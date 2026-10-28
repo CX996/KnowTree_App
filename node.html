@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="zh-CN">
+<script src="https://lf-cdn.coze.cn/obj/unpkg/coze-space/page-editor-general-web/0.1.0-alpha.274555/dist/umd/index.js"></script><script src="https://lf-cdn.coze.cn/obj/unpkg/coze-webapp/console-bridge/0.0.1-alpha.22488f/dist/index.js"></script><script src="https://lf-cdn.coze.cn/obj/unpkg/coze-webapp/history-bridge/0.0.1-alpha.10bbfe/dist/index.min.js"></script><head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0A0A0B" />
+  <title>节点 · 知树 KnowTree</title>
+  <link rel="stylesheet" href="assets/app.css" />
+</head>
+<body>
+  <div class="page">
+    <div class="topbar">
+      <button class="icon-btn" id="back" aria-label="返回" data-ic="back"></button>
+      <div class="grow">
+        <h1 class="h-big" id="name">节点</h1>
+        <div class="t3 s13" id="sub"></div>
+      </div>
+    </div>
+    <div class="mt16" id="list"></div>
+  </div>
+
+  <script src="assets/api.js"></script>
+  <script src="assets/ui.js"></script>
+  <script>
+    (async function () {
+      var id = UI.q('id');
+      var list = document.getElementById('list');
+      var nameEl = document.getElementById('name');
+      var subEl = document.getElementById('sub');
+
+      document.getElementById('back').addEventListener('click', function () { UI.back('index.html'); });
+
+      list.innerHTML = UI.emptyHTML('加载中…', '正在取这个分类下的知识');
+      try {
+        await KT.load();
+      } catch (e) {
+        list.innerHTML = KT.errorHTML(e);
+        return;
+      }
+
+      var exists = KT.NODES.some(function (n) { return n.id === id; });
+      if (!exists) {
+        nameEl.textContent = '分类不存在';
+        subEl.textContent = '';
+        list.innerHTML = UI.emptyHTML('这个分类已经被移除', '回到知识树看看');
+        return;
+      }
+
+      nameEl.textContent = KT.nodeName(id);
+      var cards = KT.nodeCards(id);
+      subEl.textContent = cards.length + ' 条知识';
+      document.title = KT.nodeName(id) + ' · 知树 KnowTree';
+
+      list.innerHTML = cards.length
+        ? cards.map(UI.cardHTML).join('')
+        : UI.emptyHTML('这个分类还没有知识', '丢一条进来，系统会试着挂到这里');
+    })();
+  </script>
+</body>
+</html>

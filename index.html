@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="zh-CN">
+<script src="https://lf-cdn.coze.cn/obj/unpkg/coze-space/page-editor-general-web/0.1.0-alpha.274555/dist/umd/index.js"></script><script src="https://lf-cdn.coze.cn/obj/unpkg/coze-webapp/console-bridge/0.0.1-alpha.22488f/dist/index.js"></script><script src="https://lf-cdn.coze.cn/obj/unpkg/coze-webapp/history-bridge/0.0.1-alpha.10bbfe/dist/index.min.js"></script><head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0A0A0B" />
+  <title>知识树 · 知树 KnowTree</title>
+  <link rel="stylesheet" href="assets/app.css" />
+</head>
+<body data-tab="tree">
+  <div class="page page--tabcta">
+    <div class="topbar">
+      <div class="grow">
+        <h1 class="h-big">知识树</h1>
+        <div class="t3 s13" id="stats">7 个节点 · 9 条知识</div>
+      </div>
+      <a class="icon-btn" href="review.html" aria-label="每日回溯" data-ic="clock"></a>
+    </div>
+
+    <a class="searchbar mt16" href="search.html">
+      <span data-ic="search"></span>
+      <span class="s13" style="font-size:15px">搜索标题、标签或正文</span>
+    </a>
+
+    <a class="banner mt12" href="inbox.html" id="inboxBanner" hidden>
+      <span data-ic="bell"></span>
+      <span class="grow"><b id="inboxNum">3</b> 条待确认 · 去看看</span>
+      <span data-ic="chev" style="color:var(--gold)"></span>
+    </a>
+
+    <div class="tree-wrap">
+      <svg class="tree" viewBox="0 0 360 460" role="img" aria-label="知识树">
+        <!-- 枝干 -->
+        <path class="branch" d="M180 460 C 180 380, 178 300, 180 172"/>
+        <path class="branch" d="M180 140 C 145 115, 100 95, 62 82"/>
+        <path class="branch" d="M180 140 C 215 115, 260 95, 298 82"/>
+        <path class="branch" d="M180 140 C 150 170, 105 200, 76 240"/>
+        <path class="branch" d="M180 140 C 210 170, 255 200, 284 240"/>
+        <path class="branch" d="M76 240 C 79 275, 83 310, 88 348"/>
+        <path class="branch" d="M284 240 C 281 275, 277 310, 272 348"/>
+        <!-- 节点 -->
+        <g class="tnode" data-node="rl" tabindex="0" role="link" aria-label="强化学习">
+          <circle class="hit" cx="180" cy="140" r="34"/>
+          <circle class="ring" cx="180" cy="140" r="30"/>
+          <text class="cnt cnt--big" x="180" y="141" data-cnt="rl">0</text>
+          <text class="lbl" x="180" y="188">强化学习</text>
+        </g>
+        <g class="tnode" data-node="math" tabindex="0" role="link" aria-label="数学">
+          <circle class="hit" cx="62" cy="82" r="28"/>
+          <circle class="ring" cx="62" cy="82" r="23"/>
+          <text class="cnt" x="62" y="83" data-cnt="math">0</text>
+          <text class="lbl" x="62" y="123">数学</text>
+        </g>
+        <g class="tnode" data-node="algo" tabindex="0" role="link" aria-label="算法">
+          <circle class="hit" cx="298" cy="82" r="28"/>
+          <circle class="ring" cx="298" cy="82" r="23"/>
+          <text class="cnt" x="298" y="83" data-cnt="algo">0</text>
+          <text class="lbl" x="298" y="123">算法</text>
+        </g>
+        <g class="tnode" data-node="robotics" tabindex="0" role="link" aria-label="机器人学">
+          <circle class="hit" cx="76" cy="240" r="30"/>
+          <circle class="ring" cx="76" cy="240" r="25"/>
+          <text class="cnt" x="76" y="241" data-cnt="robotics">0</text>
+          <text class="lbl" x="76" y="283">机器人学</text>
+        </g>
+        <g class="tnode" data-node="papers" tabindex="0" role="link" aria-label="论文">
+          <circle class="hit" cx="284" cy="240" r="30"/>
+          <circle class="ring" cx="284" cy="240" r="25"/>
+          <text class="cnt" x="284" y="241" data-cnt="papers">0</text>
+          <text class="lbl" x="284" y="283">论文</text>
+        </g>
+        <g class="tnode" data-node="control" tabindex="0" role="link" aria-label="控制">
+          <circle class="hit" cx="88" cy="348" r="28"/>
+          <circle class="ring" cx="88" cy="348" r="23"/>
+          <text class="cnt" x="88" y="349" data-cnt="control">0</text>
+          <text class="lbl" x="88" y="389">控制</text>
+        </g>
+        <g class="tnode" data-node="cog" tabindex="0" role="link" aria-label="认知">
+          <circle class="hit" cx="272" cy="348" r="28"/>
+          <circle class="ring" cx="272" cy="348" r="23"/>
+          <text class="cnt" x="272" y="349" data-cnt="cog">0</text>
+          <text class="lbl" x="272" y="389">认知</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <div class="cta-bar cta-bar--tab">
+    <a class="btn btn-primary btn-block" href="capture.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M12 5.5v13M5.5 12h13"/></svg>
+      丢一条
+    </a>
+  </div>
+  <div data-tabbar></div>
+
+  <script src="assets/api.js"></script>
+  <script src="assets/ui.js"></script>
+  <script>
+    (async function () {
+      var statsEl = document.getElementById('stats');
+      try {
+        await KT.load();
+      } catch (e) {
+        statsEl.innerHTML = '加载失败 · <a href="login.html" style="color:var(--gold)">去登录 / 配置后端</a>';
+        return;
+      }
+
+      /* 后端分类是动态的（含 parent_id），把分类按条目数从多到少铺到树的 7 个位置上 */
+      var slots = Array.prototype.slice.call(document.querySelectorAll('.tnode'));
+      var cats = KT.NODES.slice().sort(function (a, b) {
+        return KT.countInNode(b.id) - KT.countInNode(a.id);
+      });
+
+      slots.forEach(function (g, i) {
+        var cat = cats[i];
+        if (!cat) { g.style.display = 'none'; return; }
+        g.setAttribute('data-node', cat.id);
+        g.setAttribute('aria-label', cat.name);
+        var lbl = g.querySelector('.lbl');
+        if (lbl) lbl.textContent = cat.name;
+        var cnt = g.querySelector('.cnt');
+        if (cnt) { cnt.textContent = KT.countInNode(cat.id); cnt.setAttribute('data-cnt', cat.id); }
+        function open() { UI.go('node.html?id=' + encodeURIComponent(cat.id)); }
+        g.addEventListener('click', open);
+        g.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
+        });
+      });
+
+      function render() {
+        statsEl.textContent = KT.NODES.length + ' 个分类 · ' + KT.classified().length + ' 条知识';
+        var box = KT.inbox();
+        var n = box.pending.length + box.dups.length;
+        var banner = document.getElementById('inboxBanner');
+        if (n > 0) {
+          banner.hidden = false;
+          document.getElementById('inboxNum').textContent = n;
+        } else {
+          banner.hidden = true;
+        }
+        document.querySelectorAll('[data-cnt]').forEach(function (t) {
+          t.textContent = KT.countInNode(t.getAttribute('data-cnt'));
+        });
+      }
+
+      render();
+    })();
+  </script>
+</body>
+</html>

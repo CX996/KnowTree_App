@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-CN">
+<script src="https://lf-cdn.coze.cn/obj/unpkg/coze-space/page-editor-general-web/0.1.0-alpha.274555/dist/umd/index.js"></script><script src="https://lf-cdn.coze.cn/obj/unpkg/coze-webapp/console-bridge/0.0.1-alpha.22488f/dist/index.js"></script><script src="https://lf-cdn.coze.cn/obj/unpkg/coze-webapp/history-bridge/0.0.1-alpha.10bbfe/dist/index.min.js"></script><head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0A0A0B" />
+  <title>知识库 · 知树 KnowTree</title>
+  <link rel="stylesheet" href="assets/app.css" />
+</head>
+<body data-tab="lib">
+  <div class="page page--tab">
+    <div class="topbar">
+      <div class="grow">
+        <h1 class="h-big">知识库</h1>
+      </div>
+    </div>
+
+    <a class="searchbar mt8" href="search.html">
+      <span data-ic="search"></span>
+      <span style="font-size:15px">搜索标题、标签或正文</span>
+    </a>
+
+    <div class="seg mt16" id="seg">
+      <button data-f="all" class="on">全部 <span class="n"></span></button>
+      <button data-f="pending">待确认 <span class="n"></span></button>
+      <button data-f="star">未分类 <span class="n"></span></button>
+    </div>
+
+    <div class="mt16" id="list"></div>
+  </div>
+
+  <div data-tabbar></div>
+
+  <script src="assets/api.js"></script>
+  <script src="assets/ui.js"></script>
+  <script>
+    (async function () {
+      var filter = 'all';
+      var seg = document.getElementById('seg');
+      var list = document.getElementById('list');
+
+      list.innerHTML = UI.emptyHTML('加载中…', '正在从后端取知识库');
+      try {
+        await KT.load();
+      } catch (e) {
+        list.innerHTML = KT.errorHTML(e);
+        return;
+      }
+
+      function counts() {
+        var box = KT.inbox();
+        return {
+          all: KT.visible().length,
+          pending: box.pending.length + box.dups.length,
+          star: KT.uncategorized().length
+        };
+      }
+
+      function render() {
+        var c = counts();
+        seg.querySelector('[data-f="all"] .n').textContent = c.all;
+        seg.querySelector('[data-f="pending"] .n').textContent = c.pending;
+        seg.querySelector('[data-f="star"] .n').textContent = c.star;
+
+        var cards;
+        if (filter === 'pending') {
+          var box = KT.inbox();
+          cards = box.pending.concat(box.dups);
+        } else if (filter === 'star') {
+          cards = KT.uncategorized();
+        } else {
+          cards = KT.visible();
+        }
+
+        if (!cards.length) {
+          list.innerHTML = filter === 'star'
+            ? UI.emptyHTML('没有未分类的条目', '待确认的条目处理完就会归到分类下')
+            : UI.emptyHTML('这里空空如也', '丢一条进来，系统会试着挂到树上');
+          return;
+        }
+        list.innerHTML = cards.map(UI.cardHTML).join('');
+      }
+
+      seg.addEventListener('click', function (e) {
+        var b = e.target.closest('button');
+        if (!b) return;
+        filter = b.getAttribute('data-f');
+        seg.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); });
+        render();
+      });
+
+      render();
+    })();
+  </script>
+</body>
+</html>

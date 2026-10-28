@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0A0A0B" />
+  <title>连接后端 · 知树 KnowTree</title>
+  <link rel="stylesheet" href="assets/app.css" />
+</head>
+<body>
+  <div class="page">
+    <div class="topbar">
+      <div class="grow">
+        <h1 class="h-big">连接你的知树</h1>
+        <div class="t3 s13">前端已接后端 /api/v1，先填地址与凭证</div>
+      </div>
+    </div>
+
+    <div class="mt20 t3 s12">API Base（含 /api/v1）</div>
+    <input class="textarea mt8" id="apiBase" style="min-height:48px" placeholder="http://localhost:9091/api/v1" />
+
+    <div class="mt16 t3 s12">access_token（放进 x-session 头）</div>
+    <textarea class="textarea mt8" id="tok" style="min-height:88px" placeholder="粘贴 Supabase access_token"></textarea>
+
+    <button class="btn btn-primary btn-block mt16" id="enter">进入</button>
+    <button class="btn btn-ghost btn-block mt12" id="test">测试连接（GET /health）</button>
+
+    <div class="h-sec mt24 mb12">或邮箱密码登录（需 Supabase）</div>
+    <input class="textarea" id="sbUrl" style="min-height:48px" placeholder="Supabase URL，如 https://xxx.supabase.co" />
+    <input class="textarea mt8" id="sbKey" style="min-height:48px" placeholder="Supabase anon key" />
+    <input class="textarea mt8" id="email" style="min-height:48px" placeholder="邮箱" autocomplete="username" />
+    <input class="textarea mt8" id="pwd" type="password" style="min-height:48px" placeholder="密码" autocomplete="current-password" />
+    <button class="btn btn-block mt12" id="pwdLogin">邮箱密码登录</button>
+
+    <div class="t3 s12 mt20" id="msg"></div>
+    <div class="t3 s12 mt12">
+      本地开发时后端默认 http://localhost:9091。预览页是 https，浏览器会拦截 http 请求：请把后端挂到 https 域名，或在本机直接打开前端。
+    </div>
+  </div>
+
+  <script src="assets/api.js"></script>
+  <script src="assets/ui.js"></script>
+  <script>
+    (function () {
+      function el(id) { return document.getElementById(id); }
+      var c = KT.getConfig();
+      el('apiBase').value = c.apiBase || '';
+      el('sbUrl').value = c.supabaseUrl || '';
+      el('sbKey').value = c.supabaseKey || '';
+      el('tok').value = KT.token() || '';
+
+      var next = UI.q('next') || 'index.html';
+      function msg(t) { el('msg').textContent = t || ''; }
+      function save() {
+        KT.setConfig({
+          apiBase: el('apiBase').value,
+          supabaseUrl: el('sbUrl').value,
+          supabaseKey: el('sbKey').value
+        });
+      }
+
+      el('enter').addEventListener('click', function () {
+        save();
+        var t = el('tok').value.trim();
+        if (!t) { msg('先粘贴 access_token'); return; }
+        KT.setToken(t);
+        location.replace(next);
+      });
+
+      el('test').addEventListener('click', function () {
+        save();
+        msg('测试中…');
+        KT.health().then(function (r) {
+          msg('连通：' + JSON.stringify(r));
+        }, function (e) {
+          msg('失败：' + e.message);
+        });
+      });
+
+      el('pwdLogin').addEventListener('click', function () {
+        save();
+        msg('登录中…');
+        KT.loginWithPassword(el('email').value.trim(), el('pwd').value).then(function () {
+          location.replace(next);
+        }, function (e) {
+          msg('失败：' + e.message);
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

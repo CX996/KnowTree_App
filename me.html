@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="zh-CN">
+<script src="https://lf-cdn.coze.cn/obj/unpkg/coze-space/page-editor-general-web/0.1.0-alpha.274555/dist/umd/index.js"></script><script src="https://lf-cdn.coze.cn/obj/unpkg/coze-webapp/console-bridge/0.0.1-alpha.22488f/dist/index.js"></script><script src="https://lf-cdn.coze.cn/obj/unpkg/coze-webapp/history-bridge/0.0.1-alpha.10bbfe/dist/index.min.js"></script><head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0A0A0B" />
+  <title>我的 · 知树 KnowTree</title>
+  <link rel="stylesheet" href="assets/app.css" />
+</head>
+<body data-tab="me">
+  <div class="page page--tab">
+    <div class="topbar">
+      <div class="grow"><h1 class="h-big">我的</h1></div>
+    </div>
+
+    <div class="stats mt16" id="stats"></div>
+
+    <div class="rows mt20">
+      <button class="row" id="export">
+        <span data-ic="download"></span><span class="grow">数据导出</span>
+        <span class="val">JSON</span><span data-ic="chev" class="chev"></span>
+      </button>
+      <button class="row" id="trashRow">
+        <span data-ic="trash"></span><span class="grow">回收站</span>
+        <span class="val" id="trashCount"></span><span data-ic="chev" class="chev"></span>
+      </button>
+      <button class="row" id="conn">
+        <span data-ic="shield"></span><span class="grow">后端与登录</span>
+        <span class="val" id="connVal"></span><span data-ic="chev" class="chev"></span>
+      </button>
+      <button class="row" id="privacy">
+        <span data-ic="shield"></span><span class="grow">隐私与训练声明</span>
+        <span data-ic="chev" class="chev"></span>
+      </button>
+      <div class="row">
+        <span data-ic="bell"></span><span class="grow">回溯提醒</span>
+        <button class="switch" id="remind" role="switch" aria-label="回溯提醒"></button>
+      </div>
+    </div>
+
+    <div class="rows mt16">
+      <button class="row" id="reset">
+        <span data-ic="refresh"></span><span class="grow">重置演示数据</span>
+        <span data-ic="chev" class="chev"></span>
+      </button>
+      <button class="row" id="logout">
+        <span data-ic="logout"></span><span class="grow">注销账号</span>
+        <span data-ic="chev" class="chev"></span>
+      </button>
+    </div>
+
+    <div class="t3 s12 mt24" style="text-align:center;line-height:2">
+      知树 KnowTree · 演示原型<br />数据只保存在这台设备的浏览器里
+    </div>
+  </div>
+
+  <div data-tabbar></div>
+
+  <script src="assets/api.js"></script>
+  <script src="assets/ui.js"></script>
+  <script>
+    (async function () {
+      var remind = document.getElementById('remind');
+      var statsEl = document.getElementById('stats');
+      var connVal = document.getElementById('connVal');
+
+      try {
+        await KT.load();
+      } catch (e) {
+        statsEl.innerHTML = '<div class="t3 s13">加载失败 · <a href="login.html" style="color:var(--gold)">去登录 / 配置后端</a></div>';
+        return;
+      }
+
+      function render() {
+        var s = KT.stats();
+        statsEl.innerHTML =
+          '<div class="stat"><div class="v">' + s.total + '</div><div class="k">收录</div></div>' +
+          '<div class="stat"><div class="v">' + KT.NODES.length + '</div><div class="k">分类</div></div>' +
+          '<div class="stat"><div class="v">' + s.week + '</div><div class="k">本周沉淀</div></div>';
+        document.getElementById('trashCount').textContent = '';
+        remind.classList.toggle('on', KT.getSetting('reviewReminder') !== false);
+        if (connVal) {
+          var base = KT.getConfig().apiBase.replace(/^https?:\/\//, '');
+          connVal.textContent = base.length > 24 ? base.slice(0, 24) + '…' : base;
+        }
+      }
+
+      /* 数据导出：走后端 /export */
+      document.getElementById('export').addEventListener('click', async function () {
+        var btn = this;
+        btn.disabled = true;
+        try {
+          await KT.exportFile('json');
+          UI.toast('已导出全部知识（JSON）');
+        } catch (e) {
+          UI.toast('导出失败：' + e.message);
+        }
+        btn.disabled = false;
+      });
+
+      /* 回收站：后端本期无恢复接口 */
+      document.getElementById('trashRow').addEventListener('click', function () {
+        UI.toast('后端本期未提供回收站 / 恢复接口');
+      });
+
+      /* 后端与登录 */
+      var conn = document.getElementById('conn');
+      if (conn) conn.addEventListener('click', function () { UI.go('login.html?next=me.html'); });
+
+      /* 隐私与训练声明 */
+      document.getElementById('privacy').addEventListener('click', function () {
+        UI.openSheet('隐私与训练声明', function (body) {
+          body.innerHTML =
+            '<div class="prose" style="font-size:14px">' +
+            '<p>知识正文、分类与回溯记录都存在你自己的账号下（后端按 user_id 隔离，全表 RLS），前端只在本地保存登录凭证。</p>' +
+            '<p>「AI 解析」「语义检索」「相似度」由后端模型服务完成，你的内容不会被用于训练。</p>' +
+            '<p>在下方「注销账号」会调用后端 DELETE /me/account，彻底删除你的条目与账号，操作不可撤销。</p>' +
+            '</div>';
+        });
+      });
+
+      /* 回溯提醒：写回 profile.daily_recall_enabled */
+      remind.addEventListener('click', async function () {
+        var on = !(KT.getSetting('reviewReminder') !== false);
+        try {
+          await KT.setSetting('reviewReminder', on);
+          render();
+          UI.toast(on ? '已开启每日回溯' : '已关闭每日回溯');
+        } catch (e) {
+          UI.toast('保存失败：' + e.message);
+        }
+      });
+
+      /* 重置演示数据：后端数据不支持重置 */
+      document.getElementById('reset').addEventListener('click', function () {
+        UI.toast('后端数据不支持重置为演示数据');
+      });
+
+      /* 注销账号：DELETE /me/account */
+      document.getElementById('logout').addEventListener('click', function () {
+        UI.confirm({
+          title: '注销账号？',
+          desc: '会调用后端彻底删除你的全部知识、分类与账号，操作不可撤销。',
+          ok: '注销'
+        }).then(async function (ok) {
+          if (!ok) return;
+          try {
+            await KT.wipe();
+          } catch (e) {
+            UI.toast('注销失败：' + e.message);
+            return;
+          }
+          var page = document.querySelector('.page');
+          var tabHost = document.querySelector('[data-tabbar]');
+          if (tabHost) tabHost.innerHTML = '';
+          page.innerHTML =
+            '<div style="min-height:80dvh;display:flex;flex-direction:column;align-items:center;justify-content:center">' +
+            '<div class="h-big">账号已注销</div>' +
+            '<div class="t3 s13 mt8">服务端数据与登录凭证都已清除</div>' +
+            '<a class="btn btn-primary mt24" style="min-width:180px" href="login.html">重新登录</a>' +
+            '</div>';
+        });
+      });
+
+      render();
+    })();
+  </script>
+</body>
+</html>
