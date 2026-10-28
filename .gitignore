@@ -1,3 +1,6 @@
 .DS_Store
 *.log
 /runtime
+
+# 构建期临时目录（页面脚本已内联进 HTML）
+/scripts
