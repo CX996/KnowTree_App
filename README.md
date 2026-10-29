@@ -2,17 +2,25 @@
 
 个人知识储备 App：丢一条 → 自动入树 → 每日送回。
 
-本仓库同时收纳**前端（静态 H5 站点）**与**后端（Express API）**两部分源码：
+本仓库同时收纳**前端（静态 H5 站点）**与**后端（Express API）**两部分源码，采用标准前后端分目录布局：
 
-- **前端**：`./`（根目录），纯静态多页站点（MPA），原生 HTML + CSS + JS，无框架、无构建、无 npm 依赖，任意静态服务器都能跑。
-- **后端**：`./server/`，Node.js Express API，挂载在 `/api/v1`，连接 Supabase/Postgres（pgvector + RLS），AI 归类与互链通过 LLM/embedding 完成，后台任务队列处理异步重活。
+- **前端**：`client/`，纯静态多页站点（MPA），原生 HTML + CSS + JS，无框架、无构建、无 npm 依赖，任意静态服务器都能跑。
+- **后端**：`server/`，Node.js Express API，挂载在 `/api/v1`，连接 Supabase/Postgres（pgvector + RLS），AI 归类与互链通过 LLM/embedding 完成，后台任务队列处理异步重活。
+
+```
+KnowTree_App/
+├── client/    # 前端 H5 静态站
+├── server/    # 后端 Express API
+├── README.md
+└── .gitignore
+```
 
 ## 前端
 
 ### 目录
 
 ```
-.
+client/
 ├── index.html     知识树（入口）
 ├── library.html   知识库（全部 / 待确认 / 未分类）
 ├── search.html    搜索（后端语义 + 关键词）
@@ -32,7 +40,7 @@
 ## 本地运行
 
 ```bash
-cd knowtree-app
+cd knowtree-app/client
 python3 -m http.server 8080
 # 打开 http://localhost:8080/login.html
 ```
@@ -41,7 +49,7 @@ python3 -m http.server 8080
 
 ## 连接后端
 
-后端 Base 默认 `http://localhost:9091/api/v1`，在 `login.html` 里可改，配置存在 localStorage（键 `knowtree_cfg`），token 存在 `knowtree_token`。
+后端 Base 默认 `https://knowtree-api-vercel.vercel.app/api/v1`，在 `login.html` 里可改，配置存在 localStorage（键 `knowtree_cfg`），token 存在 `knowtree_token`。
 
 - 鉴权：请求头 `x-session: <Supabase access_token>`，不是 Bearer、不是 Cookie。
 - 401 会清 token 并跳回 `login.html`。
@@ -56,7 +64,8 @@ python3 -m http.server 8080
 
 ## 部署
 
-纯静态，无构建步骤。Vercel 直接导入仓库：Framework 选 **Other**，Build Command 留空，Output Directory 填 `.`（或根目录）。不需要环境变量——后端地址在前端登录页配置。
+- **前端**：纯静态，无构建步骤。Vercel 导入 `client/` 目录：Framework 选 **Other**，Build Command 留空，Output Directory 填 `.`。不需要环境变量——后端地址默认已指向线上。
+- **后端**：独立 Vercel 项目部署 `server/`，需配置环境变量（Supabase/DeepSeek），见 `server/README`。详见 `knowtree-api-vercel/` 独立工程。
 
 > 目前 `assets/api.js` 的默认 Base 还是 `http://localhost:9091/api/v1`；后端公网地址确定后会回填为默认值，届时需再提交一次。
 
