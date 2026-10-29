@@ -12,7 +12,7 @@
   var CFG_KEY = 'knowtree_cfg';
   var TOKEN_KEY = 'knowtree_token';
   var DUP_KEY = 'knowtree_dups';
-  var DEFAULT_BASE = 'http://localhost:9091/api/v1';
+  var DEFAULT_BASE = 'https://knowtree-api-vercel.vercel.app/api/v1';
 
   var cfg = {};
   try { cfg = JSON.parse(localStorage.getItem(CFG_KEY) || '{}') || {}; } catch (e) { cfg = {}; }

@@ -17,7 +17,7 @@
     </div>
 
     <div class="mt20 t3 s12">API Base（含 /api/v1）</div>
-    <input class="textarea mt8" id="apiBase" style="min-height:48px" placeholder="http://localhost:9091/api/v1" />
+    <input class="textarea mt8" id="apiBase" style="min-height:48px" placeholder="https://knowtree-api-vercel.vercel.app/api/v1" />
 
     <div class="mt16 t3 s12">access_token（放进 x-session 头）</div>
     <textarea class="textarea mt8" id="tok" style="min-height:88px" placeholder="粘贴 Supabase access_token"></textarea>
@@ -34,7 +34,7 @@
 
     <div class="t3 s12 mt20" id="msg"></div>
     <div class="t3 s12 mt12">
-      本地开发时后端默认 http://localhost:9091。预览页是 https，浏览器会拦截 http 请求：请把后端挂到 https 域名，或在本机直接打开前端。
+      后端默认已指向线上 <b>https://knowtree-api-vercel.vercel.app/api/v1</b>，无需改动；填入 Supabase 信息与邮箱密码即可登录。
     </div>
   </div>
 
