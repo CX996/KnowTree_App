@@ -629,6 +629,17 @@ svg { display: block; }
 }
 .edit-actions { display: flex; gap: 10px; }
 .edit-actions .btn { flex: 1; }
+.ai-models {
+  display: grid;
+  gap: 4px;
+  color: var(--text2);
+  font-size: 12px;
+}
+.ai-error {
+  min-height: 42px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
 
 .actionbar {
   position: fixed;

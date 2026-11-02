@@ -380,6 +380,18 @@
     });
   }
 
+  function aiStatus() {
+    return req('/ai/status');
+  }
+
+  function updateAiPreferences(patch) {
+    return req('/ai/preferences', { method: 'PATCH', body: patch });
+  }
+
+  function testAi() {
+    return req('/ai/test', { method: 'POST', timeoutMs: 65000 });
+  }
+
   /* 轮询 jobs 直到终态（或超时），用于「处理中 → 已归类/已互链」 */
   function pollJobs(ids, onTick, timeoutMs) {
     ids = ids || [];
@@ -561,6 +573,7 @@
     uncategorized: uncategorized, search: search, reviewQueue: reviewQueue,
     stats: stats,
     capture: capture, importFile: importFile, updateEntry: updateEntry, enrichEntry: enrichEntry,
+    aiStatus: aiStatus, updateAiPreferences: updateAiPreferences, testAi: testAi,
     pollJobs: pollJobs, assign: assign, mergeDup: mergeDup, keepDup: keepDup,
     removeCard: removeCard,
     processAllInbox: processAllInbox, markSeen: markSeen,

@@ -96,6 +96,16 @@ test('detail page exposes safe markdown reading and editing', async () => {
   assert.match(detail, /id="saveBtn"/);
 });
 
+test('me page exposes ai capability management', async () => {
+  const me = await readFile(path.join(clientDir, 'me.html'), 'utf8');
+  assert.match(me, /id="aiSettings"/);
+  assert.match(me, /id="aiAutoTitle"/);
+  assert.match(me, /id="aiAutoSummary"/);
+  assert.match(me, /id="aiAutoClassify"/);
+  assert.match(me, /id="aiEmbeddings"/);
+  assert.match(me, /id="aiTest"/);
+});
+
 test('production styles include keyboard, motion and minimum target standards', async () => {
   const css = await readFile(path.join(clientDir, 'assets/app.css'), 'utf8');
   assert.match(css, /:focus-visible/);

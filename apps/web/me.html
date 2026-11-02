@@ -24,6 +24,10 @@
         <span data-ic="shield"></span><span class="grow">隐私与训练声明</span>
         <span data-ic="chev" class="chev"></span>
       </button>
+      <button class="row" id="aiSettings">
+        <span data-ic="spark"></span><span class="grow">AI 整理</span>
+        <span class="val" id="aiModeLabel">查看</span><span data-ic="chev" class="chev"></span>
+      </button>
       <div class="row">
         <span data-ic="bell"></span><span class="grow">回溯提醒</span>
         <button class="switch" id="remind" role="switch" aria-label="回溯提醒" aria-checked="false"></button>
@@ -91,6 +95,101 @@
             '<p>「AI 解析」「语义检索」「相似度」由后端模型服务完成，你的内容不会被用于训练。</p>' +
             '<p>在下方「注销账号」会调用后端 DELETE /me/account，彻底删除你的条目与账号，操作不可撤销。</p>' +
             '</div>';
+        });
+      });
+
+      /* AI 能力管理：只展示配置状态和用户开关，不返回任何密钥 */
+      document.getElementById('aiSettings').addEventListener('click', function () {
+        UI.openSheet('AI 整理', function (body) {
+          body.innerHTML =
+            '<div id="aiStatus" class="t3 s13">正在读取 AI 状态…</div>' +
+            '<div class="ai-models mt12" id="aiModels"></div>' +
+            '<div class="rows mt16">' +
+              '<div class="row"><span data-ic="spark"></span><span class="grow">自动生成标题</span>' +
+                '<button class="switch" id="aiAutoTitle" role="switch" aria-label="自动生成标题" aria-checked="false"></button></div>' +
+              '<div class="row"><span data-ic="spark"></span><span class="grow">自动生成摘要</span>' +
+                '<button class="switch" id="aiAutoSummary" role="switch" aria-label="自动生成摘要" aria-checked="false"></button></div>' +
+              '<div class="row"><span data-ic="spark"></span><span class="grow">自动分类</span>' +
+                '<button class="switch" id="aiAutoClassify" role="switch" aria-label="自动分类" aria-checked="false"></button></div>' +
+              '<div class="row"><span data-ic="spark"></span><span class="grow">语义检索</span>' +
+                '<button class="switch" id="aiEmbeddings" role="switch" aria-label="语义检索" aria-checked="false"></button></div>' +
+            '</div>' +
+            '<div class="ai-error t3 s12 mt16" id="aiError" aria-live="polite"></div>' +
+            '<button class="btn btn-ghost btn-block mt16" id="aiTest" type="button">测试 AI 连接</button>';
+          UI.hydrateIcons(body);
+
+          var switches = [
+            ['aiAutoTitle', 'autoTitle'],
+            ['aiAutoSummary', 'autoSummary'],
+            ['aiAutoClassify', 'autoClassify'],
+            ['aiEmbeddings', 'embeddings']
+          ];
+
+          function renderStatus(status) {
+            var configured = !!status.configured;
+            var state = body.querySelector('#aiStatus');
+            var models = body.querySelector('#aiModels');
+            var error = body.querySelector('#aiError');
+            state.textContent = configured ? 'AI 已配置' : 'AI 未配置 · 当前使用规则降级';
+            models.innerHTML =
+              '<div>聊天模型：' + UI.esc(status.chatModel || '未设置') + '</div>' +
+              '<div>Embedding：' + UI.esc(status.embeddingModel || '未设置') +
+                ' · ' + Number(status.embeddingDimension || 1024) + ' 维</div>';
+            error.textContent = status.lastError ? '最近错误：' + status.lastError : '';
+            switches.forEach(function (item) {
+              var button = body.querySelector('#' + item[0]);
+              var on = !!status.features[item[1]];
+              button.classList.toggle('on', on);
+              button.setAttribute('aria-checked', String(on));
+              button.disabled = !configured;
+            });
+            document.getElementById('aiModeLabel').textContent = configured ? 'AI' : '规则';
+          }
+
+          switches.forEach(function (item) {
+            body.querySelector('#' + item[0]).addEventListener('click', async function () {
+              if (!this || this.disabled) return;
+              var button = this;
+              var previous = button.getAttribute('aria-checked') === 'true';
+              var next = !previous;
+              button.disabled = true;
+              button.classList.toggle('on', next);
+              button.setAttribute('aria-checked', String(next));
+              var patch = {};
+              patch[item[1]] = next;
+              try {
+                await KT.updateAiPreferences(patch);
+              } catch (error) {
+                button.classList.toggle('on', previous);
+                button.setAttribute('aria-checked', String(previous));
+                UI.toast(error.message);
+              } finally {
+                button.disabled = false;
+              }
+            });
+          });
+
+          body.querySelector('#aiTest').addEventListener('click', async function () {
+            var button = this;
+            var error = body.querySelector('#aiError');
+            button.disabled = true;
+            button.textContent = '测试中…';
+            try {
+              var result = await KT.testAi();
+              error.textContent = result.ok
+                ? '连接正常 · ' + result.latencyMs + ' ms'
+                : result.message;
+            } catch (e) {
+              error.textContent = e.message;
+            } finally {
+              button.disabled = false;
+              button.textContent = '测试 AI 连接';
+            }
+          });
+
+          KT.aiStatus().then(renderStatus, function (error) {
+            body.querySelector('#aiStatus').textContent = 'AI 状态读取失败：' + error.message;
+          });
         });
       });
 
