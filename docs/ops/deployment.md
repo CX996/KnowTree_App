@@ -54,6 +54,8 @@ pnpm dlx supabase@2.122.0 db push
 
 如果 `vercel git connect` 提示无法连接仓库，先在 Vercel 项目 Settings → Git 中完成 GitHub 授权。授权完成前仍可使用 `vercel deploy --prod` 手动发布；GitHub 推送本身不受影响。
 
+GitHub 授权完成后，Vercel 会跟踪 `master`：推送到 `master` 自动创建 Production，推送到其他分支自动创建 Preview。
+
 ## 7. Preview 上线检查
 
 在 Preview 域名上依次检查：
