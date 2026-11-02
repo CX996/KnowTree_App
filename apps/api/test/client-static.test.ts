@@ -57,3 +57,10 @@ test('login uses standard form semantics', async () => {
   assert.match(login, /autocomplete="current-password"/);
   assert.match(login, /type="submit"/);
 });
+
+test('production styles include keyboard, motion and minimum target standards', async () => {
+  const css = await readFile(path.join(clientDir, 'assets/app.css'), 'utf8');
+  assert.match(css, /:focus-visible/);
+  assert.match(css, /prefers-reduced-motion/);
+  assert.match(css, /min-height:\s*44px/);
+});
