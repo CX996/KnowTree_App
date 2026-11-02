@@ -76,6 +76,16 @@ test('core pages expose headings and switch state', async () => {
   assert.match(me, /role="switch"[^>]+aria-checked="false"/);
 });
 
+test('capture page supports document drop and replaces history after success', async () => {
+  const capture = await readFile(path.join(clientDir, 'capture.html'), 'utf8');
+  assert.match(capture, /type="file"/);
+  assert.match(capture, /accept="\.md,\.txt,\.html,\.docx,\.pdf"/);
+  assert.match(capture, /id="dropZone"/);
+  assert.match(capture, /id="title"/);
+  assert.match(capture, /location\.replace\(detailUrl\(card\.id\)\)/);
+  assert.equal(capture.includes("UI.go('detail.html?id='"), false);
+});
+
 test('production styles include keyboard, motion and minimum target standards', async () => {
   const css = await readFile(path.join(clientDir, 'assets/app.css'), 'utf8');
   assert.match(css, /:focus-visible/);

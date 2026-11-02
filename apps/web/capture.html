@@ -9,86 +9,247 @@
 </head>
 <body>
   <main>
-  <div class="capture-bg" id="bg"></div>
+    <div class="capture-bg" id="bg"></div>
 
-  <div class="capture-sheet" role="dialog" aria-label="丢一条">
-    <div class="sheet__handle"></div>
-    <div class="topbar" style="padding-top:0;min-height:44px">
-      <div class="grow">
-        <div class="h-sec" style="font-size:20px">丢进来</div>
-        <div class="t3 s13">不用选分类，也不用填标题</div>
+    <div class="capture-sheet capture-sheet--document" role="dialog" aria-label="丢一条">
+      <div class="sheet__handle"></div>
+      <div class="topbar" style="padding-top:0;min-height:44px">
+        <div class="grow">
+          <div class="h-sec" style="font-size:20px">丢进来</div>
+          <div class="t3 s13">文字、Markdown 或一份文档都可以</div>
+        </div>
+        <button class="icon-btn" id="close" aria-label="关闭" data-ic="x"></button>
       </div>
-      <button class="icon-btn" id="close" aria-label="关闭" data-ic="x"></button>
+
+      <label class="t3 s12" for="title">标题</label>
+      <input class="textarea mt8" id="title" type="text" maxlength="200"
+        placeholder="可留空，我会根据内容自动起标题" autocomplete="off" />
+
+      <div class="capture-mode mt16" role="group" aria-label="录入方式">
+        <button class="capture-mode__tab is-active" id="textMode" type="button">直接写</button>
+        <button class="capture-mode__tab" id="fileMode" type="button">导入文档</button>
+      </div>
+
+      <div id="textPane">
+        <label class="sr-only" for="text">正文</label>
+        <textarea class="textarea mt12" id="text"
+          placeholder="把想法、笔记或 Markdown 直接丢进来…"></textarea>
+      </div>
+
+      <div id="filePane" hidden>
+        <input id="fileInput" class="sr-only" type="file"
+          accept=".md,.txt,.html,.docx,.pdf" />
+        <div id="dropZone" class="drop-zone mt12">
+          <span class="drop-zone__icon" data-ic="download"></span>
+          <div class="drop-zone__title">拖一份文档到这里</div>
+          <div class="t3 s12">MD、TXT、HTML、DOCX、文本型 PDF，最大 10 MB</div>
+          <button class="btn btn-ghost mt12" id="pickFile" type="button">选择文件</button>
+        </div>
+        <div class="file-chip mt12" id="fileChip" hidden>
+          <span data-ic="document"></span>
+          <div class="grow">
+            <div class="file-chip__name" id="fileName"></div>
+            <div class="t3 s12" id="fileMeta"></div>
+          </div>
+          <button class="icon-btn" id="removeFile" type="button" aria-label="移除文件" data-ic="x"></button>
+        </div>
+      </div>
+
+      <div class="capture-status t3 s12 mt12" id="status" aria-live="polite"></div>
+      <button class="btn btn-primary btn-block mt12" id="submit" type="button">丢进去</button>
     </div>
-
-    <textarea class="textarea mt16" id="text" placeholder="把脑子里那段想法、那段笔记，直接丢进来…"></textarea>
-
-    <button class="btn btn-primary btn-block mt16" id="submit">丢进去</button>
-  </div>
   </main>
 
   <script src="assets/api.js"></script>
   <script src="assets/ui.js"></script>
   <script>
     (async function () {
+      var titleInput = document.getElementById('title');
       var text = document.getElementById('text');
       var submit = document.getElementById('submit');
+      var status = document.getElementById('status');
+      var textPane = document.getElementById('textPane');
+      var filePane = document.getElementById('filePane');
+      var textMode = document.getElementById('textMode');
+      var fileMode = document.getElementById('fileMode');
+      var fileInput = document.getElementById('fileInput');
+      var dropZone = document.getElementById('dropZone');
+      var fileChip = document.getElementById('fileChip');
+      var fileName = document.getElementById('fileName');
+      var fileMeta = document.getElementById('fileMeta');
+      var pickFile = document.getElementById('pickFile');
+      var selectedFile = null;
+      var busy = false;
 
-      function leave() { UI.go('index.html'); }
+      var MAX_FILE_BYTES = 10 * 1024 * 1024;
+      var ALLOWED = ['.md', '.txt', '.html', '.docx', '.pdf'];
+
+      function leave() {
+        UI.back('index.html');
+      }
+
       document.getElementById('bg').addEventListener('click', leave);
       document.getElementById('close').addEventListener('click', leave);
 
       try {
         await KT.load();
       } catch (e) {
-        /* 未登录时 KT.load 会跳登录页，这里不打断 */
+        /* KT.load 会在未登录时跳转登录页 */
+      }
+
+      function setStatus(message) {
+        status.textContent = message || '';
+      }
+
+      function setMode(mode) {
+        var isFile = mode === 'file';
+        textPane.hidden = isFile;
+        filePane.hidden = !isFile;
+        textMode.classList.toggle('is-active', !isFile);
+        fileMode.classList.toggle('is-active', isFile);
+        textMode.setAttribute('aria-pressed', String(!isFile));
+        fileMode.setAttribute('aria-pressed', String(isFile));
+        if (isFile) {
+          pickFile.focus();
+        } else {
+          text.focus();
+        }
+      }
+
+      function extension(name) {
+        var match = String(name || '').toLowerCase().match(/(\.[^.]+)$/);
+        return match ? match[1] : '';
+      }
+
+      function formatBytes(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+      }
+
+      function chooseFile(file) {
+        if (!file) return;
+        var ext = extension(file.name);
+        if (ALLOWED.indexOf(ext) < 0) {
+          UI.toast('仅支持 MD、TXT、HTML、DOCX 和文本型 PDF');
+          return;
+        }
+        if (file.size > MAX_FILE_BYTES) {
+          UI.toast('文件超过 10 MB 限制');
+          return;
+        }
+        selectedFile = file;
+        fileName.textContent = file.name;
+        fileMeta.textContent = formatBytes(file.size) + ' · ' + ext.slice(1).toUpperCase();
+        fileChip.hidden = false;
+        dropZone.hidden = true;
+        setStatus('文档已就绪');
+      }
+
+      function clearFile() {
+        selectedFile = null;
+        fileInput.value = '';
+        fileChip.hidden = true;
+        dropZone.hidden = false;
+        setStatus('');
+      }
+
+      textMode.addEventListener('click', function () { setMode('text'); });
+      fileMode.addEventListener('click', function () { setMode('file'); });
+      pickFile.addEventListener('click', function () {
+        fileInput.click();
+      });
+      fileInput.addEventListener('change', function () {
+        chooseFile(fileInput.files && fileInput.files[0]);
+      });
+      document.getElementById('removeFile').addEventListener('click', clearFile);
+
+      ['dragenter', 'dragover'].forEach(function (name) {
+        dropZone.addEventListener(name, function (event) {
+          event.preventDefault();
+          dropZone.classList.add('is-dragging');
+        });
+      });
+      ['dragleave', 'drop'].forEach(function (name) {
+        dropZone.addEventListener(name, function (event) {
+          event.preventDefault();
+          dropZone.classList.remove('is-dragging');
+        });
+      });
+      dropZone.addEventListener('drop', function (event) {
+        var file = event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0];
+        if (file) chooseFile(file);
+      });
+
+      function detailUrl(id) {
+        return 'detail.html?id=' + encodeURIComponent(id);
+      }
+
+      async function finishIngest(result) {
+        if (result.jobs && result.jobs.length) {
+          setStatus('正在生成标题、摘要和分类…');
+          submit.textContent = '整理中…';
+          await KT.pollJobs(result.jobs, function (jobs) {
+            var done = jobs.filter(function (job) { return job.status === 'succeeded'; }).length;
+            setStatus('正在整理 ' + done + '/' + jobs.length);
+          });
+        }
+
+        var card = result.card;
+        if (card) {
+          try {
+            card = await KT.refreshEntry(card.id);
+          } catch (e) {
+            card = KT.byId(card.id) || card;
+          }
+        }
+        if (!card) throw new Error('入库失败，没有返回条目');
+
+        if (result.dup) {
+          UI.flash('这条之前收过了，权重 +1');
+        } else if (card.status === 'dup') {
+          UI.flash('疑似与已有知识重复，请到收件箱确认');
+        } else {
+          UI.flash('已收录，正在打开整理结果');
+        }
+        location.replace(detailUrl(card.id));
       }
 
       submit.addEventListener('click', async function () {
-        var v = text.value.trim();
-        if (!v) { UI.toast('先写点什么，再丢进来'); text.focus(); return; }
+        if (busy) return;
+        var title = titleInput.value.trim();
+        var body = text.value.trim();
+        if (filePane.hidden && !body && !selectedFile) {
+          UI.toast('先写点什么，或选择一份文档');
+          text.focus();
+          return;
+        }
+        if (!filePane.hidden && !selectedFile) {
+          UI.toast('请选择一份文档');
+          dropZone.focus();
+          return;
+        }
+
+        busy = true;
         submit.disabled = true;
-        submit.textContent = '正在收录…';
+        setStatus(selectedFile ? '正在解析文档…' : '正在收录…');
+        submit.textContent = selectedFile ? '解析中…' : '收录中…';
         try {
-          var r = await KT.capture(v);
-
-          if (r.dup) {
-            submit.textContent = '已存在';
-            UI.flash('这条之前收过了，权重 +1（未重复收录）');
-            UI.go('inbox.html');
-            return;
-          }
-
-          if (r.jobs && r.jobs.length) {
-            submit.textContent = '正在归类…';
-            await KT.pollJobs(r.jobs, function (jobs) {
-              var done = jobs.filter(function (j) { return j.status === 'succeeded'; }).length;
-              if (done) submit.textContent = '正在归类… ' + done + '/' + jobs.length;
-            });
-          }
-
-          var c;
-      try { c = await KT.refreshEntry(r.card.id); } catch (e2) { c = KT.byId(r.card.id) || r.card; }
-          if (c && c.status === 'dup') {
-            UI.flash('疑似和《' + (KT.byId(c.dupOf) || {}).title + '》重复，去收件箱确认');
-            UI.go('inbox.html');
-            return;
-          }
-          if (c && c.status === 'ok') {
-            UI.flash('已收录并归到「' + KT.nodeName(c.nodeId) + '」');
-            UI.go('detail.html?id=' + encodeURIComponent(c.id));
-            return;
-          }
-          UI.flash('已收录，等你确认分类');
-          UI.go('inbox.html');
-        } catch (e) {
+          var result = selectedFile
+            ? await KT.importFile(selectedFile, { title: title })
+            : await KT.capture(body, { title: title, captureType: 'manual' });
+          await finishIngest(result);
+        } catch (error) {
+          busy = false;
           submit.disabled = false;
-          submit.textContent = '丢进去';
-          UI.toast(e.message);
+          submit.textContent = '重试';
+          setStatus(error.message || '收录失败');
+          UI.toast(error.message || '收录失败');
         }
       });
 
-      setTimeout(function () { text.focus(); }, 120);
+      setMode('text');
+      setTimeout(function () { titleInput.focus(); }, 120);
     })();
   </script>
 </body>

@@ -46,17 +46,19 @@
   /* ---------- 请求 ---------- */
   function req(path, opts) {
     opts = opts || {};
-    var headers = { 'Content-Type': 'application/json' };
+    var headers = {};
+    if (!opts.form) headers['Content-Type'] = 'application/json';
     var t = token();
     if (t) headers['x-session'] = t;
 
+    var timeoutMs = opts.timeoutMs || 15000;
     var ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
-    var timer = ctl ? setTimeout(function () { ctl.abort(); }, 15000) : null;
+    var timer = ctl ? setTimeout(function () { ctl.abort(); }, timeoutMs) : null;
 
     return fetch(apiBase() + path, {
       method: opts.method || 'GET',
       headers: headers,
-      body: opts.body ? JSON.stringify(opts.body) : undefined,
+      body: opts.form ? opts.form : opts.body ? JSON.stringify(opts.body) : undefined,
       signal: ctl ? ctl.signal : undefined
     }).then(function (r) {
       if (timer) clearTimeout(timer);
@@ -90,7 +92,9 @@
       return r.text();
     }, function (e) {
       if (timer) clearTimeout(timer);
-      if (e && e.name === 'AbortError') throw new Error('请求超时（15s），后端是否可达？');
+      if (e && e.name === 'AbortError') {
+        throw new Error('请求超时（' + Math.round(timeoutMs / 1000) + 's），后端是否可达？');
+      }
       throw new Error('连不上后端，请稍后重试');
     });
   }
@@ -316,30 +320,44 @@
   }
 
   /* ---------- 写入（async） ---------- */
+  function normalizeIngestResult(r) {
+    var e = r.entry || null;
+    if (e) upsert(e);
+    if (r.status === 'hash_duplicate' && e) {
+      cache.dups[e.id] = { dupOf: r.dup_of, sim: 1 };
+      saveDups();
+    } else if (e && (r.dup_suggestions || []).length) {
+      var top = r.dup_suggestions[0];
+      cache.dups[e.id] = { dupOf: top.entry_id, sim: top.similarity };
+      saveDups();
+    }
+    return {
+      dup: r.status === 'hash_duplicate',
+      card: e ? toCard(e) : null,
+      jobs: r.jobs || [],
+      message: r.message || '',
+      suggestions: r.dup_suggestions || []
+    };
+  }
+
   function capture(text, opts) {
     opts = opts || {};
     var body = { content: String(text || '').trim(), captureType: opts.captureType || 'manual' };
     if (opts.title) body.title = opts.title;
     if (opts.url) body.url = opts.url;
-    return req('/entries/ingest', { method: 'POST', body: body }).then(function (r) {
-      var e = r.entry || null;
-      if (e) upsert(e);
-      if (r.status === 'hash_duplicate' && e) {
-        cache.dups[e.id] = { dupOf: r.dup_of, sim: 1 };
-        saveDups();
-      } else if (e && (r.dup_suggestions || []).length) {
-        var top = r.dup_suggestions[0];
-        cache.dups[e.id] = { dupOf: top.entry_id, sim: top.similarity };
-        saveDups();
-      }
-      return {
-        dup: r.status === 'hash_duplicate',
-        card: e ? toCard(e) : null,
-        jobs: r.jobs || [],
-        message: r.message || '',
-        suggestions: r.dup_suggestions || []
-      };
-    });
+    return req('/entries/ingest', { method: 'POST', body: body }).then(normalizeIngestResult);
+  }
+
+  function importFile(file, opts) {
+    opts = opts || {};
+    var form = new FormData();
+    form.append('file', file, file.name);
+    if (opts.title) form.append('title', String(opts.title).trim());
+    return req('/entries/import', {
+      method: 'POST',
+      form: form,
+      timeoutMs: 120000
+    }).then(normalizeIngestResult);
   }
 
   /* 轮询 jobs 直到终态（或超时），用于「处理中 → 已归类/已互链」 */
@@ -522,7 +540,7 @@
     nodeCards: nodeCards, countInNode: countInNode, inbox: inbox,
     uncategorized: uncategorized, search: search, reviewQueue: reviewQueue,
     stats: stats,
-    capture: capture, pollJobs: pollJobs, assign: assign, mergeDup: mergeDup, keepDup: keepDup,
+    capture: capture, importFile: importFile, pollJobs: pollJobs, assign: assign, mergeDup: mergeDup, keepDup: keepDup,
     removeCard: removeCard,
     processAllInbox: processAllInbox, markSeen: markSeen,
     setSetting: setSetting, getSetting: getSetting,

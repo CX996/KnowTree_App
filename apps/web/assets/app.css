@@ -598,7 +598,67 @@ svg { display: block; }
   display: flex;
   flex-direction: column;
   max-height: 92dvh;
+  overflow-y: auto;
 }
+.capture-sheet--document { min-height: min(720px, 92dvh); }
+#title { min-height: 48px; resize: none; }
+.capture-mode {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 4px;
+  background: var(--surface2);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+.capture-mode__tab {
+  min-height: 44px;
+  border-radius: 10px;
+  color: var(--text3);
+  font-size: 14px;
+}
+.capture-mode__tab.is-active {
+  color: var(--text);
+  background: rgba(201, 169, 107, .14);
+  box-shadow: inset 0 0 0 1px rgba(201, 169, 107, .28);
+}
+.drop-zone {
+  min-height: 190px;
+  border: 1px dashed rgba(201, 169, 107, .38);
+  border-radius: 16px;
+  padding: 24px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+  background: rgba(201, 169, 107, .04);
+  transition: border-color .15s ease, background .15s ease;
+}
+.drop-zone.is-dragging {
+  border-color: var(--gold);
+  background: rgba(201, 169, 107, .11);
+}
+.drop-zone__icon { width: 30px; height: 30px; color: var(--gold); }
+.drop-zone__title { font-size: 16px; font-weight: 500; }
+.file-chip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--surface2);
+  border: 1px solid var(--line);
+}
+.file-chip > svg { color: var(--gold); flex: none; }
+.file-chip__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+}
+.capture-status { min-height: 21px; }
 .textarea {
   width: 100%;
   min-height: 150px;
