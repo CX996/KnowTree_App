@@ -6,6 +6,7 @@ import * as recallSvc from '../services/recalls';
 import * as jobSvc from '../services/jobs';
 import { getJob, listJobs } from '../lib/task';
 import { getSupabaseClient } from '../storage/database/supabase-client';
+import { scheduleBackgroundTask } from '../lib/background.js';
 import type { Request, Response } from 'express';
 
 // 包装异步 handler，统一错误处理
@@ -99,6 +100,9 @@ r.post('/entries/ingest', h(async (req, res) => {
     title: req.body.title,
     captureType: req.body.captureType,
   });
+  if ('jobs' in result && result.jobs.length > 0) {
+    scheduleBackgroundTask(() => jobSvc.runDueJobs(10));
+  }
   res.status(201).json(result);
 }));
 
@@ -157,11 +161,6 @@ r.get('/export', h(async (req, res) => {
 r.get('/jobs', h(async (req, res) => {
   const user = req.user!;
   res.json(await listJobs(user.id, { status: str(req.query.status) }));
-}));
-
-r.post('/jobs/run', h(async (_req, res) => {
-  const result = await jobSvc.runDueJobs(5);
-  res.json(result);
 }));
 
 r.get('/jobs/:id', h(async (req, res) => {
@@ -236,7 +235,6 @@ r.get('/entries/:id/links', h(async (req, res) => {
 // 触发归类
 r.post('/entries/:id/classify', h(async (req, res) => {
   const user = req.user!;
-  // 分类由后台任务/服务内部调用即可，无需前台透传 headers（避免携带过大 header 对象）
   res.json(await entrySvc.classifyEntry(user.id, pid(req)));
 }));
 

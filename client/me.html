@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="zh-CN">
-<script src="https://lf-cdn.coze.cn/obj/unpkg/coze-space/page-editor-general-web/0.1.0-alpha.274555/dist/umd/index.js"></script><script src="https://lf-cdn.coze.cn/obj/unpkg/coze-webapp/console-bridge/0.0.1-alpha.22488f/dist/index.js"></script><script src="https://lf-cdn.coze.cn/obj/unpkg/coze-webapp/history-bridge/0.0.1-alpha.10bbfe/dist/index.min.js"></script><head>
+<head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0A0A0B" />
@@ -67,7 +67,7 @@
       try {
         await KT.load();
       } catch (e) {
-        statsEl.innerHTML = '<div class="t3 s13">加载失败 · <a href="login.html" style="color:var(--gold)">去登录 / 配置后端</a></div>';
+        statsEl.innerHTML = '<div class="t3 s13">加载失败 · <a href="login.html" style="color:var(--gold)">去登录</a></div>';
         return;
       }
 

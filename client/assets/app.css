@@ -46,6 +46,7 @@ svg { display: block; }
 .page--tab { padding-bottom: calc(96px + var(--sab)); }
 .page--bar { padding-bottom: calc(96px + var(--sab)); }
 .page--tabcta { padding-bottom: calc(168px + var(--sab)); }
+.page--auth { padding-top: 32px; }
 
 .topbar {
   display: flex;

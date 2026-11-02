@@ -4,7 +4,7 @@ import { generateDailyRecall } from './recalls';
 import type { Job } from '../types';
 
 /** 任务分发：按 job_type 执行对应业务逻辑 */
-export async function processJob(job: Job, forwardHeaders?: Record<string, string>): Promise<void> {
+export async function processJob(job: Job): Promise<void> {
   const userId = job.user_id;
   if (!userId) throw new Error('任务缺少用户上下文');
 
@@ -17,7 +17,7 @@ export async function processJob(job: Job, forwardHeaders?: Record<string, strin
     }
     case 'classify': {
       const payload = job.payload as { entry_id: string };
-      const entry = await classifyEntry(userId, payload.entry_id, forwardHeaders);
+      const entry = await classifyEntry(userId, payload.entry_id);
       await completeJob(job.id, {
         entry_id: payload.entry_id,
         classification_status: entry.classification_status,
@@ -49,12 +49,12 @@ export async function processJob(job: Job, forwardHeaders?: Record<string, strin
 }
 
 /** 消费一次到期任务（供定时器与手动触发调用） */
-export async function runDueJobs(limit = 5, forwardHeaders?: Record<string, string>): Promise<{ claimed: number; processed: number }> {
+export async function runDueJobs(limit = 5): Promise<{ claimed: number; processed: number }> {
   const jobs = await claimDueJobs(limit);
   let processed = 0;
   for (const job of jobs) {
     try {
-      await processJob(job, forwardHeaders);
+      await processJob(job);
       processed++;
     } catch (e) {
       await failJob(job, e);

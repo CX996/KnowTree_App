@@ -4,10 +4,10 @@ import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const pkg = require('./package.json');
 const dependencies = pkg.dependencies || {};
-const externalList = Object.keys(dependencies).filter(dep => dep !== 'dayjs');
+const externalList = Object.keys(dependencies);
 try {
   await esbuild.build({
-    entryPoints: ['src/index.ts'],
+    entryPoints: ['src/app.ts', 'src/local.ts', 'src/worker.ts'],
     bundle: true,
     platform: 'node',
     format: 'esm',

@@ -1,0 +1,841 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>知树 KnowTree · 产品方案 v0.4</title>
+<style>
+  :root{
+    --bg:#0d0f12;
+    --surface:#14171c;
+    --surface-2:#171b21;
+    --ink:#eef1f4;
+    --ink-strong:#ffffff;
+    --muted:#99a0aa;
+    --faint:#6b727d;
+    --hair:#24282f;
+    --accent:#c9a25e;
+    --accent-soft:rgba(201,162,94,.12);
+    --warn:#d98a5f;
+    --ok:#7fb08a;
+    --radius:16px;
+    --shadow:0 18px 44px rgba(0,0,0,.42);
+    --font:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);
+    font-family:var(--font);line-height:1.78;-webkit-font-smoothing:antialiased;
+    letter-spacing:.1px;
+  }
+  ::selection{background:var(--accent-soft);color:var(--ink-strong)}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 26px}
+
+  /* 顶部导航 */
+  .nav{position:sticky;top:0;z-index:20;background:rgba(13,15,18,.82);backdrop-filter:blur(14px);
+    border-bottom:1px solid rgba(36,40,47,.7)}
+  .nav .wrap{display:flex;align-items:center;gap:24px;min-height:64px;flex-wrap:wrap}
+  .nav .brand{font-size:15px;font-weight:600;letter-spacing:.6px;color:var(--ink-strong)}
+  .nav .brand b{color:var(--accent);font-weight:600}
+  .nav .toc{display:flex;gap:20px;font-size:13px}
+  .nav .toc a{color:var(--muted);position:relative;padding:4px 0;transition:color .25s;white-space:nowrap}
+  .nav .toc a::after{
+    content:"";position:absolute;left:0;right:100%;bottom:-2px;height:1.5px;background:var(--accent);
+    transition:right .35s cubic-bezier(.22,.61,.36,1);
+  }
+  .nav .toc a:hover{color:var(--ink-strong);text-decoration:none}
+  .nav .toc a:hover::after{right:0}
+
+  header.hero{padding:80px 0 26px}
+  .eyebrow{
+    display:inline-block;font-size:12px;letter-spacing:1.5px;color:var(--accent);
+    text-transform:uppercase;margin-bottom:20px;font-weight:500;
+  }
+  h1{font-size:clamp(32px,5.4vw,50px);line-height:1.12;margin:0 0 18px;font-weight:500;letter-spacing:1px;color:var(--ink-strong)}
+  .sub{font-size:16.5px;color:var(--muted);max-width:46em;font-weight:300}
+  .sub strong{color:var(--ink);font-weight:500}
+  .pillline{margin:28px 0 8px;display:flex;gap:10px;flex-wrap:wrap}
+  .pill{font-size:12px;letter-spacing:.3px;color:var(--muted);padding:7px 15px;border-radius:999px;
+    border:1px solid var(--hair);background:var(--surface);transition:border-color .3s,color .3s}
+  .pill:hover{border-color:var(--accent);color:var(--ink-strong)}
+
+  .tagline{
+    margin:38px 0 8px;padding:26px 30px;border-radius:var(--radius);
+    background:linear-gradient(135deg,rgba(201,162,94,.07),rgba(201,162,94,.02) 55%);
+    border:1px solid var(--hair);font-size:17px;color:var(--ink);letter-spacing:.2px;
+  }
+  .tagline b{color:var(--accent);font-weight:600}
+
+  section{margin:70px 0;scroll-margin-top:80px}
+  h2{font-size:clamp(21px,3.2vw,27px);margin:0 0 8px;display:flex;align-items:baseline;gap:16px;font-weight:500;color:var(--ink-strong)}
+  h2 .no{
+    font-size:14px;font-weight:600;color:var(--accent);letter-spacing:1px;flex:none;min-width:34px;
+  }
+  .sec-intro{color:var(--muted);margin:0 0 28px;max-width:52em;font-weight:300}
+  .sec-intro b{color:var(--ink);font-weight:500}
+
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(228px,1fr));gap:14px}
+  .card{background:var(--surface);border:1px solid var(--hair);border-radius:var(--radius);padding:22px 22px 20px;
+    transition:transform .45s cubic-bezier(.22,.61,.36,1),border-color .35s,background .35s}
+  .card:hover{transform:translateY(-3px);border-color:rgba(201,162,94,.4);background:var(--surface-2)}
+  .card h3{margin:0 0 10px;font-size:15.5px;font-weight:500;color:var(--ink-strong);display:flex;align-items:center;gap:10px}
+  .card .em{font-size:20px;line-height:1;opacity:.9;margin-bottom:10px}
+  .card p{margin:0;color:var(--muted);font-size:13.5px;line-height:1.7}
+
+  /* 评审结论 */
+  .verdicts{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+  .verdict{background:var(--surface);border:1px solid var(--hair);border-radius:var(--radius);padding:22px;
+    display:flex;flex-direction:column;gap:8px;transition:border-color .35s,transform .45s cubic-bezier(.22,.61,.36,1)}
+  .verdict:hover{transform:translateY(-3px);border-color:rgba(201,162,94,.4)}
+  .verdict .head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .verdict h3{margin:0;font-size:15px;font-weight:500;color:var(--ink-strong);line-height:1.5}
+  .verdict p{margin:0;color:var(--muted);font-size:13.5px;line-height:1.72}
+  .verdict p b{color:var(--ink);font-weight:500}
+  .sev{flex:none;font-size:11px;letter-spacing:.5px;padding:3px 9px;border-radius:999px;border:1px solid;font-weight:500}
+  .sev.high{color:#e2a07a;border-color:rgba(226,160,122,.4);background:rgba(226,160,122,.1)}
+  .sev.mid{color:var(--accent);border-color:rgba(201,162,94,.4);background:var(--accent-soft)}
+  .sev.low{color:var(--muted);border-color:var(--hair);background:var(--surface-2)}
+
+  /* 优先级 */
+  .pri{display:inline-block;font-size:10.5px;font-weight:600;letter-spacing:.6px;padding:2px 7px;border-radius:5px;margin-right:6px;vertical-align:1px}
+  .pri.p0{color:#0d0f12;background:var(--accent)}
+  .pri.p1{color:var(--muted);background:transparent;border:1px solid var(--hair)}
+
+  /* 表格 */
+  .tablewrap{overflow-x:auto;border-radius:12px}
+  table{width:100%;border-collapse:collapse;font-size:13px;background:var(--surface);border-radius:12px;overflow:hidden;border:1px solid var(--hair)}
+  th,td{text-align:left;padding:13px 16px;border-bottom:1px solid var(--hair);vertical-align:top}
+  th{background:rgba(255,255,255,.03);font-size:11.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);font-weight:600;white-space:nowrap}
+  td{color:var(--muted);line-height:1.65}
+  td:first-child{color:var(--ink)}
+  td code,li code,p code{background:var(--surface-2);padding:1px 7px;border-radius:5px;font-size:11.5px;color:var(--accent)}
+  tr:last-child td{border-bottom:none}
+  table.tight td,table.tight th{padding:11px 14px;font-size:12.5px}
+  table.rules{min-width:760px}
+  table.model{min-width:700px}
+  table.metrics{min-width:640px}
+  .nowrap{white-space:nowrap}
+
+  /* 步骤 */
+  .steps{position:relative;margin:10px 0}
+  .step{display:flex;gap:20px;padding:0 0 28px;position:relative;opacity:0;transform:translateY(14px);
+    transition:opacity .7s ease,transform .7s cubic-bezier(.22,.61,.36,1)}
+  .step.in{opacity:1;transform:none}
+  .step:not(:last-child)::before{content:"";position:absolute;left:22px;top:52px;bottom:2px;width:1px;
+    background:linear-gradient(var(--hair),transparent)}
+  .step .dot{
+    width:44px;height:44px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;
+    font-weight:500;font-size:14px;color:var(--accent);background:var(--surface);border:1px solid var(--hair);
+  }
+  .step h4{margin:2px 0 6px;font-size:15px;font-weight:500;color:var(--ink-strong)}
+  .step p{margin:0;color:var(--muted);font-size:13.5px;max-width:56em;line-height:1.7}
+  .step .fail{margin-top:6px;font-size:12.5px;color:var(--faint)}
+  .step .fail b{color:var(--warn);font-weight:500}
+
+  /* 技术栈 */
+  .stack{display:grid;grid-template-columns:repeat(auto-fit,minmax(228px,1fr));gap:14px}
+  .stack .tier{font-size:11.5px;font-weight:600;letter-spacing:1px;margin-bottom:10px;text-transform:uppercase;color:var(--accent)}
+  .stack ul{margin:0;padding:0;list-style:none}
+  .stack li{margin:6px 0;color:var(--muted);font-size:13px;padding-left:16px;position:relative;line-height:1.65}
+  .stack li::before{content:"";position:absolute;left:2px;top:9px;width:5px;height:5px;border-radius:50%;background:var(--accent);opacity:.6}
+  .stack li b{color:var(--ink);font-weight:500}
+
+  .reviewblock{display:grid;grid-template-columns:repeat(auto-fit,minmax(228px,1fr));gap:14px}
+  .review{background:var(--surface);border:1px solid var(--hair);border-radius:var(--radius);padding:22px;
+    transition:transform .45s cubic-bezier(.22,.61,.36,1),border-color .35s}
+  .review:hover{transform:translateY(-3px);border-color:rgba(201,162,94,.4)}
+  .review .ico{font-size:22px;opacity:.9}
+  .review h3{margin:10px 0 6px;font-size:15px;font-weight:500;color:var(--ink-strong)}
+  .review .level{font-size:11.5px;color:var(--accent);letter-spacing:.5px;margin-bottom:8px;font-weight:500}
+  .review p{margin:0;color:var(--muted);font-size:13px;line-height:1.7}
+
+  .route{background:var(--surface);border:1px solid var(--hair);border-radius:var(--radius);padding:4px 0}
+  .route .m{display:flex;gap:18px;padding:20px 24px;border-bottom:1px solid var(--hair);align-items:flex-start}
+  .route .m:last-child{border-bottom:none}
+  .route .m .badge{flex:none;font-size:11.5px;font-weight:600;letter-spacing:1px;color:var(--accent);border:1px solid rgba(201,162,94,.35);padding:5px 11px;border-radius:7px}
+  .route h4{margin:0 0 4px;font-size:14.5px;font-weight:500;color:var(--ink-strong)}
+  .route p{margin:0;color:var(--muted);font-size:13px;line-height:1.7}
+  .route p+p{margin-top:6px}
+  .route code{background:var(--surface-2);padding:1px 6px;border-radius:5px;font-size:12px;color:var(--accent)}
+  .route .exit{color:var(--ink);font-size:12.5px}
+
+  .shots{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:26px}
+  figure{margin:0}
+  figure img{width:100%;border-radius:var(--radius);border:1px solid var(--hair);box-shadow:var(--shadow);display:block}
+  figcaption{margin-top:12px;font-size:13px;color:var(--muted);line-height:1.7}
+  figcaption b{color:var(--ink-strong);font-weight:500}
+
+  .qa{border-left:1px solid rgba(201,162,94,.45);padding:2px 0 2px 20px;margin:22px 0}
+  .qa h4{margin:0 0 5px;font-size:14.5px;font-weight:500;color:var(--ink-strong)}
+  .qa p{margin:0;color:var(--muted);font-size:13.5px;line-height:1.7}
+  .qa p+p{margin-top:6px}
+  .qa .rec{color:var(--ink)}
+  .qa .rec b{color:var(--accent);font-weight:600}
+
+  .blueprint{background:linear-gradient(135deg,rgba(201,162,94,.06),transparent 60%);
+    border:1px solid var(--hair);border-radius:var(--radius);padding:28px 30px;margin-top:28px}
+  .blueprint h3{margin:0 0 14px;font-size:15.5px;font-weight:500;color:var(--ink-strong)}
+  .blueprint p{margin:0 0 8px;color:var(--muted);font-size:14px;line-height:1.7}
+  .blueprint p:last-child{margin-bottom:0}
+  .blueprint b{color:var(--ink)}
+
+  ul.plain{margin:0;padding-left:18px;color:var(--muted);font-size:13.5px;line-height:1.8}
+  ul.plain li{margin:4px 0}
+  ul.plain b{color:var(--ink);font-weight:500}
+
+  .check{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+  .check li{background:var(--surface);border:1px solid var(--hair);border-radius:10px;padding:13px 16px 13px 44px;
+    position:relative;color:var(--muted);font-size:13.5px;line-height:1.7}
+  .check li::before{content:"";position:absolute;left:16px;top:17px;width:13px;height:13px;border:1px solid rgba(201,162,94,.55);border-radius:3px}
+  .check li b{color:var(--ink);font-weight:500}
+
+  footer{border-top:1px solid var(--hair);margin-top:80px;padding:32px 0 64px;color:var(--faint);font-size:12.5px;letter-spacing:.2px;line-height:1.9}
+  footer b{color:var(--muted);font-weight:500}
+
+  /* 滚动渐显 */
+  .reveal{opacity:0;transform:translateY(18px);transition:opacity .8s ease,transform .8s cubic-bezier(.22,.61,.36,1)}
+  .reveal.in{opacity:1;transform:none}
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none!important;animation:none!important}
+    .reveal,.step{opacity:1!important;transform:none!important}
+    html{scroll-behavior:auto}
+  }
+  @media (max-width:640px){
+    .nav .wrap{min-height:auto;padding:12px 16px;gap:10px}
+    .nav .toc{gap:14px;order:3;width:100%;overflow-x:auto;padding-bottom:4px}
+    .route .m{flex-direction:column;gap:10px}
+    header.hero{padding:52px 0 18px}
+    .tagline{padding:22px 22px}
+    section{margin:52px 0}
+    td,th{padding:11px 12px}
+  }
+
+  @media print{
+    :root{--bg:#fff;--surface:#fff;--surface-2:#f4f4f4;--ink:#111;--ink-strong:#000;
+      --muted:#333;--faint:#555;--hair:#d8d8d8;--accent:#7a5c22;--shadow:none;--warn:#8a4a28}
+    .nav{display:none}
+    .reveal,.step{opacity:1!important;transform:none!important}
+    body{font-size:11pt;line-height:1.65}
+    .wrap{max-width:none;padding:0 8mm}
+    section{margin:26px 0}
+    .card,.review,.verdict,.route,.blueprint,table,figure,.check li{page-break-inside:avoid}
+    h2{page-break-after:avoid}
+    a{color:#111;text-decoration:underline}
+    .pill,.sev,.pri{border:1px solid #999}
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="wrap">
+    <span class="brand">知树 <b>KnowTree</b></span>
+    <span class="toc">
+      <a href="#verdict">评审结论</a>
+      <a href="#position">定位</a>
+      <a href="#hypo">假设</a>
+      <a href="#scope">范围</a>
+      <a href="#rules">规则</a>
+      <a href="#flow">旅程</a>
+      <a href="#data">数据</a>
+      <a href="#metrics">指标</a>
+      <a href="#route">路线</a>
+      <a href="#decisions">决策</a>
+    </span>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="eyebrow">产品方案 · v0.4 评审修订稿</span>
+    <h1>知树 KnowTree</h1>
+    <p class="sub">一个<strong>长期、简约</strong>的个人知识储备软件 —— 把总结「丢」进去，它自动归类、挂上知识树、去重合并、建立互链、生成卡片，并在你需要时把旧知识送回眼前。
+    <br>只做核心闭环，<strong>不加法</strong>。</p>
+    <div class="pillline">
+      <span class="pill">移动端 App</span>
+      <span class="pill">个人云端 · 多端同步</span>
+      <span class="pill">AI 归类 · 去重 · 互链</span>
+      <span class="pill">P0 范围已冻结</span>
+    </div>
+
+    <div class="tagline" id="concept">
+      <b>一句话定位：</b>「知识随手丢，树自会长大。」你负责记录，它负责把零散知识整理成结构清晰、彼此互联的个人知识树，并用卡片与回溯让你真的把知识留下来。
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section id="verdict" class="reveal">
+    <h2><span class="no">00</span>评审结论：这轮改了什么</h2>
+    <p class="sec-intro">方向我认同，<b>「零分类记录 + 自动结构化」是真实痛点，值得做</b>。但 v0.3 是一份好的概念稿，还不是一份能直接开发、能验收的方案：范围偏满、规则缺失、没有量化标准。以下五条是主要判断，本轮已据此改写全文。</p>
+    <div class="verdicts">
+      <div class="verdict">
+        <div class="head"><h3>定位成立，但用户还太宽</h3><span class="sev high">高</span></div>
+        <p>「个人知识储备」无法指导取舍：学生、工程师、内容创作者、收藏党要的东西完全不同。已补首发人群、高频场景、<b>明确不服务的人</b>，以及和现有做法的差异。</p>
+      </div>
+      <div class="verdict">
+        <div class="head"><h3>最大风险是「纠错成本」，不是 AI 不够强</h3><span class="sev high">高</span></div>
+        <p>自动归类一旦出错，用户要花比手动分类更多的时间去改。v0.3 只写了「没有就自动新建节点」，没有防节点泛滥的门槛，也没有误合并的恢复路径。<b>这是会直接杀死产品的点</b>，已补规则与兜底。</p>
+      </div>
+      <div class="verdict">
+        <div class="head"><h3>冷启动没解</h3><span class="sev high">高</span></div>
+        <p>新用户是一棵空树，前 20 条恰恰是体验最差的时候：无可匹配节点、互链稀疏、推荐无内容。已补导入引导、可选骨架、推荐降级策略。</p>
+      </div>
+      <div class="verdict">
+        <div class="head"><h3>「绝对不加法」和清单自相矛盾</h3><span class="sev mid">中</span></div>
+        <p>六项核心 + 四项可玩，实际接近 10 项，MVP 会失焦。已按 P0 / P1 重排，把吉祥物、深度推荐、图片卡片移出关键路径。</p>
+      </div>
+      <div class="verdict">
+        <div class="head"><h3>没有可验收的标准</h3><span class="sev mid">中</span></div>
+        <p>「自动」「秒级」「更准」都无法测试，研发和测试只能各自发明标准。已补关键规则、条目状态、指标定义和 M1 验收清单。</p>
+      </div>
+    </div>
+    <div class="blueprint">
+      <h3>◈ 本轮改动范围</h3>
+      <p>· <b>新增</b>：目标用户与差异、价值假设与验证方案、关键规则表、条目状态与失败兜底、指标与验收、风险与对策。</p>
+      <p>· <b>修正</b>：数据模型字段错位（<code>tags</code> / <code>entry_tags</code> 混行），补状态、哈希、软删除、任务队列、版本表与 RLS。</p>
+      <p>· <b>调整</b>：范围分 P0/P1；底部 Tab 由 4 个收敛为 3 个；深度推荐降级为 P1 并给规则兜底。</p>
+      <p>· <b>保留</b>：产品定位、技术栈选型、视觉方向、v0.3 已确认的决策全部不变。</p>
+      <p style="color:var(--faint);font-size:12.5px;margin-top:12px">说明：文中标注「建议」的阈值（如置信度、相似度、留存线）是我给的初始值，需在 M0 用真实数据校准后写回，不作为已确认承诺。</p>
+    </div>
+  </section>
+
+  <section id="position" class="reveal">
+    <h2><span class="no">01</span>定位与目标用户</h2>
+    <p class="sec-intro">先把「给谁、在什么时刻用、替代了什么」说清楚，后面的功能取舍才有依据。</p>
+
+    <div class="cards">
+      <div class="card">
+        <div class="em">🎯</div>
+        <h3>首发人群</h3>
+        <p>每周至少产出 3 篇学习/研究总结，且资料已经散落在 2 个以上工具里的人：研究生、工程师、转行学习者。</p>
+      </div>
+      <div class="card">
+        <div class="em">⏱</div>
+        <h3>高频场景</h3>
+        <p>学完一个知识点 → 写总结 → 丢进 App → 一周后被回溯卡片送回眼前 → 需要时检索复用。</p>
+      </div>
+      <div class="card">
+        <div class="em">🚫</div>
+        <h3>暂不服务</h3>
+        <p>团队共享知识库、内容创作者发布、纯收藏不复盘的人。这些需求会把产品推向协作与编辑器，直接背离闭环。</p>
+      </div>
+    </div>
+
+    <h3 style="margin:34px 0 12px;font-size:15.5px;font-weight:500;color:var(--ink-strong)">它替代了什么</h3>
+    <div class="tablewrap">
+      <table class="tight">
+        <thead><tr><th>现有做法</th><th>能解决</th><th>缺口</th></tr></thead>
+        <tbody>
+          <tr><td>手动分类笔记（文件夹 / 标签）</td><td>记录稳定、可检索</td><td>每次记录都要先决定「放哪」；长期分类会失控；不自动去重、不建立关系</td></tr>
+          <tr><td>稍后读 / 剪藏工具</td><td>收集快</td><td>只收不用；没有结构；内容越多越不敢打开</td></tr>
+          <tr><td>通用 AI 对话</td><td>即时答疑</td><td>对话不沉淀为可检索资产，下次还得重新问</td></tr>
+          <tr><td>文件夹 + 全文搜索</td><td>找得到</td><td>依赖记得关键词；知识之间没有关系</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="blueprint">
+      <h3>◈ 差异化就三条，其余都是支撑</h3>
+      <p>· <b>把分类从用户身上移走</b> —— 记录时零决策，归类是系统的事，且用户随时能改、系统会记住。</p>
+      <p>· <b>把结构化变成自动结果</b> —— 去重、互链、挂树不是用户维护出来的，是收录时自动产生的。</p>
+      <p>· <b>用回溯保证二次使用</b> —— 不做「收藏即学会」的假闭环，旧知识必须被重新送回眼前。</p>
+    </div>
+  </section>
+
+  <section id="hypo" class="reveal">
+    <h2><span class="no">02</span>价值假设与验证</h2>
+    <p class="sec-intro">这个产品赌的是三件事。M0 不是为了「跑通链路」，而是为了<b>验证这三条假设是否成立</b>；任何一条不成立，方案要改，而不是硬做。</p>
+    <div class="tablewrap">
+      <table class="rules">
+        <thead><tr><th>假设</th><th>为什么关键</th><th>M0 怎么验</th><th>达标线（建议）</th><th>不达标怎么办</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><b>H1 用户愿意「不分类直接丢」</b></td>
+            <td>这是整个产品的前提。若用户仍要先想分类，产品就没有存在理由</td>
+            <td>Web 原型 + 10 位目标用户，7 天真实使用</td>
+            <td>人均收录 ≥15 条；≥60% 的条目未手动改分类</td>
+            <td>退化为「半自动」：AI 给 3 个候选节点，用户一键选，仍不要求手写分类</td>
+          </tr>
+          <tr>
+            <td><b>H2 自动归类与去重足够可信</b></td>
+            <td>一次误合并就可能让用户不敢再丢东西进来</td>
+            <td>200 条真实总结离线盲测，人工标注对照</td>
+            <td>归类 Top1 命中 ≥70%（含可接受的父节点）；误合并率 ≤2%；100% 可撤销</td>
+            <td>收紧自动挂载阈值，低置信全部进「待确认」；去重只提示不合并</td>
+          </tr>
+          <tr>
+            <td><b>H3 回溯能带来二次使用</b></td>
+            <td>没有二次使用，产品就只是个更聪明的收藏夹</td>
+            <td>4 周内测，统计回溯卡片打开与反馈</td>
+            <td>打开率 ≥35%；「记得/忘了」反馈率 ≥20%</td>
+            <td>改推送时机与卡片形态（图文/一问一答），不改核心链路</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="qa">
+      <h4>M0 的产出不是「能点」，是「有数」</h4>
+      <p>M0 必须产出三份东西：<b>准确率报告</b>（归类/去重/互链各多少）、<b>阈值表</b>（写回本文档第 04 节）、<b>10 人使用记录</b>（收录量、纠偏率、放弃原因）。没有这三份，不进 M1。</p>
+    </div>
+  </section>
+
+  <section id="scope" class="reveal">
+    <h2><span class="no">03</span>首发范围 · P0 / P1</h2>
+    <p class="sec-intro">「不加法」的正确含义不是功能少，而是<b>关键路径上只有一件事：让「丢 → 结构化 → 被送回」跑顺</b>。以下按是否影响这条路径分层。</p>
+    <div class="tablewrap">
+      <table class="rules">
+        <thead><tr><th>能力</th><th>优先级</th><th>首发做到什么程度</th><th>后置 / 不做</th></tr></thead>
+        <tbody>
+          <tr><td>文本 / Markdown / PDF / Word 收录</td><td><span class="pri p0">P0</span></td><td>粘贴、导入、批量丢；一丢即收，无需填字段</td><td>网页剪藏、邮件导入、微信转发（P1 后）</td></tr>
+          <tr><td>AI 归类收编</td><td><span class="pri p0">P0</span></td><td>自动标题/摘要/标签/候选节点，低置信进「待确认」，支持拖拽纠偏</td><td>长文改写、自动扩写、多语言互译</td></tr>
+          <tr><td>去重与合并</td><td><span class="pri p0">P0</span></td><td>精确哈希 + 语义相似度提示；软合并、可一键拆分</td><td>全自动静默合并（不做）</td></tr>
+          <tr><td>知识互链</td><td><span class="pri p0">P0</span></td><td>每条自动建 1–3 条高置信链接，可撤销且不再重建</td><td>知识图谱全景视图（P1）</td></tr>
+          <tr><td>知识树 + 卡片</td><td><span class="pri p0">P0</span></td><td>树可视化 + 节点生长；卡片用模板（标题/摘要/标签）</td><td>AI 插画卡片（P1，异步补）</td></tr>
+          <tr><td>检索</td><td><span class="pri p0">P0</span></td><td>关键词 + 语义双通道，覆盖标题/摘要/正文/标签</td><td>高级筛选器、布尔检索（不做）</td></tr>
+          <tr><td>每日回溯</td><td><span class="pri p0">P0</span></td><td>每日 1–3 张，简单权重 + 记得/忘了反馈</td><td>自定义复习计划、间隔重复曲线（P1）</td></tr>
+          <tr><td>数据主权</td><td><span class="pri p0">P0</span></td><td>导出 MD/JSON、注销彻底删除、不用于训练声明</td><td>端到端加密（M2）</td></tr>
+          <tr><td>离线草稿</td><td><span class="pri p0">P0</span></td><td>断网可写，联网自动同步，不重复入库</td><td>离线阅读全库（P1）</td></tr>
+          <tr><td>图片收录 / OCR</td><td><span class="pri p1">P1</span></td><td>先做 OCR 转文字；图片作为卡片后置</td><td>拍照即卡片、手写识别（不做）</td></tr>
+          <tr><td>深度推荐</td><td><span class="pri p1">P1</span></td><td>首发用规则版兜底：同标签 + 最近浏览 + 被链次数</td><td>LLM 主题推荐（数据 &lt;50 条时质量不可用）</td></tr>
+          <tr><td>卡片收藏夹</td><td><span class="pri p1">P1</span></td><td>首发作为「知识库」的筛选视图，不单独做 Tab</td><td>收藏册/集邮式展示（P1）</td></tr>
+          <tr><td>吉祥物养成</td><td><span class="pri p1">P1</span></td><td>首发只保留静态形象与成长值，不做装扮系统</td><td>表情/装扮解锁（P1，美术成本高）</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="blueprint">
+      <h3>◈ 明确「不做」什么（首发排除）</h3>
+      <p>社交与分享广场、多人协作与共享空间、复杂富文本编辑器、插件/开放 API、多父节点归类、自动摘要长文、独立 Web 正式版。</p>
+      <p style="color:var(--faint);font-size:13px">判断标准只有一句：<b>它是否让「丢 → 结构化 → 被送回」更快发生</b>。不能，就不做。</p>
+    </div>
+    <div class="qa">
+      <h4>冷启动兜底：前 20 条怎么不难用</h4>
+      <p>① 首次进入给「从现有笔记导入」入口，支持粘贴多段或批量文件，让树在第一天就有内容。</p>
+      <p>② 提供可选主题骨架（如「机器人 / 算法 / 论文」），可一键采用，也可从零开始；不强制。</p>
+      <p>③ 条目不足 10 条时隐藏互链与推荐模块，只展示树与卡片，避免满屏「暂无内容」。</p>
+      <p>④ 条目不足 3 条时不推送回溯卡片，改为收录引导（对应第 06 节第 7 步的兜底）。</p>
+    </div>
+  </section>
+
+  <section id="rules" class="reveal">
+    <h2><span class="no">04</span>关键规则：能开发，也能测试</h2>
+    <p class="sec-intro">这一节是 v0.3 最大的缺口。每个环节都写清<b>触发条件、判定规则、失败时怎么办、用户能否恢复</b>；标「建议」的数值待 M0 校准。</p>
+    <div class="tablewrap">
+      <table class="rules">
+        <thead><tr><th>环节</th><th>规则</th><th>失败 / 异常</th><th>用户可恢复动作</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><b>收录</b></td>
+            <td>文本 ≤5 万字直接收；超长截断展示并保留原文件。同一文件哈希 / 同一 URL 命中已有条目时提示「已收录过」，默认不新增。</td>
+            <td>超大文件、加密 PDF、扫描件无文本层</td>
+            <td>保留原文件可下载；可手动粘贴正文</td>
+          </tr>
+          <tr>
+            <td><b>解析</b></td>
+            <td>PDF/Word/Markdown 后端解析抽正文；图片走 OCR（P1）。解析结果与原文件一起入库。</td>
+            <td>解析失败重试 3 次（退避），仍失败标「解析失败」并保留原文件</td>
+            <td>手动重试、手动补正文、删除重传</td>
+          </tr>
+          <tr>
+            <td><b>AI 归类</b></td>
+            <td>输出标题、一句话摘要、标签、候选节点 Top3 + 置信度。置信 ≥0.75 且节点存在 → 自动挂载；0.50–0.75 → 挂载但标「待确认」；&lt;0.50 → 进「未分类」收件箱，<b>不自动新建节点</b>。</td>
+            <td>模型超时 / 限流 / 返回结构不合法</td>
+            <td>条目仍入「未分类」，后台重试；用户可手动挂树</td>
+          </tr>
+          <tr>
+            <td><b>新建节点</b></td>
+            <td>同一父节点下已有 ≥3 条同主题内容且无匹配节点时，才「建议新建」；新建需用户确认（支持批量）；层级 ≤3 级；单用户节点数 &gt;200 时提示合并。</td>
+            <td>AI 反复建议碎节点</td>
+            <td>一键合并节点、批量重挂、节点改名</td>
+          </tr>
+          <tr>
+            <td><b>去重合并</b></td>
+            <td>第一道：内容哈希完全相同 → 直接提示重复。第二道：同节点内向量相似度 ≥0.90 → 强提示合并；0.80–0.90 → 弱提示「可能相关」。<b>默认只提示，不自动合并</b>；合并为软合并，原文与互链保留。</td>
+            <td>误判（两篇不同但相似）；合并后想找回</td>
+            <td>一键拆分，恢复原文、标签、互链；30 天内可撤销</td>
+          </tr>
+          <tr>
+            <td><b>知识互链</b></td>
+            <td>每条自动建 1–3 条最高分链接，分数 &lt;0.70 不建；同节点内不建链（树已表达层级）；单条自动链上限 5 条，超出需手动添加。</td>
+            <td>链太多变成噪音；撤销后被反复重建</td>
+            <td>单条撤销并记录负反馈，同类链接不再自动重建</td>
+          </tr>
+          <tr>
+            <td><b>卡片</b></td>
+            <td>入树即生成卡片（标题 / 摘要 / 标签 / 来源）。首版用模板与纯色纹理，不依赖文生图，保证 8 秒内可见。</td>
+            <td>摘要为空、标题过长</td>
+            <td>手动编辑标题/摘要；重新生成摘要</td>
+          </tr>
+          <tr>
+            <td><b>检索</b></td>
+            <td>关键词走全文索引，语义走向量；结果按 相关度 × 新鲜度 排序；覆盖标题、摘要、正文、标签（OCR 文本在 P1 接入后纳入）。</td>
+            <td>空结果、中文分词差、OCR 噪声</td>
+            <td>自动降级为语义检索；展示「相关节点」而非空页</td>
+          </tr>
+          <tr>
+            <td><b>回溯</b></td>
+            <td>每日 1–3 张；权重 = 久未查看天数 × 重要度（收藏、被链次数）；排除 7 天内已看；「记得/忘了」调整下次间隔。</td>
+            <td>推送打扰、旧知识过多</td>
+            <td>可关推送、可调时间；连续忽略自动降频</td>
+          </tr>
+          <tr>
+            <td><b>同步与冲突</b></td>
+            <td>条目级后写覆盖，保留最近 10 个历史版本；节点重命名冲突以最新为准并提示。</td>
+            <td>离线草稿重复上传；两设备同时编辑</td>
+            <td>查看历史版本、一键回滚</td>
+          </tr>
+          <tr>
+            <td><b>删除与导出</b></td>
+            <td>删除进回收站 30 天；注销需二次确认 + 7 天冷静期，到期彻底删除数据与文件。导出 MD（含 front-matter）与 JSON（全表）。</td>
+            <td>导出缺字段、附件丢失</td>
+            <td>导出前校验条目数与附件数，不一致则阻断并提示</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="state" class="reveal">
+    <h2><span class="no">05</span>条目状态与失败兜底</h2>
+    <p class="sec-intro">一条知识从「丢进来」到「被删掉」会经过 7 个状态。状态不写清，就会出现「转圈很久不知道成没成」和「失败后内容丢了」这两类致命体验。</p>
+    <div class="tablewrap">
+      <table class="tight">
+        <thead><tr><th>状态</th><th>进入条件</th><th>用户看到什么</th><th>可执行动作</th></tr></thead>
+        <tbody>
+          <tr><td><b>草稿</b></td><td>本地输入，未上传</td><td>列表顶部「待同步」标识</td><td>编辑、删除、立即同步</td></tr>
+          <tr><td><b>解析中</b></td><td>已上传，正文抽取中</td><td>卡片骨架 + 进度，不阻塞继续收录</td><td>取消、查看原文件</td></tr>
+          <tr><td><b>待确认</b></td><td>归类置信 0.5–0.75，或命中疑似重复</td><td>「待确认」角标 + 建议节点/重复项</td><td>确认、改节点、合并、保留为独立条目</td></tr>
+          <tr><td><b>已入树</b></td><td>归类完成并挂载</td><td>卡片 + 所属节点 + 互链</td><td>改节点/标签、编辑、收藏、删除</td></tr>
+          <tr><td><b>已合并</b></td><td>用户确认合并</td><td>主条目下显示「已合并 N 条」，可展开</td><td>拆分、查看原文</td></tr>
+          <tr><td><b>回收站</b></td><td>删除</td><td>回收站列表，30 天倒计时</td><td>恢复、彻底删除</td></tr>
+          <tr><td><b>已删除</b></td><td>超期或彻底删除</td><td>不可见</td><td>无（注销时一并清除）</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="qa">
+      <h4>失败兜底的三条硬规则</h4>
+      <p>① <b>任何失败都不能丢原文</b> —— 解析失败、AI 失败都保留原文件与原始文本，用户可手动补。</p>
+      <p>② <b>失败不阻塞下一次收录</b> —— 失败任务进队列后台重试，前端不弹阻塞式弹窗。</p>
+      <p>③ <b>失败必须可解释</b> —— 提示「文件已加密，无法读取正文」这类具体原因，不用「处理失败，请重试」。</p>
+    </div>
+  </section>
+
+  <section id="flow" class="reveal">
+    <h2><span class="no">06</span>一次收录的完整旅程</h2>
+    <p class="sec-intro">主路径全自动，但每一步都有兜底。用户只需要做两个决定：<b>要不要合并</b>、<b>分类对不对</b>。</p>
+    <div class="steps">
+      <div class="step"><div class="dot">1</div><div><h4>丢入内容</h4><p>粘贴文本，或导入文档/图片，支持批量。不填任何字段，不做任何选择。</p><p class="fail"><b>失败时：</b>超大或加密文件提示具体原因，原文件可下载。</p></div></div>
+      <div class="step"><div class="dot">2</div><div><h4>解析与提取</h4><p>后端解析 PDF / Word / Markdown 正文；图片走 OCR（P1）。原文件与正文一起入库。</p><p class="fail"><b>失败时：</b>自动重试 3 次，仍失败标「解析失败」，可手动补正文。</p></div></div>
+      <div class="step"><div class="dot">3</div><div><h4>AI 理解与去重检测</h4><p>生成标题、摘要、标签；哈希 + 向量双通道检测重复，给出「合并 / 保留」建议。</p><p class="fail"><b>失败时：</b>进「未分类」收件箱，后台重试，不阻塞后续流程。</p></div></div>
+      <div class="step"><div class="dot">4</div><div><h4>自动归类挂树</h4><p>高置信直接挂载；中置信挂载并标「待确认」；低置信留在收件箱，不自动新建节点。</p><p class="fail"><b>失败时：</b>用户拖拽纠偏，系统记录偏好，下次同类内容优先该节点。</p></div></div>
+      <div class="step"><div class="dot">5</div><div><h4>建立知识互链</h4><p>基于语义与标签，自动关联 1–3 条最相关的既有知识，也可手动连线。</p><p class="fail"><b>失败时：</b>可单条撤销，撤销后同类链接不再自动重建。</p></div></div>
+      <div class="step"><div class="dot">6</div><div><h4>入索引与节点生长</h4><p>写入全文索引与向量索引；对应节点「生长」一截，卡片即时可见。</p><p class="fail"><b>失败时：</b>索引失败仍可浏览，标注「暂不可搜索」，后台补建。</p></div></div>
+      <div class="step"><div class="dot">7</div><div><h4>在需要时被送回</h4><p>每日回溯 1–3 张旧卡片；检索时按相关度 + 新鲜度返回；P1 起补充深度推荐。</p><p class="fail"><b>失败时：</b>无足够旧内容时不推送空卡片，改为提示「再收录 3 条即可开启回溯」。</p></div></div>
+    </div>
+  </section>
+
+  <section id="data" class="reveal">
+    <h2><span class="no">07</span>核心数据模型</h2>
+    <p class="sec-intro">v0.3 的 <code>tags</code> / <code>entry_tags</code> 挤在同一行、字段缺失，直接照着建表会漏关系。以下为修订版：补状态、哈希、软删除、任务队列、版本表，并统一 RLS 隔离。</p>
+    <div class="tablewrap">
+      <table class="model">
+        <thead><tr><th>表</th><th>作用</th><th>关键字段</th></tr></thead>
+        <tbody>
+          <tr><td><code>users</code></td><td>账号与多端同步主体</td><td>id · email · status · created_at</td></tr>
+          <tr><td><code>knowledge_nodes</code></td><td>知识树节点（分类与叶子）</td><td>id · user_id · parent_id · title · type(system/user) · growth_level · sort · entry_count · created_at</td></tr>
+          <tr><td><code>knowledge_entries</code></td><td>单条知识 / 卡片</td><td>id · user_id · node_id · title · summary · content · content_hash · source_type · source_url · file_path · status · illustration_url · dup_group_id · created_at · updated_at · deleted_at</td></tr>
+          <tr><td><code>tags</code></td><td>标签本体</td><td>id · user_id · name · usage_count</td></tr>
+          <tr><td><code>entry_tags</code></td><td>条目与标签的多对多</td><td>entry_id · tag_id</td></tr>
+          <tr><td><code>related_links</code></td><td>知识互链的「边」</td><td>id · user_id · from_entry · to_entry · relation · score · origin(auto/manual) · status(active/revoked) · created_at</td></tr>
+          <tr><td><code>dedup_groups</code></td><td>去重合并分组</td><td>id · user_id · primary_entry_id · merged_entry_ids[] · similarity · status · created_at · undone_at</td></tr>
+          <tr><td><code>favorites</code></td><td>卡片收藏</td><td>id · user_id · entry_id · created_at</td></tr>
+          <tr><td><code>daily_review_log</code></td><td>回溯记录（含反馈）</td><td>id · user_id · entry_id · review_date · action(shown/remembered/forgotten) · created_at</td></tr>
+          <tr><td><code>embeddings</code></td><td>语义检索向量</td><td>entry_id · model · dim · vector · updated_at</td></tr>
+          <tr><td><code>entry_versions</code></td><td>同步冲突的历史版本</td><td>id · entry_id · content · created_at</td></tr>
+          <tr><td><code>jobs</code></td><td>解析 / AI / 索引任务队列</td><td>id · user_id · entry_id · type · status · attempts · last_error · created_at</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="qa">
+      <h4>建表时必须一起定下的四件事</h4>
+      <p>① 全表启用 RLS：<code>user_id = auth.uid()</code>，个人数据不靠应用层过滤。</p>
+      <p>② 软删除统一用 <code>deleted_at</code>，所有查询默认过滤，回收站才有 30 天可恢复。</p>
+      <p>③ <code>embeddings</code> 用 pgvector，记录 <code>model</code> 与 <code>dim</code>，换模型时可增量重建而不污染旧数据。</p>
+      <p>④ <code>content_hash</code> 是去重第一道，入库前计算，比向量检索便宜且确定。</p>
+    </div>
+  </section>
+
+  <section id="stack" class="reveal">
+    <h2><span class="no">08</span>技术栈与成本约束</h2>
+    <p class="sec-intro">选型沿用 v0.3，成熟、少造轮子。补一列「为什么是它」，以及一条容易被忽略的约束：<b>每条知识都有 AI 成本</b>。</p>
+    <div class="stack">
+      <div class="card">
+        <div class="tier">前端 · 移动端</div>
+        <ul>
+          <li><b>Expo (React Native)</b> — 一套代码出 iOS/Android，迭代快。</li>
+          <li><b>React Navigation</b> — 底部 3 个 Tab（知识树 / 知识库 / 我的）。</li>
+          <li><b>自研简约主题</b> — 暗色底、单点缀色、圆角卡片，克制不花哨。</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="tier">后端 · Supabase</div>
+        <ul>
+          <li><b>Postgres + pgvector</b> — 条目、节点、边、向量一套库解决。</li>
+          <li><b>Auth</b> — 邮箱登录，多端同步与 RLS 的基础。</li>
+          <li><b>Express + Vercel Functions</b> — 同源 API、解析与 AI 编排、定时任务补偿。</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="tier">AI · OpenAI 兼容接口</div>
+        <ul>
+          <li><b>LLM（豆包 / DeepSeek / Kimi）</b> — 标题、摘要、标签、候选节点。</li>
+          <li><b>Embedding</b> — 检索、去重、互链共用同一套向量。</li>
+          <li><b>文生图（Seedream）</b> — 仅 P1 卡片插画，异步补齐。</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="tier">成本与限制</div>
+        <ul>
+          <li><b>每条知识</b> ≈ 1 次 LLM + 1 次 embedding；插画另计且异步。</li>
+          <li><b>降级策略</b> — 高峰期用轻量模型做归类，摘要失败不阻塞入树。</li>
+          <li><b>预算上限</b> — 内测期按人设月额度，超出排队而非静默失败。</li>
+          <li><b>待核算</b> — 单条成本需按实际调用价实测，M0 给出数。</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="play" class="reveal">
+    <h2><span class="no">09</span>可玩性：只留两项进关键路径</h2>
+    <p class="sec-intro">可玩性不是坏东西，但它<b>不能挡住闭环</b>。四项里只有两项直接服务主循环，其余放 P1。</p>
+    <div class="reviewblock">
+      <div class="review"><div class="ico">◈</div><h3>知识树生长</h3><div class="level">P0 · 成就可视化</div><p>每次收录，对应节点生长一截。让「积累」这件事被看见，是最低成本的长期动力。</p></div>
+      <div class="review"><div class="ico">↻</div><h3>每日回溯卡片</h3><div class="level">P0 · 对抗遗忘</div><p>每天 1–3 张旧卡片，按「久未看 + 重要度」加权。它是 H3 假设的验证载体，必须首发。</p></div>
+      <div class="review"><div class="ico">♡</div><h3>卡片收藏夹</h3><div class="level">P1 · 集邮式沉淀</div><p>首发作为知识库筛选视图存在；独立收藏册与集邮展示等留存数据证明有效再做。</p></div>
+      <div class="review"><div class="ico">◆</div><h3>吉祥物养成</h3><div class="level">P1 · 长期陪伴</div><p>首发只保留形象与成长值。表情、装扮需要持续美术投入，不进关键路径。</p></div>
+    </div>
+    <div class="qa">
+      <h4>克制原则</h4>
+      <p>不抽卡、不充值、不强制社交、不做复杂数值。可玩性只服务「记录 → 成长 → 回顾」，一旦需要额外解释才懂，就是做过头了。</p>
+    </div>
+  </section>
+
+  <section id="metrics" class="reveal">
+    <h2><span class="no">10</span>指标与验收</h2>
+    <p class="sec-intro">没有指标，「更准」「更快」就无法判断。以下阈值为<b>建议初值</b>，M0 实测后校准；但指标定义从第一版就该固定，否则每次都在换尺子。</p>
+
+    <div class="blueprint" style="margin-top:0">
+      <h3>◈ 北极星指标</h3>
+      <p><b>周有效沉淀数</b> = 本周收录、且 30 天内被再次打开（回溯或检索点击）的条目数。</p>
+      <p style="color:var(--faint);font-size:13px">选它的理由：只统计「收录」会奖励囤积，只统计「打开」会奖励刷旧内容。两者相乘才代表知识真的沉淀下来了。</p>
+    </div>
+
+    <div class="tablewrap" style="margin-top:24px">
+      <table class="metrics">
+        <thead><tr><th>维度</th><th>指标</th><th>建议达标线</th><th>怎么用</th></tr></thead>
+        <tbody>
+          <tr><td rowspan="2">激活</td><td>首日收录条目数</td><td>≥3 条</td><td>低于此值说明「丢」的门槛还太高</td></tr>
+          <tr><td>首周收录条目数</td><td>≥10 条</td><td>低于此值不进留存分析，先修引导</td></tr>
+          <tr><td rowspan="2">留存</td><td>次周留存</td><td>≥40%</td><td>核心健康度</td></tr>
+          <tr><td>4 周留存</td><td>≥25%</td><td>决定是否值得继续投入 M2</td></tr>
+          <tr><td rowspan="2">归类</td><td>Top1 命中率</td><td>≥70%</td><td>含「可接受的父节点」也算命中，按人工抽检</td></tr>
+          <tr><td>人工纠偏率</td><td>≤25%</td><td>高于此值说明自动归类在制造负担</td></tr>
+          <tr><td rowspan="2">去重</td><td>误合并率</td><td>≤2%</td><td><b>红线指标</b>，超标立即收紧阈值</td></tr>
+          <tr><td>重复提示采纳率</td><td>≥50%</td><td>过低说明提示太吵或不准</td></tr>
+          <tr><td>互链</td><td>自动链撤销率</td><td>≤15%</td><td>过高说明链接是噪音，宁少不多</td></tr>
+          <tr><td>回溯</td><td>卡片打开率 / 反馈率</td><td>≥35% / ≥20%</td><td>验证 H3；打开率低先改时机不改算法</td></tr>
+          <tr><td>检索</td><td>空结果率 / 首条点击率</td><td>≤10% / ≥60%</td><td>空结果率高说明索引或分词有问题</td></tr>
+          <tr><td>性能</td><td>收录到卡片可见 P90</td><td>≤8 秒</td><td>超过就先把卡片和 AI 解耦，先出卡后补摘要</td></tr>
+          <tr><td>成本</td><td>单条 AI 成本</td><td>M0 实测后定</td><td>用于定内测额度与降级策略</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="margin:32px 0 12px;font-size:15.5px;font-weight:500;color:var(--ink-strong)">M1 验收清单（可直接当测试用例）</h3>
+    <ul class="check">
+      <li><b>断网收录：</b>断网写入 3 条 → 恢复网络后全部入库，且与云端已有内容不产生重复条目。</li>
+      <li><b>重复导入：</b>同一份 PDF 二次导入 → 提示「已收录过」，默认不新增，可强制新增。</li>
+      <li><b>低置信不新建：</b>新主题内容首次收录 → 进入「未分类」收件箱，不自动创建节点。</li>
+      <li><b>误合并可恢复：</b>合并两条后拆分 → 原文、标签、互链全部恢复，主条目不受影响。</li>
+      <li><b>失败不丢内容：</b>上传加密 PDF → 提示具体原因，原文件可下载，条目保留在列表。</li>
+      <li><b>撤销后不重建：</b>撤销一条自动互链 → 同一对条目不再自动建链。</li>
+      <li><b>回溯不空转：</b>知识库不足 3 条时 → 不推送空卡片，改为引导收录。</li>
+      <li><b>导出完整：</b>导出 100 条 → MD 与 JSON 条目数一致，附件链接可访问。</li>
+      <li><b>注销彻底：</b>注销冷静期结束 → 各表记录、Storage 文件、向量全部清除，账号无法登录。</li>
+      <li><b>隔离有效：</b>用 A 账号 token 请求 B 账号条目 → 返回空，不泄露任何字段。</li>
+    </ul>
+  </section>
+
+  <section id="risk" class="reveal">
+    <h2><span class="no">11</span>风险与对策</h2>
+    <p class="sec-intro">按「会不会让用户直接放弃」排序。前三条是产品级风险，不是技术风险。</p>
+    <div class="tablewrap">
+      <table class="rules">
+        <thead><tr><th>风险</th><th>影响</th><th>对策</th><th>观察指标</th></tr></thead>
+        <tbody>
+          <tr><td><b>AI 归类错得多</b></td><td>用户要花更多时间纠错，比手动分类更痛，直接弃用</td><td>低置信不自动新建、待确认态、纠偏偏好学习、候选节点可选</td><td>纠偏率、待确认处理率</td></tr>
+          <tr><td><b>节点泛滥</b></td><td>树变成一团乱麻，「结构化」价值归零</td><td>新建需确认 + 同主题 ≥3 条门槛 + 节点上限提示 + 一键合并节点</td><td>节点数 / 条目数比值</td></tr>
+          <tr><td><b>误合并丢知识</b></td><td>信任崩塌，用户不敢再丢东西</td><td>只提示不自动合并、软合并、30 天可拆、原文永不删除</td><td>误合并率、拆分率</td></tr>
+          <tr><td><b>冷启动</b></td><td>前 20 条体验最差，首周流失</td><td>导入引导、可选主题骨架、批量导入、推荐降级为规则版</td><td>首周收录数、首周留存</td></tr>
+          <tr><td><b>成本失控</b></td><td>免费内测撑不住，被迫提前收费</td><td>单条预算、模型降级、插画异步、超额排队</td><td>单条成本、月总成本</td></tr>
+          <tr><td><b>数据主权不信任</b></td><td>用户不愿把长期知识放进来</td><td>导出 + 彻底删除 + 不用于训练声明 + RLS + 隐私说明前置</td><td>导出使用率、注销流失访谈</td></tr>
+          <tr><td><b>被通用工具覆盖</b></td><td>笔记软件加个 AI 归类，差异消失</td><td>只押「零分类 + 自动结构化 + 回溯」三件套，不追功能广度</td><td>纠偏率、周有效沉淀数</td></tr>
+          <tr><td><b>单人节奏延期</b></td><td>P1 拖累 P0，闭环迟迟不上线</td><td>P0 冻结、P1 不进关键路径、M0 不过不进 M1</td><td>里程碑达成率</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="route" class="reveal">
+    <h2><span class="no">12</span>实施路线</h2>
+    <p class="sec-intro">先验证假设，再写 App。每个阶段都有<b>退出标准</b>，达不到就停在原地修，不靠延期掩盖。时间为建议，需按实际投入确认。</p>
+    <div class="route">
+      <div class="m"><span class="badge">M0</span><div>
+        <h4>假设验证 · 2 周（建议）</h4>
+        <p>Web 原型 + 200 条真实总结离线跑归类/去重/互链；10 位目标用户真实使用 7 天。此阶段不写正式 App。</p>
+        <p class="exit"><b>退出标准：</b>H1/H2 达标，产出准确率报告、阈值表、使用记录。<b>不达标 → 调整方案，不进 M1。</b></p>
+      </div></div>
+      <div class="m"><span class="badge">M1</span><div>
+        <h4>MVP · 6–8 周（建议）</h4>
+        <p>Expo + Supabase：P0 全部能力、知识树与模板卡片、检索、回溯、导出与删除、离线草稿。P1 一律不进本次发布。</p>
+        <p class="exit"><b>退出标准：</b>验收清单 10 项全过；内测 4 周留存 ≥25%；误合并率 ≤2%。</p>
+      </div></div>
+      <div class="m"><span class="badge">M2</span><div>
+        <h4>打磨与扩展 · 按留存数据决定</h4>
+        <p>P1 能力：OCR 与图片卡片、深度推荐、收藏册、吉祥物装扮、端到端加密；以及准确率、动效与性能打磨。</p>
+        <p class="exit"><b>进入条件：</b>4 周留存 ≥25% 且周有效沉淀数仍在增长。<b>否则先修留存，不扩功能。</b></p>
+      </div></div>
+    </div>
+  </section>
+
+  <section id="shots" class="reveal">
+    <h2><span class="no">13</span>视觉方向参考</h2>
+    <p class="sec-intro">三张概念图仅用于确认视觉调性，正式 UI 会在此基础上细化。图片由 AI 生成，仅作方向参考。</p>
+    <div class="shots">
+      <figure>
+        <img src="https://s.coze.cn/image/LzIcgmA5rXg/" alt="极简深色高级风知识卡片界面：碳黑玻璃面板、暖金细边、含标题摘要标签与收藏，右上角有星光点缀" width="884" height="1568">
+        <figcaption><b>① 知识卡片</b><br>简约卡片结构：标题 / 摘要 / 标签 / 收藏。</figcaption>
+      </figure>
+      <figure>
+        <img src="https://s.coze.cn/image/F4IxRg1b1MU/" alt="极简精致深色风知识树界面：细暖金流线构成抽象树，节点为细边框圆环，顶部有极简搜索框" width="884" height="1568">
+        <figcaption><b>② 知识树</b><br>会生长的数据树，分支承载分类节点，顶部可检索。</figcaption>
+      </figure>
+      <figure>
+        <img src="https://s.coze.cn/image/ixU7naRnE6M/" alt="极简高级风小黑狐吉祥物：哑光深炭黑配色、暖金细线勾勒、静谧蹲坐" width="1176" height="1176">
+        <figcaption><b>③ 吉祥物</b><br>首发只保留形象与成长值，装扮系统放 P1。</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section id="decisions" class="reveal">
+    <h2><span class="no">14</span>决策清单</h2>
+    <p class="sec-intro">第一部分是 v0.3 已确认的决策，保持不变，作为开发与验收的边界。第二部分是本轮因新增内容而产生的<b>待你确认</b>项，未确认前按「建议」执行。</p>
+
+    <h3 style="margin:0 0 12px;font-size:15.5px;font-weight:500;color:var(--ink-strong)">已确认 · 不变</h3>
+    <div class="tablewrap">
+      <table class="tight">
+        <thead><tr><th>类别</th><th>决策项</th><th>结论</th></tr></thead>
+        <tbody>
+          <tr><td rowspan="4">架构</td><td>树与互链的关系</td><td>树＋互链并存：树管归类，互链管跨主题关系</td></tr>
+          <tr><td>一条知识的归属</td><td>单节点＋多标签，不做多父节点</td></tr>
+          <tr><td>AI 归类纠偏</td><td>可手动拖拽/改标签，AI 记住反馈变准</td></tr>
+          <tr><td>离线使用</td><td>本地草稿暂存，联网后自动同步收录</td></tr>
+          <tr><td rowspan="3">数据安全</td><td>数据主权</td><td>全做进 MVP：导出(MD/JSON)＋注销彻底删除＋不用于 AI 训练</td></tr>
+          <tr><td>云端加密</td><td>常规存储＋隐私声明先行，端到端加密放 M2</td></tr>
+          <tr><td>多端同步冲突</td><td>后写覆盖＋保留历史版本</td></tr>
+          <tr><td rowspan="4">AI 体验</td><td>重复知识合并</td><td>弹窗确认「合并/保留」＋可撤销</td></tr>
+          <tr><td>知识互链建立</td><td>自动建链＋可手动撤销/补充</td></tr>
+          <tr><td>检索范围</td><td>标题＋摘要＋正文＋标签＋OCR</td></tr>
+          <tr><td>每日回顾算法</td><td>简单权重（久未看优先）＋「记得/忘了」反馈</td></tr>
+          <tr><td>运营</td><td>成本与收费</td><td>MVP 内测免费，跑通后再议</td></tr>
+          <tr><td>发布</td><td>上架顺序</td><td>Web 原型验证 → Android → iOS(TestFlight)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="margin:30px 0 12px;font-size:15.5px;font-weight:500;color:var(--ink-strong)">本轮新增 · 待确认（未确认前按建议执行）</h3>
+    <div class="tablewrap">
+      <table class="tight">
+        <thead><tr><th>决策项</th><th>建议</th><th>影响</th></tr></thead>
+        <tbody>
+          <tr><td>首发人群是否锁定</td><td>锁定「有持续学习任务、每周产出 3 篇以上总结」的人</td><td>影响 M0 招募与所有文案，不定就无法验证 H1</td></tr>
+          <tr><td>范围是否按 P0/P1 冻结</td><td>P0 九项（六项闭环 + 回溯 + 数据主权 + 离线草稿），P1 不进 M1</td><td>决定工期与失焦风险</td></tr>
+          <tr><td>自动新建节点</td><td>改为「同主题 ≥3 条才建议新建，且需确认」</td><td>直接影响树是否可用</td></tr>
+          <tr><td>去重合并</td><td>只提示不自动合并；软合并、30 天可拆</td><td>误合并是信任红线</td></tr>
+          <tr><td>底部 Tab</td><td>由 4 个收敛为 3 个（树 / 知识库 / 我的），收藏做筛选</td><td>减少一个空 Tab，降低开发量</td></tr>
+          <tr><td>深度推荐</td><td>降为 P1，首发用规则版兜底</td><td>冷启动阶段推荐质量不可用</td></tr>
+          <tr><td>卡片插画</td><td>首发用模板卡片，插画 P1 异步补</td><td>影响首屏速度与成本</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="open" class="reveal">
+    <h2><span class="no">15</span>待定项与建议默认值</h2>
+    <p class="sec-intro">这三项需要你拍板。我先给建议，避免方案停在「等你回答」上；你改，我按你的改。</p>
+    <div class="qa">
+      <h4>① 图片的收录方式？</h4>
+      <p class="rec"><b>建议：</b>先做 OCR 转文字（P1 早期），图片本身作为卡片放 P1 后期。</p>
+      <p>理由：卡片已有模板承担视觉，图片存储、裁切、清晰度与成本都不轻；而 OCR 直接服务「检索得到」，对闭环更有价值。</p>
+    </div>
+    <div class="qa">
+      <h4>② 是否已有 AI 平台云资源 / 账号？</h4>
+      <p class="rec"><b>建议：</b>M0 使用可配置的 OpenAI 兼容接口；未配置密钥时按规则降级，站点仍可完整运行。</p>
+      <p>理由：M0 要的是准确率数据，不是最优模型；先跑起来，再按实测成本决定正式接入哪家。</p>
+    </div>
+    <div class="qa">
+      <h4>③ 命名「知树 KnowTree」是否保留？</h4>
+      <p class="rec"><b>建议：</b>保留为工作名，M1 前再做商店名与商标查重。</p>
+      <p>理由：名字不影响验证，但现在改会牵连图标、文案与截图，等闭环成立再定更省。</p>
+    </div>
+    <div class="qa">
+      <h4>④ 新增：M0 是否接受「先不写 App」？</h4>
+      <p class="rec"><b>建议：</b>接受。M0 用 Web 原型验证 H1/H2，2 周内拿到数，再决定 M1 怎么做。</p>
+      <p>理由：归类与去重的效果只有真实数据能回答；先写 App 等于把最大的不确定性推到最贵的阶段。</p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <b>知树 KnowTree · 产品方案 · v0.4（评审修订稿）</b><br>
+    修订依据：v0.3 概念稿（已归档至 <code>archive/知树KnowTree-产品方案-v0.3.html</code>）。<br>
+    文中标注「建议」的阈值、周期与结论为产品侧建议值，需经 M0 实测或负责人确认后生效；视觉参考图均为 AI 生成的概念示意，非最终 UI。
+  </div>
+</footer>
+
+<script>
+(function(){
+  try{
+    // 页内导航
+    var toc = document.querySelectorAll('.nav .toc a');
+    toc.forEach(function(a){
+      a.addEventListener('click',function(e){
+        var t = document.querySelector(a.getAttribute('href'));
+        if(t){e.preventDefault();t.scrollIntoView({behavior:'smooth',block:'start'})}
+      });
+    });
+
+    // 滚动渐显（尊重系统减少动态设置）
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if(!reduce && 'IntersectionObserver' in window){
+      var observe = new IntersectionObserver(function(entries){
+        entries.forEach(function(en){
+          if(en.isIntersecting){en.target.classList.add('in');observe.unobserve(en.target)}
+        });
+      },{threshold:.12});
+      document.querySelectorAll('.reveal,.step').forEach(function(el){observe.observe(el)});
+    }else{
+      document.querySelectorAll('.reveal,.step').forEach(function(el){el.classList.add('in')});
+    }
+  }catch(err){}
+})();
+</script>
+</body>
+</html>

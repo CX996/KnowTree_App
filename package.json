@@ -1,0 +1,25 @@
+{
+  "name": "knowtree",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.25.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "pnpm --dir server build",
+    "dev": "pnpm --dir server dev",
+    "lint": "pnpm --dir server lint && pnpm --dir server exec tsc -p ../tsconfig.json",
+    "test": "pnpm --dir server test",
+    "worker": "pnpm --dir server worker"
+  },
+  "dependencies": {
+    "@knowtree/server": "workspace:*",
+    "express": "4.22.3"
+  },
+  "devDependencies": {
+    "@types/express": "5.0.6",
+    "@types/node": "24.19.2",
+    "typescript": "5.9.3"
+  }
+}

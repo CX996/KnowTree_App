@@ -1,5 +1,4 @@
-import { getSupabaseClient } from '../storage/database/supabase-client';
-import { getPool } from '../lib/pg';
+import { getAdminClient, getSupabaseClient } from '../storage/database/supabase-client.js';
 import { contentHash, sha256, urlHash } from '../lib/hash';
 import { canonicalizeUrl, htmlToText, normalizeContent, truncateText } from '../lib/text';
 import { embedText, classifyContent } from './ai';
@@ -20,15 +19,44 @@ export async function getEntryEmbedding(userId: string, entryId: string): Promis
   const { data, error } = await client.from('entries').select('embedding').eq('id', entryId).eq('user_id', userId).maybeSingle();
   if (error) throw new Error(`查询向量失败: ${error.message}`);
   const emb = (data as unknown as { embedding?: unknown } | null)?.embedding;
-  return Array.isArray(emb) ? (emb as number[]) : null;
-}
-
-function vec(arr: number[]): string {
-  return '[' + arr.join(',') + ']';
+  if (Array.isArray(emb)) return emb as number[];
+  if (typeof emb === 'string') {
+    try {
+      const parsed = JSON.parse(emb);
+      return Array.isArray(parsed) ? parsed as number[] : null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
 }
 
 function nowIso(): string {
   return new Date().toISOString();
+}
+
+interface SimilarEntry {
+  entry_id: string;
+  title: string;
+  similarity: number;
+}
+
+async function findSimilarEntries(
+  userId: string,
+  excludeEntryId: string,
+  embedding: number[],
+  minSimilarity: number,
+  matchCount: number,
+): Promise<SimilarEntry[]> {
+  const { data, error } = await getSupabaseClient().rpc('match_entries', {
+    p_user_id: userId,
+    p_query_embedding: embedding,
+    p_exclude_entry_id: excludeEntryId,
+    p_min_similarity: minSimilarity,
+    p_match_count: matchCount,
+  });
+  if (error) throw new Error(`向量检索失败: ${error.message}`);
+  return (data ?? []) as SimilarEntry[];
 }
 
 export async function getEntry(userId: string, id: string): Promise<Entry | null> {
@@ -219,17 +247,10 @@ export async function ingest(userId: string, payload: IngestPayload) {
   if (body) {
     try {
       const emb = await embedText(`${title} ${body}`);
-      const pool = getPool();
-      const { rows } = await pool.query(
-        `SELECT e.id AS entry_id, e.title, ROUND((1 - (e.embedding <=> $1::vector))::numeric, 4)::float AS similarity
-         FROM entries e
-         WHERE e.user_id = $2 AND e.deleted_at IS NULL AND e.embedding IS NOT NULL AND e.id <> $3
-           AND (1 - (e.embedding <=> $1::vector)) >= 0.90
-         ORDER BY e.embedding <=> $1::vector ASC
-         LIMIT 5`,
-        [vec(emb), userId, entry.id],
-      );
-      dupSuggestions = rows;
+      if (emb) {
+        await client.from('entries').update({ embedding: emb, updated_at: nowIso() }).eq('id', entry.id).eq('user_id', userId);
+        dupSuggestions = await findSimilarEntries(userId, entry.id, emb, 0.9, 5);
+      }
     } catch {
       // 向量化失败不阻断收录
     }
@@ -306,7 +327,7 @@ export async function parseEntry(userId: string, entryId: string, url?: string |
 // ---------------------------------------------------------------------------
 // AI 归类：0.75 自动 / 0.50-0.75 待确认 / <0.50 未分类（不新建）
 // ---------------------------------------------------------------------------
-export async function classifyEntry(userId: string, entryId: string, forwardHeaders?: Record<string, string>): Promise<Entry> {
+export async function classifyEntry(userId: string, entryId: string): Promise<Entry> {
   const entry = await getEntry(userId, entryId);
   if (!entry) throw new Error('条目不存在');
   if (!entry.content && !entry.summary) {
@@ -319,10 +340,7 @@ export async function classifyEntry(userId: string, entryId: string, forwardHead
 
   let suggestion: { name: string; confidence: number; summary?: string | null };
   try {
-    suggestion = await classifyContent(
-      { title: entry.title, content: entry.content || entry.summary || '', categories },
-      forwardHeaders,
-    );
+    suggestion = await classifyContent({ title: entry.title, content: entry.content || entry.summary || '', categories });
   } catch (e) {
     throw new Error(`AI 归类失败: ${e instanceof Error ? e.message : String(e)}`);
   }
@@ -380,21 +398,15 @@ export async function linkEntry(userId: string, entryId: string): Promise<{ coun
 
   // 确保本条目已向量化（复用，不重复嵌入）
   const emb = await ensureEntryEmbedding(userId, entryId);
+  const client = getSupabaseClient();
+  if (!emb) {
+    await client.from('entries').update({ status: 'linked', updated_at: nowIso() }).eq('id', entryId).eq('user_id', userId);
+    return { count: 0, links: [] };
+  }
 
-  const pool = getPool();
-  const { rows } = await pool.query(
-    `SELECT e.id AS entry_id, ROUND((1 - (e.embedding <=> $1::vector))::numeric, 4)::float AS similarity
-     FROM entries e
-     WHERE e.user_id = $2 AND e.deleted_at IS NULL AND e.embedding IS NOT NULL AND e.id <> $3
-       AND (1 - (e.embedding <=> $1::vector)) >= 0.70
-     ORDER BY e.embedding <=> $1::vector ASC
-     LIMIT 5`,
-    [vec(emb), userId, entryId],
-  );
-  const links = rows as Array<{ entry_id: string; similarity: number }>;
+  const links = await findSimilarEntries(userId, entryId, emb, 0.7, 5);
   const top = links.slice(0, 3); // 1-3 条
 
-  const client = getSupabaseClient();
   // 清空该条目旧的出链
   await client.from('links').update({ deleted_at: nowIso() }).eq('user_id', userId).eq('source_entry_id', entryId).is('deleted_at', null);
   if (top.length > 0) {
@@ -412,12 +424,13 @@ export async function linkEntry(userId: string, entryId: string): Promise<{ coun
   return { count: top.length, links: top.map((l) => ({ target_id: l.entry_id, score: l.similarity })) };
 }
 
-export async function ensureEntryEmbedding(userId: string, entryId: string): Promise<number[]> {
+export async function ensureEntryEmbedding(userId: string, entryId: string): Promise<number[] | null> {
   const existing = await getEntryEmbedding(userId, entryId);
   if (existing && existing.length > 0) return existing;
   const entry = await getEntry(userId, entryId);
   if (!entry) throw new Error('条目不存在');
   const emb = await embedText(`${entry.title} ${entry.summary ?? ''} ${entry.content ?? ''}`.trim());
+  if (!emb) return null;
   await getSupabaseClient().from('entries').update({ embedding: emb, updated_at: nowIso() }).eq('id', entryId).eq('user_id', userId);
   return emb;
 }
@@ -442,17 +455,10 @@ export async function searchEntries(userId: string, query: string, opts: SearchO
   let semanticMap = new Map<string, number>();
   try {
     const emb = await embedText(q);
-    const pool = getPool();
-    const { rows } = await pool.query(
-      `SELECT e.id AS entry_id, ROUND((1 - (e.embedding <=> $1::vector))::numeric, 4)::float AS similarity
-       FROM entries e
-       WHERE e.user_id = $2 AND e.deleted_at IS NULL AND e.embedding IS NOT NULL
-         AND (1 - (e.embedding <=> $1::vector)) > 0.05
-       ORDER BY e.embedding <=> $1::vector ASC
-       LIMIT $3`,
-      [vec(emb), userId, limit * 2],
-    );
-    semanticMap = new Map((rows as Array<{ entry_id: string; similarity: number }>).map((r) => [r.entry_id, r.similarity]));
+    if (emb) {
+      const rows = await findSimilarEntries(userId, '00000000-0000-0000-0000-000000000000', emb, 0.05, limit * 2);
+      semanticMap = new Map(rows.map((row) => [row.entry_id, row.similarity]));
+    }
   } catch {
     // 语义检索失败时退化为关键词
   }
@@ -637,7 +643,7 @@ export async function exportAll(userId: string, format: 'md' | 'json' = 'md'): P
 // 注销：彻底删除该用户所有数据 + 删除 auth 账号
 // ---------------------------------------------------------------------------
 export async function deleteAccount(userId: string): Promise<{ deleted: boolean }> {
-  const client = getSupabaseClient();
+  const client = getAdminClient();
   const tables = ['links', 'daily_recalls', 'entry_versions', 'entries', 'sources', 'categories', 'jobs', 'profiles'];
   for (const t of tables) {
     const { error } = await client.from(t).delete().eq('user_id', userId);

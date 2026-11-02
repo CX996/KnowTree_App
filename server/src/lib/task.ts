@@ -29,27 +29,9 @@ export async function createJob(input: NewJobInput): Promise<Job> {
 /** 抢占一批到期、尚未超过最大尝试次数的 pending 任务（原子更新为 running） */
 export async function claimDueJobs(limit: number): Promise<Job[]> {
   const client = getSupabaseClient();
-  const now = new Date().toISOString();
-  // 读取到期任务（通过 service_role 直读，避免状态条件读写竞态由应用层尽量规避）
-  const { data, error } = await client
-    .from('jobs')
-    .select('*')
-    .in('status', ['pending', 'running'])
-    .lte('next_run_at', now)
-    .order('next_run_at', { ascending: true })
-    .limit(limit);
-  if (error) throw new Error(`读取任务失败: ${error.message}`);
-  const jobs = (data ?? []) as unknown as Job[];
-  if (jobs.length === 0) return [];
-
-  const ids = jobs.map((j) => j.id);
-  const { error: updErr } = await client
-    .from('jobs')
-    .update({ status: 'running', updated_at: now })
-    .in('id', ids)
-    .in('status', ['pending', 'running']);
-  if (updErr) throw new Error(`抢占任务失败: ${updErr.message}`);
-  return jobs;
+  const { data, error } = await client.rpc('claim_due_jobs', { p_limit: limit });
+  if (error) throw new Error(`抢占任务失败: ${error.message}`);
+  return (data ?? []) as Job[];
 }
 
 /** 标记任务成功 */

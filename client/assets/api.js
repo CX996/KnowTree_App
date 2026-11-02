@@ -2,32 +2,38 @@
  * 取代原 assets/store.js。对外仍暴露 window.KT，页面渲染代码尽量不动。
  *
  * 约定（见《知树KnowTree-后端接口契约.md》）：
- *  - Base: <apiBase>/api/v1，鉴权头 x-session = Supabase access_token
+ *  - Base: 同源 /api/v1，鉴权头 x-session = Supabase access_token
  *  - 字段 snake_case，本文件在 toCard() 里转成页面既有的 camelCase 视图模型
  *  - 网络方法一律 async；只读方法同步读内存缓存（页面渲染不受影响）
  */
 (function () {
   'use strict';
 
-  var CFG_KEY = 'knowtree_cfg';
   var TOKEN_KEY = 'knowtree_token';
+  var REFRESH_KEY = 'knowtree_refresh_token';
   var DUP_KEY = 'knowtree_dups';
-  var DEFAULT_BASE = 'https://knowtree-api-vercel.vercel.app/api/v1';
+  var DEFAULT_BASE = '/api/v1';
 
-  var cfg = {};
-  try { cfg = JSON.parse(localStorage.getItem(CFG_KEY) || '{}') || {}; } catch (e) { cfg = {}; }
+  var publicConfig = null;
+  var publicConfigPromise = null;
 
-  function apiBase() { return String(cfg.apiBase || DEFAULT_BASE).replace(/\/+$/, ''); }
+  function apiBase() { return DEFAULT_BASE; }
   function token() { return localStorage.getItem(TOKEN_KEY) || ''; }
-  function setToken(t) { localStorage.setItem(TOKEN_KEY, t || ''); }
-  function clearToken() { localStorage.removeItem(TOKEN_KEY); }
-  function getConfig() { return { apiBase: apiBase(), supabaseUrl: cfg.supabaseUrl || '', supabaseKey: cfg.supabaseKey || '' }; }
-  function setConfig(next) {
-    cfg = cfg || {};
-    ['apiBase', 'supabaseUrl', 'supabaseKey'].forEach(function (k) {
-      if (next && typeof next[k] === 'string' && next[k]) cfg[k] = next[k].trim();
-    });
-    localStorage.setItem(CFG_KEY, JSON.stringify(cfg));
+  function refreshToken() { return localStorage.getItem(REFRESH_KEY) || ''; }
+  function setToken(t, refresh) {
+    localStorage.setItem(TOKEN_KEY, t || '');
+    if (refresh !== undefined) localStorage.setItem(REFRESH_KEY, refresh || '');
+  }
+  function clearToken() {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(REFRESH_KEY);
+  }
+  function getConfig() {
+    return {
+      apiBase: apiBase(),
+      supabaseUrl: publicConfig ? publicConfig.supabaseUrl : '',
+      supabaseKey: publicConfig ? publicConfig.supabaseKey : ''
+    };
   }
 
   function needLogin() {
@@ -55,6 +61,18 @@
     }).then(function (r) {
       if (timer) clearTimeout(timer);
       if (r.status === 401) {
+        if (!opts._retryAuth && refreshToken()) {
+          var retryOpts = {};
+          Object.keys(opts).forEach(function (key) { retryOpts[key] = opts[key]; });
+          retryOpts._retryAuth = true;
+          return refreshAccessToken()
+            .then(function () { return req(path, retryOpts); })
+            .catch(function () {
+              clearToken();
+              needLogin();
+              throw new Error('登录已失效，请重新登录');
+            });
+        }
         clearToken();
         needLogin();
         throw new Error('登录已失效，请重新登录');
@@ -73,7 +91,7 @@
     }, function (e) {
       if (timer) clearTimeout(timer);
       if (e && e.name === 'AbortError') throw new Error('请求超时（15s），后端是否可达？');
-      throw new Error('连不上后端：检查「API Base」是否指向可访问的 /api/v1');
+      throw new Error('连不上后端，请稍后重试');
     });
   }
 
@@ -437,21 +455,59 @@
     });
   }
 
-  /* 登录：优先 Supabase 邮箱密码（需配置 URL + anon key），否则粘贴 access_token */
+  function loadPublicConfig(force) {
+    if (publicConfig && !force) return Promise.resolve(publicConfig);
+    if (publicConfigPromise && !force) return publicConfigPromise;
+    publicConfigPromise = req('/config').then(function (config) {
+      if (!config || !config.supabaseUrl || !config.supabaseKey) {
+        throw new Error('Supabase 公共配置不完整');
+      }
+      publicConfig = config;
+      return config;
+    }).catch(function (error) {
+      publicConfigPromise = null;
+      throw error;
+    });
+    return publicConfigPromise;
+  }
+
+  function refreshAccessToken() {
+    var savedRefresh = refreshToken();
+    if (!savedRefresh) return Promise.reject(new Error('没有可用的刷新令牌'));
+    return loadPublicConfig().then(function (config) {
+      var url = String(config.supabaseUrl).replace(/\/+$/, '');
+      return fetch(url + '/auth/v1/token?grant_type=refresh_token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', apikey: config.supabaseKey },
+        body: JSON.stringify({ refresh_token: savedRefresh })
+      });
+    }).then(function (response) {
+      return response.json().then(function (body) {
+        if (!response.ok || !body.access_token) {
+          throw new Error(body.error_description || body.msg || body.error || '刷新登录失败');
+        }
+        setToken(body.access_token, body.refresh_token || savedRefresh);
+        return body;
+      });
+    });
+  }
+
+  /* 登录：Supabase 邮箱密码。账号由项目管理员预先创建。 */
   function loginWithPassword(email, password) {
-    var url = String(cfg.supabaseUrl || '').replace(/\/+$/, '');
-    var key = cfg.supabaseKey || '';
-    if (!url || !key) return Promise.reject(new Error('未配置 Supabase URL / anon key，请用「粘贴 access_token」方式'));
-    return fetch(url + '/auth/v1/token?grant_type=password', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', apikey: key },
-      body: JSON.stringify({ email: email, password: password })
-    }).then(function (r) {
-      return r.json().then(function (j) {
-        if (!r.ok) throw new Error(j.error_description || j.msg || j.error || '登录失败');
-        if (!j.access_token) throw new Error('未拿到 access_token');
-        setToken(j.access_token);
-        return j;
+    if (!email || !password) return Promise.reject(new Error('请输入邮箱和密码'));
+    return loadPublicConfig().then(function (config) {
+      var url = String(config.supabaseUrl).replace(/\/+$/, '');
+      return fetch(url + '/auth/v1/token?grant_type=password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', apikey: config.supabaseKey },
+        body: JSON.stringify({ email: email, password: password })
+      });
+    }).then(function (response) {
+      return response.json().then(function (body) {
+        if (!response.ok) throw new Error(body.error_description || body.msg || body.error || '登录失败');
+        if (!body.access_token) throw new Error('登录响应缺少 access_token');
+        setToken(body.access_token, body.refresh_token || '');
+        return body;
       });
     });
   }
@@ -479,9 +535,10 @@
     processAllInbox: processAllInbox, markSeen: markSeen, undo: undo, reset: reset,
     setSetting: setSetting, getSetting: getSetting,
     exportFile: exportFile, wipe: wipe,
+    loadPublicConfig: loadPublicConfig,
     loginWithPassword: loginWithPassword, health: health,
     token: token, setToken: setToken, clearToken: clearToken,
-    getConfig: getConfig, setConfig: setConfig,
+    getConfig: getConfig,
     errorHTML: errorHTML
   };
 })();

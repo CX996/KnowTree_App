@@ -1,5 +1,9 @@
 import type { Request, Response, NextFunction } from 'express';
-import { getSupabaseClient } from '../storage/database/supabase-client';
+import {
+  createUserClient,
+  getSupabaseClient,
+  runWithUserClient,
+} from '../storage/database/supabase-client';
 import type { AuthUser, Profile } from '../types';
 
 declare global {
@@ -20,8 +24,8 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     res.status(401).json({ error: '请先登录' });
     return;
   }
-  const client = getSupabaseClient(token);
-  const { data, error } = await client.auth.getUser();
+  const client = createUserClient(token);
+  const { data, error } = await client.auth.getUser(token);
   if (error || !data.user) {
     res.status(401).json({ error: '认证失败' });
     return;
@@ -32,7 +36,7 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     phone: data.user.phone ?? undefined,
   };
   req.authToken = token;
-  next();
+  runWithUserClient(client, next);
 }
 
 /** 从 database 读取用户配置（不存在则创建一条默认配置） */
