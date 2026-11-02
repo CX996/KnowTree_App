@@ -12,7 +12,8 @@ export interface Category {
   updated_at: string;
 }
 
-export type CaptureType = 'web' | 'manual' | 'clip' | 'image';
+export type CaptureType = 'web' | 'manual' | 'clip' | 'image' | 'file';
+export type ContentSource = 'manual' | 'ai' | 'fallback' | 'imported' | 'legacy';
 
 // entries.status
 export type EntryStatus = 'pending' | 'parsing' | 'parsed' | 'classified' | 'linked' | 'failed';
@@ -29,7 +30,11 @@ export interface Entry {
   content: string;
   content_hash: string;
   source_url: string | null;
+  source_name: string | null;
+  source_mime: string | null;
   capture_type: CaptureType;
+  title_source: ContentSource;
+  summary_source: ContentSource | null;
   status: EntryStatus;
   classification_status: ClassificationStatus;
   classification_confidence: number | null;
@@ -115,6 +120,10 @@ export interface Profile {
   auto_classify_threshold: number;
   review_threshold: number;
   auto_merge_enabled: boolean;
+  ai_auto_title: boolean;
+  ai_auto_summary: boolean;
+  ai_auto_classify: boolean;
+  ai_embeddings_enabled: boolean;
   created_at: string;
   updated_at: string;
 }
