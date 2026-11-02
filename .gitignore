@@ -2,13 +2,10 @@
 *.log
 /runtime
 
-# 构建期临时目录（页面脚本已内联进 HTML）
-/scripts
-
 node_modules/
 *.log
 .env
 .env.*
 !.env.example
 .vercel
-server/dist/
+apps/api/dist/
