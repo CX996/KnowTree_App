@@ -52,6 +52,8 @@ pnpm dlx supabase@2.122.0 db push
 
 推送分支后创建 Preview Deployment，不要先升级 Production。
 
+如果 `vercel git connect` 提示无法连接仓库，先在 Vercel 项目 Settings → Git 中完成 GitHub 授权。授权完成前仍可使用 `vercel deploy --prod` 手动发布；GitHub 推送本身不受影响。
+
 ## 7. Preview 上线检查
 
 在 Preview 域名上依次检查：
@@ -74,6 +76,8 @@ vercel promote <preview-url>
 ```
 
 生产域名确认后，再在 Vercel Cron 中验证 `/api/v1/cron/jobs` 能携带 `CRON_SECRET` 被调用。
+
+Deployment Protection 建议设为仅保护 Preview；Production 自动域名应允许访客访问。
 
 ## 9. 回滚
 
