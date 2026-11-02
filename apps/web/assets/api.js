@@ -152,6 +152,7 @@
       id: e.id,
       title: e.title || (body[0] ? body[0].slice(0, 18) : '（无标题）'),
       summary: e.summary || (body[0] ? body[0].slice(0, 80) : ''),
+      rawContent: e.content || '',
       body: body.length ? body : [String(e.content || '')],
       nodeId: e.category_id || null,
       suggestedNode: e.suggested_category_id || null,
@@ -160,7 +161,9 @@
       dupOf: dup ? dup.dupOf : null,
       sim: dup ? dup.sim : null,
       tags: cat ? [cat.name] : [],
-      source: e.source_url || TYPE_LABEL[e.capture_type] || '手动丢入',
+      source: e.source_name || e.source_url || TYPE_LABEL[e.capture_type] || '手动丢入',
+      titleSource: e.title_source || 'legacy',
+      summarySource: e.summary_source || null,
       createdAt: e.created_at,
       deleted: !!e.deleted_at,
       links: (cache.links[e.id] || []).map(function (l) {
@@ -360,6 +363,23 @@
     }).then(normalizeIngestResult);
   }
 
+  function updateEntry(id, patch) {
+    return req('/entries/' + encodeURIComponent(id), {
+      method: 'PATCH',
+      body: patch
+    }).then(function (entry) {
+      upsert(entry);
+      return entry ? toCard(entry) : null;
+    });
+  }
+
+  function enrichEntry(id) {
+    return req('/entries/' + encodeURIComponent(id) + '/enrich', { method: 'POST' }).then(function (entry) {
+      upsert(entry);
+      return entry ? toCard(entry) : null;
+    });
+  }
+
   /* 轮询 jobs 直到终态（或超时），用于「处理中 → 已归类/已互链」 */
   function pollJobs(ids, onTick, timeoutMs) {
     ids = ids || [];
@@ -540,7 +560,8 @@
     nodeCards: nodeCards, countInNode: countInNode, inbox: inbox,
     uncategorized: uncategorized, search: search, reviewQueue: reviewQueue,
     stats: stats,
-    capture: capture, importFile: importFile, pollJobs: pollJobs, assign: assign, mergeDup: mergeDup, keepDup: keepDup,
+    capture: capture, importFile: importFile, updateEntry: updateEntry, enrichEntry: enrichEntry,
+    pollJobs: pollJobs, assign: assign, mergeDup: mergeDup, keepDup: keepDup,
     removeCard: removeCard,
     processAllInbox: processAllInbox, markSeen: markSeen,
     setSetting: setSetting, getSetting: getSetting,

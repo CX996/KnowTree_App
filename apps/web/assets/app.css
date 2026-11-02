@@ -528,6 +528,108 @@ svg { display: block; }
 .rel-row .sim { flex: none; font-size: 12px; color: var(--gold); }
 .rel-row .t { flex: 1; min-width: 0; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+.detail-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.source-badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: var(--gold);
+  background: rgba(201, 169, 107, .1);
+  border: 1px solid rgba(201, 169, 107, .2);
+}
+.detail-summary { margin-top: 18px; }
+.detail-tools { display: flex; justify-content: flex-end; }
+.text-btn {
+  min-height: 44px;
+  padding: 0 4px;
+  color: var(--gold);
+  font-size: 13px;
+}
+
+.markdown-body {
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.85;
+  overflow-wrap: anywhere;
+}
+.markdown-body > :first-child { margin-top: 0; }
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4 {
+  line-height: 1.4;
+  letter-spacing: .01em;
+  margin: 1.5em 0 .65em;
+}
+.markdown-body h1 { font-size: 25px; font-weight: 400; }
+.markdown-body h2 { font-size: 20px; font-weight: 500; }
+.markdown-body h3 { font-size: 17px; font-weight: 500; }
+.markdown-body p { margin: .8em 0; }
+.markdown-body ul,
+.markdown-body ol { margin: .8em 0; padding-left: 1.45em; }
+.markdown-body li + li { margin-top: .35em; }
+.markdown-body blockquote {
+  margin: 1em 0;
+  padding: 10px 14px;
+  border-left: 2px solid var(--gold);
+  background: rgba(201, 169, 107, .06);
+  color: var(--text2);
+}
+.markdown-body code {
+  padding: .16em .38em;
+  border-radius: 5px;
+  background: var(--surface2);
+  font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+  font-size: .88em;
+}
+.markdown-body pre {
+  margin: 1em 0;
+  padding: 14px 16px;
+  overflow-x: auto;
+  background: var(--surface2);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.markdown-body pre code { padding: 0; background: transparent; }
+.markdown-body a { color: var(--gold); text-decoration: underline; text-underline-offset: 3px; }
+.markdown-body hr { border: 0; border-top: 1px solid var(--line); margin: 1.6em 0; }
+.markdown-body table {
+  width: 100%;
+  margin: 1em 0;
+  border-collapse: collapse;
+  display: block;
+  overflow-x: auto;
+}
+.markdown-body th,
+.markdown-body td {
+  min-width: 110px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  text-align: left;
+}
+.markdown-body img { max-width: 100%; border-radius: 12px; }
+
+.edit-pane { padding-bottom: 24px; }
+.textarea--summary { min-height: 96px; }
+.textarea--source {
+  min-height: 360px;
+  font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.65;
+}
+.markdown-body--preview {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(20, 20, 22, .78);
+}
+.edit-actions { display: flex; gap: 10px; }
+.edit-actions .btn { flex: 1; }
+
 .actionbar {
   position: fixed;
   left: 50%;

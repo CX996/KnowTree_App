@@ -86,6 +86,16 @@ test('capture page supports document drop and replaces history after success', a
   assert.equal(capture.includes("UI.go('detail.html?id='"), false);
 });
 
+test('detail page exposes safe markdown reading and editing', async () => {
+  const detail = await readFile(path.join(clientDir, 'detail.html'), 'utf8');
+  assert.match(detail, /type="module"/);
+  assert.match(detail, /assets\/markdown\.js/);
+  assert.match(detail, /id="editBtn"/);
+  assert.match(detail, /id="editPane"/);
+  assert.match(detail, /id="preview"/);
+  assert.match(detail, /id="saveBtn"/);
+});
+
 test('production styles include keyboard, motion and minimum target standards', async () => {
   const css = await readFile(path.join(clientDir, 'assets/app.css'), 'utf8');
   assert.match(css, /:focus-visible/);
