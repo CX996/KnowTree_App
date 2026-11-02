@@ -121,3 +121,18 @@ test('TypeScript config matches Vercel NodeNext resolution', async () => {
     assert.equal(config.compilerOptions?.moduleResolution, 'NodeNext');
   }
 });
+
+test('capture migration adds file metadata and AI preferences', async () => {
+  const files = (await readdir(path.join(root, 'supabase/migrations')))
+    .filter((file) => file.endsWith('_capture_document_ai.sql'));
+  assert.equal(files.length, 1);
+
+  const sql = await readFile(path.join(root, 'supabase/migrations', files[0]), 'utf8');
+  assert.match(sql, /'file'/);
+  assert.match(sql, /source_name/);
+  assert.match(sql, /source_mime/);
+  assert.match(sql, /title_source/);
+  assert.match(sql, /summary_source/);
+  assert.match(sql, /ai_auto_title/);
+  assert.match(sql, /ai_embeddings_enabled/);
+});

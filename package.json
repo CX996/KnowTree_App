@@ -7,8 +7,8 @@
     "node": "24.x"
   },
   "scripts": {
-    "build": "pnpm --dir apps/api build",
-    "dev": "pnpm --dir apps/api dev",
+    "build": "node scripts/sync-web-assets.mjs && pnpm --dir apps/api build",
+    "dev": "node scripts/sync-web-assets.mjs && pnpm --dir apps/api dev",
     "lint": "pnpm --dir apps/api lint && pnpm --dir apps/api exec tsc -p ../../tsconfig.json",
     "preflight": "node scripts/deploy-preflight.mjs",
     "test": "node --test scripts/tests/*.test.mjs && pnpm --dir apps/api test",
@@ -21,6 +21,8 @@
   "devDependencies": {
     "@types/express": "5.0.6",
     "@types/node": "24.19.2",
+    "dompurify": "3.4.17",
+    "marked": "18.1.2",
     "typescript": "5.9.3"
   }
 }

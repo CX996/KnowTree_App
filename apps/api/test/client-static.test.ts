@@ -76,6 +76,36 @@ test('core pages expose headings and switch state', async () => {
   assert.match(me, /role="switch"[^>]+aria-checked="false"/);
 });
 
+test('capture page supports document drop and replaces history after success', async () => {
+  const capture = await readFile(path.join(clientDir, 'capture.html'), 'utf8');
+  assert.match(capture, /type="file"/);
+  assert.match(capture, /accept="\.md,\.txt,\.html,\.docx,\.pdf"/);
+  assert.match(capture, /id="dropZone"/);
+  assert.match(capture, /id="title"/);
+  assert.match(capture, /location\.replace\(detailUrl\(card\.id\)\)/);
+  assert.equal(capture.includes("UI.go('detail.html?id='"), false);
+});
+
+test('detail page exposes safe markdown reading and editing', async () => {
+  const detail = await readFile(path.join(clientDir, 'detail.html'), 'utf8');
+  assert.match(detail, /type="module"/);
+  assert.match(detail, /assets\/markdown\.js/);
+  assert.match(detail, /id="editBtn"/);
+  assert.match(detail, /id="editPane"/);
+  assert.match(detail, /id="preview"/);
+  assert.match(detail, /id="saveBtn"/);
+});
+
+test('me page exposes ai capability management', async () => {
+  const me = await readFile(path.join(clientDir, 'me.html'), 'utf8');
+  assert.match(me, /id="aiSettings"/);
+  assert.match(me, /id="aiAutoTitle"/);
+  assert.match(me, /id="aiAutoSummary"/);
+  assert.match(me, /id="aiAutoClassify"/);
+  assert.match(me, /id="aiEmbeddings"/);
+  assert.match(me, /id="aiTest"/);
+});
+
 test('production styles include keyboard, motion and minimum target standards', async () => {
   const css = await readFile(path.join(clientDir, 'assets/app.css'), 'utf8');
   assert.match(css, /:focus-visible/);
