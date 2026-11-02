@@ -4,7 +4,7 @@
 
 **Goal:** 将仓库整理成 `apps + docs + design + tools + supabase` 标准单仓，删除重复界面与非功能入口，并准备可执行的 Vercel + Supabase 上线流程。
 
-**Architecture:** 根目录仅保留跨应用配置和 Vercel 薄入口；静态前端位于 `apps/web`，Express API 位于 `apps/api`，文档、设计参考、mock、脚本和数据库迁移各有唯一目录。一个 Vercel 项目通过根级 `server.ts` 同时提供静态站点和 `/api/v1`。
+**Architecture:** 根目录仅保留跨应用配置和 Vercel 函数入口；静态前端位于 `apps/web`，Express API 位于 `apps/api`，文档、设计参考、mock、脚本和数据库迁移各有唯一目录。一个 Vercel 项目通过 `api/index.js` 和 API rewrite 导入构建后的 Express App，并从 `apps/web` 提供静态站点。
 
 **Tech Stack:** Node.js 24、pnpm 11、TypeScript、Express 4、Vercel Functions/Cron、Supabase Postgres/Auth/pgvector、原生 HTML/CSS/JS、Node test runner。
 
@@ -46,7 +46,7 @@
 - Delete: `04-Archive/`
 - Modify: `package.json`
 - Modify: `pnpm-workspace.yaml`
-- Modify: `server.ts`
+- Create: `api/index.js`
 - Modify: `vercel.json`
 - Modify: `tsconfig.json`
 - Modify: `apps/api/package.json`
@@ -58,7 +58,7 @@
 
 **Interfaces:**
 - Consumes: existing `configureApp(app, options)` and default Express app.
-- Produces: workspace packages `apps/web` and `@knowtree/api`; root `server.ts` stays the only Vercel framework entry.
+- Produces: workspace packages `apps/web` and `@knowtree/api`; `api/index.js` is the only Vercel function entry.
 
 - [ ] **Step 1: Write the failing repository layout test**
 
@@ -185,27 +185,44 @@ Root `package.json` scripts and dependency names:
     "noEmit": true,
     "types": ["node"]
   },
-  "include": ["src", "test", "../../server.ts"]
+  "include": ["src", "test", "../../api"]
 }
 ```
 
-`server.ts`:
+`api/index.js`:
 
-```ts
-import express from 'express';
-import path from 'node:path';
-import { configureApp } from './apps/api/src/app.js';
+```js
+import app from '../apps/api/dist/app.js';
 
-const app = express();
-configureApp(app, { staticDir: path.join(process.cwd(), 'apps/web') });
+export default function handler(req, res) {
+  const incoming = new URL(req.url || '/', 'http://localhost');
+  const forwardedPath = incoming.searchParams.get('path');
 
-export default app;
+  if (forwardedPath) {
+    incoming.searchParams.delete('path');
+    req.url = `/api/${forwardedPath}${incoming.search}`;
+  }
+
+  return app(req, res);
+}
 ```
 
-`vercel.json` function include:
+`vercel.json` shared function and rewrite:
 
 ```json
-"includeFiles": "apps/web/**/*"
+{
+  "functions": {
+    "api/index.js": {
+      "maxDuration": 300
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/index?path=$1"
+    }
+  ]
+}
 ```
 
 `apps/api/src/app.ts` local static fallback:
@@ -221,7 +238,7 @@ Update test-relative paths:
 
 ```ts
 // apps/api/test/app.test.ts
-await import('../../../server.js');
+await import('../../../api/index.js');
 
 // apps/api/test/client-static.test.ts
 const clientDir = path.resolve(
@@ -560,7 +577,7 @@ export function runPreflight({ root = process.cwd(), env = process.env } = {}) {
   }
 
   const requiredFiles = [
-    'server.ts',
+    'api/index.js',
     'vercel.json',
     'apps/web/index.html',
     'apps/api/src/app.ts',
@@ -574,7 +591,7 @@ export function runPreflight({ root = process.cwd(), env = process.env } = {}) {
   if (existsSync(vercelPath)) {
     try {
       const vercel = JSON.parse(readFileSync(vercelPath, 'utf8'));
-      if (!vercel.functions?.['server.ts']) errors.push('vercel.json has no server.ts function');
+      if (!vercel.functions?.['api/index.js']) errors.push('vercel.json has no API function');
       if (!vercel.crons?.some((cron) => cron.path === '/api/v1/cron/jobs')) {
         errors.push('vercel.json has no jobs cron');
       }
@@ -801,7 +818,7 @@ design/        visual references
 tools/         local mock tools
 supabase/      config and migrations
 scripts/       deployment preflight
-server.ts      Vercel entry
+api/           Vercel Serverless API entry
 ```
 
 Commands must use:

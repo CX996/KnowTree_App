@@ -1,7 +1,7 @@
-import { claimDueJobs, completeJob, failJob } from '../lib/task';
-import { parseEntry, classifyEntry, linkEntry } from './entries';
-import { generateDailyRecall } from './recalls';
-import type { Job } from '../types';
+import { claimDueJobs, completeJob, failJob } from '../lib/task.js';
+import { parseEntry, classifyEntry, linkEntry } from './entries.js';
+import { generateDailyRecall } from './recalls.js';
+import type { Job } from '../types/index.js';
 
 /** 任务分发：按 job_type 执行对应业务逻辑 */
 export async function processJob(job: Job): Promise<void> {

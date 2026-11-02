@@ -1,11 +1,11 @@
 import { Router } from 'express';
-import { requireAuth, ensureProfile } from '../middleware/auth';
-import * as categorySvc from '../services/categories';
-import * as entrySvc from '../services/entries';
-import * as recallSvc from '../services/recalls';
-import * as jobSvc from '../services/jobs';
-import { getJob, listJobs } from '../lib/task';
-import { getSupabaseClient } from '../storage/database/supabase-client';
+import { requireAuth, ensureProfile } from '../middleware/auth.js';
+import * as categorySvc from '../services/categories.js';
+import * as entrySvc from '../services/entries.js';
+import * as recallSvc from '../services/recalls.js';
+import * as jobSvc from '../services/jobs.js';
+import { getJob, listJobs } from '../lib/task.js';
+import { getSupabaseClient } from '../storage/database/supabase-client.js';
 import { scheduleBackgroundTask } from '../lib/background.js';
 import type { Request, Response } from 'express';
 

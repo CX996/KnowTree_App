@@ -46,7 +46,8 @@ pnpm dlx supabase@2.122.0 db push
 在 Vercel 中导入 GitHub 仓库 `CX996/KnowTree_App`：
 
 - Root Directory：仓库根目录
-- Framework Preset：让 Vercel 自动识别根级 `server.ts`
+- API Function：`api/index.js`
+- Output Directory：`apps/web`
 - 不需要拆成前端和后端两个项目
 
 推送分支后创建 Preview Deployment，不要先升级 Production。

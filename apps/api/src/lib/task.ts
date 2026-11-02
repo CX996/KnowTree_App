@@ -1,5 +1,5 @@
-import { getSupabaseClient } from '../storage/database/supabase-client';
-import type { Job, JobType } from '../types';
+import { getSupabaseClient } from '../storage/database/supabase-client.js';
+import type { Job, JobType } from '../types/index.js';
 
 export interface NewJobInput {
   user_id: string | null;

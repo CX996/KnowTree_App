@@ -14,6 +14,7 @@ const required = [
   'design/references',
   'tools/mock/server.js',
   'supabase/migrations/20261102055337_init_knowtree.sql',
+  'api/index.js',
 ];
 const legacy = [
   'client',
@@ -22,7 +23,6 @@ const legacy = [
   '02-Design',
   '03-Code',
   '04-Archive',
-  'api',
 ];
 
 test('repository uses the standard monorepo layout', () => {

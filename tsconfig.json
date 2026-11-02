@@ -1,9 +1,11 @@
 {
   "extends": "./apps/api/tsconfig.json",
   "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "noEmit": true
   },
   "include": [
-    "server.ts"
+    "apps/api/src/**/*.ts"
   ]
 }

@@ -60,21 +60,27 @@ test('local and hosted auth are configured for pre-created accounts', async () =
   assert.match(config, /\[auth\.email\][\s\S]*?enable_signup = false/);
 });
 
-test('Vercel uses the root Express entrypoint and a protected daily cron', async () => {
+test('Vercel uses an API function, static output, and a protected daily cron', async () => {
   const vercel = JSON.parse(await readFile(path.join(root, 'vercel.json'), 'utf8')) as {
     functions?: Record<string, { includeFiles?: string; maxDuration?: number }>;
     crons?: Array<{ path: string; schedule: string }>;
+    buildCommand?: string;
+    outputDirectory?: string;
+    rewrites?: Array<{ source: string; destination: string }>;
   };
-  const entry = await readFile(path.join(root, 'server.ts'), 'utf8');
+  const entry = await readFile(path.join(root, 'api/index.js'), 'utf8');
   const rootPackage = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8')) as {
     dependencies?: Record<string, string>;
   };
 
-  assert.match(entry, /import express from 'express'/);
-  assert.match(entry, /path\.join\(process\.cwd\(\), 'apps\/web'\)/);
+  assert.match(entry, /apps\/api\/dist\/app\.js/);
+  assert.equal(vercel.buildCommand, 'pnpm build');
+  assert.equal(vercel.outputDirectory, 'apps/web');
   assert.equal(rootPackage.dependencies?.express, '4.22.3');
-  assert.equal(vercel.functions?.['server.ts']?.includeFiles, 'apps/web/**/*');
-  assert.equal(vercel.functions?.['server.ts']?.maxDuration, 300);
+  assert.equal(vercel.functions?.['api/index.js']?.maxDuration, 300);
+  assert.deepEqual(vercel.rewrites, [
+    { source: '/api/(.*)', destination: '/api/index?path=$1' },
+  ]);
   assert.deepEqual(vercel.crons, [{ path: '/api/v1/cron/jobs', schedule: '0 8 * * *' }]);
 });
 
@@ -99,5 +105,19 @@ test('documentation does not point to removed source directories', async () => {
     for (const legacy of ['`client/', '`server/', '01-Docs/', '02-Design/', '03-Code/', '04-Archive/']) {
       assert.equal(text.includes(legacy), false, `${relative} still references ${legacy}`);
     }
+  }
+});
+
+test('TypeScript config matches Vercel NodeNext resolution', async () => {
+  const rootTs = JSON.parse(await readFile(path.join(root, 'tsconfig.json'), 'utf8')) as {
+    compilerOptions?: { module?: string; moduleResolution?: string };
+  };
+  const apiTs = JSON.parse(await readFile(path.join(root, 'apps/api/tsconfig.json'), 'utf8')) as {
+    compilerOptions?: { module?: string; moduleResolution?: string };
+  };
+
+  for (const config of [rootTs, apiTs]) {
+    assert.equal(config.compilerOptions?.module, 'NodeNext');
+    assert.equal(config.compilerOptions?.moduleResolution, 'NodeNext');
   }
 });

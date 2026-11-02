@@ -1,11 +1,11 @@
 import { getAdminClient, getSupabaseClient } from '../storage/database/supabase-client.js';
-import { contentHash, sha256, urlHash } from '../lib/hash';
-import { canonicalizeUrl, htmlToText, normalizeContent, truncateText } from '../lib/text';
-import { embedText, classifyContent } from './ai';
-import { listCategories, createCategory } from './categories';
-import { ensureProfile } from '../middleware/auth';
-import { createJob } from '../lib/task';
-import type { Entry, EntryVersion, EntryStatus } from '../types';
+import { contentHash, sha256, urlHash } from '../lib/hash.js';
+import { canonicalizeUrl, htmlToText, normalizeContent, truncateText } from '../lib/text.js';
+import { embedText, classifyContent } from './ai.js';
+import { listCategories, createCategory } from './categories.js';
+import { ensureProfile } from '../middleware/auth.js';
+import { createJob } from '../lib/task.js';
+import type { Entry, EntryVersion, EntryStatus } from '../types/index.js';
 
 // entries 对 categories 存在两个外键（category_id、suggested_category_id），
 // 直接嵌套 `categories(...)` 会因关系不唯一报错，因此统一取平铺字段，分类名由调用方显式关联。

@@ -3,8 +3,8 @@ import {
   createUserClient,
   getSupabaseClient,
   runWithUserClient,
-} from '../storage/database/supabase-client';
-import type { AuthUser, Profile } from '../types';
+} from '../storage/database/supabase-client.js';
+import type { AuthUser, Profile } from '../types/index.js';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace

@@ -84,7 +84,7 @@
 ├─ tools/                  # 原 03-Code/mock
 ├─ scripts/                # 部署预检等可执行工具
 ├─ supabase/
-├─ server.ts               # 薄 Vercel 入口
+├─ api/index.js           # Vercel 共享 Serverless API 入口
 ├─ vercel.json
 ├─ package.json
 ├─ pnpm-lock.yaml
@@ -107,10 +107,12 @@
 - 对外暴露 `createApp` 与默认应用实例。
 - 不负责静态页面的构建，不负责根目录 Vercel 入口。
 
-### 根级 `server.ts`
+### 根级 `api/index.js`
 
-- 只导入 `apps/api` 的应用创建函数。
-- 显式把 `apps/web` 设置为静态目录。
+- 只导入构建后的 `apps/api/dist/app.js` Express 应用。
+- 作为 Vercel 共享 Serverless API 函数入口，并用 rewrite 接收 `/api/v1/...`。
+- API 的 TypeScript 类型检查由本地/CI 的 `pnpm lint` 完成，Vercel 入口保持纯 JavaScript。
+- 静态页面由 Vercel 从 `apps/web` 输出目录直接提供。
 - 不包含业务路由或服务逻辑。
 
 ### `docs`
@@ -142,7 +144,7 @@
 
 ```text
 浏览器
-  -> Vercel 根级 server.ts
+  -> Vercel api/index.js
   -> apps/api Express App
   -> Supabase Auth / Postgres / pgvector
   -> apps/web 静态资产

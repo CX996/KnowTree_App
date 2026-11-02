@@ -1,6 +1,6 @@
-import { getSupabaseClient } from '../storage/database/supabase-client';
-import { ensureProfile } from '../middleware/auth';
-import type { DailyRecall } from '../types';
+import { getSupabaseClient } from '../storage/database/supabase-client.js';
+import { ensureProfile } from '../middleware/auth.js';
+import type { DailyRecall } from '../types/index.js';
 
 function todayStr(date?: string): string {
   return date ?? new Date().toISOString().slice(0, 10);

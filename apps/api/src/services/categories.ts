@@ -1,5 +1,5 @@
-import { getSupabaseClient } from '../storage/database/supabase-client';
-import type { Category } from '../types';
+import { getSupabaseClient } from '../storage/database/supabase-client.js';
+import type { Category } from '../types/index.js';
 
 const CATEGORY_SELECT = 'id,user_id,name,description,parent_id,icon,deleted_at,created_at,updated_at';
 

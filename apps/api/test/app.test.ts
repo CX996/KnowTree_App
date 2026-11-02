@@ -21,8 +21,8 @@ test('createApp exposes a health endpoint without starting its own listener', as
   assert.deepEqual(await response.json(), { status: 'ok' });
 });
 
-test('Vercel root entrypoint exports the same Express application contract', async (t) => {
-  const { default: vercelApp } = await import('../../../server.js');
+test('Vercel API entrypoint exports the same Express application contract', async (t) => {
+  const { default: vercelApp } = await import('../../../api/index.js');
   const server = createServer(vercelApp);
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
   t.after(() => closeServer(server));
@@ -30,6 +30,19 @@ test('Vercel root entrypoint exports the same Express application contract', asy
   assert.ok(address && typeof address === 'object');
 
   const response = await fetch(`http://127.0.0.1:${address.port}/api/v1/health`);
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { status: 'ok' });
+});
+
+test('Vercel API rewrite restores a nested API path', async (t) => {
+  const { default: vercelApp } = await import('../../../api/index.js');
+  const server = createServer(vercelApp);
+  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => closeServer(server));
+  const address = server.address();
+  assert.ok(address && typeof address === 'object');
+
+  const response = await fetch(`http://127.0.0.1:${address.port}/api/index?path=v1%2Fhealth`);
   assert.equal(response.status, 200);
   assert.deepEqual(await response.json(), { status: 'ok' });
 });

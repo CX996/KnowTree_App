@@ -42,7 +42,7 @@ export function runPreflight({ root = process.cwd(), env = process.env } = {}) {
 
   const requiredFiles = [
     '.env.example',
-    'server.ts',
+    'api/index.js',
     'vercel.json',
     'apps/web/index.html',
     'apps/api/src/app.ts',
@@ -56,7 +56,12 @@ export function runPreflight({ root = process.cwd(), env = process.env } = {}) {
   if (existsSync(vercelPath)) {
     try {
       const vercel = JSON.parse(readFileSync(vercelPath, 'utf8'));
-      if (!vercel.functions?.['server.ts']) errors.push('vercel.json has no server.ts function');
+      if (vercel.buildCommand !== 'pnpm build') errors.push('vercel.json buildCommand is invalid');
+      if (vercel.outputDirectory !== 'apps/web') errors.push('vercel.json outputDirectory is invalid');
+      if (!vercel.functions?.['api/index.js']) errors.push('vercel.json has no API function');
+      if (!vercel.rewrites?.some((rewrite) => rewrite.source === '/api/(.*)')) {
+        errors.push('vercel.json has no shared API rewrite');
+      }
       if (!vercel.crons?.some((cron) => cron.path === '/api/v1/cron/jobs')) {
         errors.push('vercel.json has no jobs cron');
       }

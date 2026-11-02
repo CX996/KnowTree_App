@@ -53,11 +53,11 @@ Vercel / Express
 | `tools/mock/` | 本地 mock 联调服务 |
 | `supabase/` | Supabase CLI 配置与数据库 migration |
 | `scripts/` | 仓库检查和部署预检 |
-| `server.ts` | Vercel 薄入口 |
+| `api/index.js` | Vercel Serverless API 入口，导入构建后的 Express App |
 
 ## 本地运行
 
-环境要求：Node.js 20+、pnpm 11；本地 Supabase 额外需要 Docker。
+环境要求：Node.js 24 LTS、pnpm 11；本地 Supabase 额外需要 Docker。
 
 ```powershell
 pnpm install
@@ -103,7 +103,9 @@ Migration 包含 8 张业务表、RLS、显式 grant、pgvector、HNSW、语义�
 
 ## Vercel
 
-在 Vercel 导入 GitHub 仓库，Root Directory 保持仓库根目录。Vercel 会自动识别 `server.ts`。
+在 Vercel 导入 GitHub 仓库，Root Directory 保持仓库根目录。Vercel 使用 `api/index.js` 提供共享 API 入口，并用 `vercel.json` rewrite 接收 `/api/:path*`；`apps/web` 作为静态输出目录。
+
+`api/index.js` 只导入 `apps/api/dist/app.js`，并把 rewrite 传入的 `path` 恢复为 Express 需要的 `/api/v1/...` 请求路径。API 的 TypeScript 类型检查由 `pnpm lint` 在本地和 CI 中完成，Vercel 函数构建只消费已生成的 JavaScript，避免其临时函数目录缺少类型依赖。
 
 上线前阅读：
 

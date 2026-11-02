@@ -1,11 +1,18 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "pnpm build",
+  "outputDirectory": "apps/web",
   "functions": {
-    "server.ts": {
-      "maxDuration": 300,
-      "includeFiles": "apps/web/**/*"
+    "api/index.js": {
+      "maxDuration": 300
     }
   },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/index?path=$1"
+    }
+  ],
   "crons": [
     {
       "path": "/api/v1/cron/jobs",
