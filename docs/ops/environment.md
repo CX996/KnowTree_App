@@ -12,7 +12,7 @@
 | `CRON_SECRET` | 是 | 仅 Vercel 服务端 | 至少 16 字符，保护 `/api/v1/cron/jobs` |
 | `OPENAI_API_KEY` | 否 | 仅 Vercel 服务端 | OpenAI 兼容服务密钥；留空时启用规则降级 |
 | `OPENAI_BASE_URL` | 否 | 仅 Vercel 服务端 | 默认 `https://api.openai.com/v1` |
-| `OPENAI_CHAT_MODEL` | 否 | 仅 Vercel 服务端 | 归类模型；配置 Key 时必填 |
+| `OPENAI_CHAT_MODEL` | 否 | 仅 Vercel 服务端 | 结构化整理模型：标题、摘要、分类和关键词；配置 Key 时必填 |
 | `OPENAI_EMBEDDING_MODEL` | 否 | 仅 Vercel 服务端 | 适配 1024 维向量的 embedding 模型 |
 | `ALLOWED_ORIGIN` | 否 | 可公开 | 仅跨域本地开发使用，多个来源用逗号分隔 |
 | `PORT` | 否 | 可公开 | 本地 Express 端口，默认 `9091` |
@@ -23,6 +23,8 @@
 - `SUPABASE_SECRET_KEY` 绕过 RLS，只允许出现在 Vercel 环境变量和受控服务端。
 - `OPENAI_API_KEY` 与 `CRON_SECRET` 不得进入 `apps/web` 或 Git 历史。
 - 配置 AI 后，模型 embedding 维度必须为 1024；切换 embedding 模型时应重新生成旧向量。
+- “我的 → AI 整理”只管理自动标题、自动摘要、自动分类和语义检索开关；API Key 与 Base URL 永不下发浏览器。
+- AI 失败时保留确定性标题、摘要和规则分类，并在 profile 中记录最近错误。
 - 公开注册保持关闭，第一阶段账号由管理员预先创建。
 
 ## 本机配置
