@@ -85,3 +85,19 @@ test('authenticated requests verify the token and run inside the user RLS contex
   assert.match(auth, /getUser\(token\)/);
   assert.match(auth, /runWithUserClient\(client, next\)/);
 });
+
+test('documentation does not point to removed source directories', async () => {
+  const files = [
+    'README.md',
+    'docs/api/后端接口契约.md',
+    'docs/ops/deployment.md',
+    'docs/ops/environment.md',
+  ];
+
+  for (const relative of files) {
+    const text = await readFile(path.join(root, relative), 'utf8');
+    for (const legacy of ['`client/', '`server/', '01-Docs/', '02-Design/', '03-Code/', '04-Archive/']) {
+      assert.equal(text.includes(legacy), false, `${relative} still references ${legacy}`);
+    }
+  }
+});

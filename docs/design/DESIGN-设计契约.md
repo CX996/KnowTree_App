@@ -27,7 +27,7 @@
 - `search`（search.html）：搜索页，实时过滤标题、摘要、标签与正文。
 - `inbox`（inbox.html）：待确认收件箱，逐条确认归类、处理疑似重复。
 - `card`（card.html）：卡片详情，收藏、改节点、互链跳转。
-- `node`（node.html）：单节点视图，该节点下的全部卡片。
+- 分类视图使用 `library.html?category=<id>`，不单独保留节点页。
 - `review`（review.html）：每日回溯，记得 / 忘了，三张结束。
 - `compose`（compose.html）：收录页，粘贴即入库，模拟解析后进入待确认。
 - `me`（me.html）：我的，统计、数据主权、演示数据重置。
