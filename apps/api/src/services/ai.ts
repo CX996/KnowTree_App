@@ -27,6 +27,7 @@ export interface EnrichmentResult {
   confidence: number;
   keywords: string[];
   mode: 'ai' | 'fallback';
+  error: { code: AiServiceCode; message: string } | null;
 }
 
 export type AiServiceCode = 'AI_TIMEOUT' | 'AI_INVALID_RESPONSE' | 'AI_REQUEST_FAILED';
@@ -147,6 +148,7 @@ function fallbackEnrichment(input: EnrichmentInput): EnrichmentResult {
     confidence: input.allowClassification ? suggestion.confidence : 0,
     keywords: [],
     mode: 'fallback',
+    error: null,
   };
 }
 
@@ -154,10 +156,11 @@ function fallbackEnrichment(input: EnrichmentInput): EnrichmentResult {
 export async function enrichContent(input: EnrichmentInput): Promise<EnrichmentResult> {
   if (!isAiConfigured()) return fallbackEnrichment(input);
 
-  const categoryLines = input.categories.length > 0
-    ? input.categories.map((category) => `- ${category.name}${category.description ? `：${category.description}` : ''}`).join('\n')
-    : '（尚无分类，请根据内容主题新建一个分类）';
-  const system = `你是一名个人知识管理助手。请阅读用户的收录内容，并输出结构化整理结果。
+  try {
+    const categoryLines = input.categories.length > 0
+      ? input.categories.map((category) => `- ${category.name}${category.description ? `：${category.description}` : ''}`).join('\n')
+      : '（尚无分类，请根据内容主题新建一个分类）';
+    const system = `你是一名个人知识管理助手。请阅读用户的收录内容，并输出结构化整理结果。
 已有分类如下：
 ${categoryLines}
 
@@ -169,46 +172,56 @@ ${categoryLines}
 - keywords 返回 2~6 个短关键词。
 - 只输出如下 JSON，不要输出其他内容：
 {"title": "标题或null", "category": "分类名或null", "confidence": 0.0, "summary": "摘要或null", "keywords": ["关键词"]}`;
-  const user = `标题：${input.title || '（无标题）'}\n\n正文：\n${input.content.slice(0, 6000)}`;
-  const response = await postOpenAi('chat/completions', {
-    model: process.env.OPENAI_CHAT_MODEL,
-    temperature: 0.2,
-    messages: [
-      { role: 'system', content: system },
-      { role: 'user', content: user },
-    ],
-  });
-  const choices = response.choices as Array<{ message?: { content?: unknown } }> | undefined;
-  const rawContent = choices?.[0]?.message?.content;
-  if (typeof rawContent !== 'string') {
-    throw new AiServiceError('AI_INVALID_RESPONSE', 'AI 整理响应缺少 message.content');
-  }
-  const parsed = safeParseJson<EnrichmentLLMResult>(rawContent);
-  if (!parsed || typeof parsed.confidence !== 'number') {
-    throw new AiServiceError(
-      'AI_INVALID_RESPONSE',
-      `AI 整理返回无法解析：${rawContent.slice(0, 200)}`,
-    );
-  }
+    const user = `标题：${input.title || '（无标题）'}\n\n正文：\n${input.content.slice(0, 6000)}`;
+    const response = await postOpenAi('chat/completions', {
+      model: process.env.OPENAI_CHAT_MODEL,
+      temperature: 0.2,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: user },
+      ],
+    });
+    const choices = response.choices as Array<{ message?: { content?: unknown } }> | undefined;
+    const rawContent = choices?.[0]?.message?.content;
+    if (typeof rawContent !== 'string') {
+      throw new AiServiceError('AI_INVALID_RESPONSE', 'AI 整理响应缺少 message.content');
+    }
+    const parsed = safeParseJson<EnrichmentLLMResult>(rawContent);
+    if (!parsed || typeof parsed.confidence !== 'number') {
+      throw new AiServiceError(
+        'AI_INVALID_RESPONSE',
+        `AI 整理返回无法解析：${rawContent.slice(0, 200)}`,
+      );
+    }
 
-  return {
-    title: input.allowTitle && typeof parsed.title === 'string'
-      ? parsed.title.trim().slice(0, 200) || null
-      : input.title || null,
-    summary: input.allowSummary && typeof parsed.summary === 'string'
-      ? parsed.summary.trim().slice(0, 300) || null
-      : null,
-    category: input.allowClassification
-      && typeof parsed.category === 'string'
-      && parsed.category !== 'null'
-      ? parsed.category.trim()
-      : null,
-    confidence: input.allowClassification ? Math.min(Math.max(parsed.confidence, 0), 1) : 0,
-    keywords: Array.isArray(parsed.keywords)
-      ? parsed.keywords.filter((keyword): keyword is string => typeof keyword === 'string').slice(0, 6)
-      : [],
-    mode: 'ai',
-  };
+    return {
+      title: input.allowTitle && typeof parsed.title === 'string'
+        ? parsed.title.trim().slice(0, 200) || null
+        : input.title || null,
+      summary: input.allowSummary && typeof parsed.summary === 'string'
+        ? parsed.summary.trim().slice(0, 300) || null
+        : null,
+      category: input.allowClassification
+        && typeof parsed.category === 'string'
+        && parsed.category !== 'null'
+        ? parsed.category.trim()
+        : null,
+      confidence: input.allowClassification ? Math.min(Math.max(parsed.confidence, 0), 1) : 0,
+      keywords: Array.isArray(parsed.keywords)
+        ? parsed.keywords.filter((keyword): keyword is string => typeof keyword === 'string').slice(0, 6)
+        : [],
+      mode: 'ai',
+      error: null,
+    };
+  } catch (error) {
+    const aiError = error instanceof AiServiceError
+      ? error
+      : new AiServiceError('AI_REQUEST_FAILED', error instanceof Error ? error.message : String(error));
+    return {
+      ...fallbackEnrichment(input),
+      error: { code: aiError.code, message: aiError.message },
+    };
+  }
 }
 
 /** 兼容旧调用方：只返回分类与摘要。 */
@@ -223,6 +236,30 @@ export async function classifyContent(input: ClassifyInput): Promise<CategorySug
     name: result.category ?? '',
     confidence: result.confidence,
     summary: result.summary,
+  };
+}
+
+export async function testAiConnection(): Promise<{
+  ok: boolean;
+  latencyMs: number | null;
+  message: string;
+}> {
+  if (!isAiConfigured()) {
+    return { ok: false, latencyMs: null, message: 'AI 尚未配置，当前使用规则降级' };
+  }
+  const started = Date.now();
+  const result = await enrichContent({
+    title: '连接测试',
+    content: '这是一次连接测试，请返回结构化整理结果。',
+    categories: [],
+    allowTitle: true,
+    allowSummary: true,
+    allowClassification: false,
+  });
+  return {
+    ok: !result.error,
+    latencyMs: Date.now() - started,
+    message: result.error?.message ?? 'AI 连接正常',
   };
 }
 

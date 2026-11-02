@@ -1,6 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { classifyContent, embedText, enrichContent, isAiConfigured } from '../src/services/ai.js';
+import {
+  classifyContent,
+  embedText,
+  enrichContent,
+  isAiConfigured,
+  testAiConnection,
+} from '../src/services/ai.js';
 
 test('AI classification degrades deterministically when no provider is configured', async () => {
   const previousKey = process.env.OPENAI_API_KEY;
@@ -155,4 +161,44 @@ test('AI enrichment honors disabled capabilities', async (t) => {
   assert.equal(result.summary, null);
   assert.equal(result.category, null);
   assert.deepEqual(result.keywords, ['ignored']);
+});
+
+test('AI enrichment returns fallback metadata after a provider failure', async (t) => {
+  const previousKey = process.env.OPENAI_API_KEY;
+  const previousModel = process.env.OPENAI_CHAT_MODEL;
+  process.env.OPENAI_API_KEY = 'test-key';
+  process.env.OPENAI_CHAT_MODEL = 'test-model';
+  t.after(() => {
+    if (previousKey === undefined) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = previousKey;
+    if (previousModel === undefined) delete process.env.OPENAI_CHAT_MODEL;
+    else process.env.OPENAI_CHAT_MODEL = previousModel;
+  });
+
+  t.mock.method(globalThis, 'fetch', async () => new Response('provider down', { status: 503 }));
+  const result = await enrichContent({
+    title: '',
+    content: '# 降级标题\n\n仍然保留正文。',
+    categories: [{ id: '1', name: '技术' }],
+    allowTitle: true,
+    allowSummary: true,
+    allowClassification: true,
+  });
+
+  assert.equal(result.mode, 'fallback');
+  assert.equal(result.title, '降级标题');
+  assert.equal(result.error?.code, 'AI_REQUEST_FAILED');
+});
+
+test('AI connection test reports unavailable when no provider exists', async () => {
+  const previousKey = process.env.OPENAI_API_KEY;
+  delete process.env.OPENAI_API_KEY;
+  try {
+    const result = await testAiConnection();
+    assert.equal(result.ok, false);
+    assert.match(result.message, /未配置/);
+  } finally {
+    if (previousKey === undefined) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = previousKey;
+  }
 });

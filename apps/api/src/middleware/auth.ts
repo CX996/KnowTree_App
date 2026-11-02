@@ -55,6 +55,12 @@ export async function ensureProfile(userId: string): Promise<Profile> {
     auto_classify_threshold: 0.75,
     review_threshold: 0.5,
     auto_merge_enabled: false,
+    ai_auto_title: true,
+    ai_auto_summary: true,
+    ai_auto_classify: true,
+    ai_embeddings_enabled: true,
+    ai_last_error: null,
+    ai_last_error_at: null,
   };
   const { data: created, error: createError } = await client.from('profiles').insert(defaults).select().single();
   if (createError) throw new Error(`初始化用户配置失败: ${createError.message}`);

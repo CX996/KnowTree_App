@@ -1,7 +1,16 @@
 import { getAdminClient, getSupabaseClient } from '../storage/database/supabase-client.js';
 import { contentHash, sha256, urlHash } from '../lib/hash.js';
-import { canonicalizeUrl, htmlToText, normalizeContent, truncateText } from '../lib/text.js';
-import { embedText, classifyContent } from './ai.js';
+import {
+  canonicalizeUrl,
+  deriveSummary,
+  deriveTitle,
+  htmlToText,
+  markdownToPlainText,
+  normalizeContent,
+  normalizeMarkdown,
+  truncateText,
+} from '../lib/text.js';
+import { embedText, enrichContent } from './ai.js';
 import { listCategories, createCategory } from './categories.js';
 import { ensureProfile } from '../middleware/auth.js';
 import { createJob } from '../lib/task.js';
@@ -11,7 +20,7 @@ import type { Entry, EntryVersion, EntryStatus } from '../types/index.js';
 // 直接嵌套 `categories(...)` 会因关系不唯一报错，因此统一取平铺字段，分类名由调用方显式关联。
 // 为避免 API 响应携带 1024 维向量，默认选择列不含 embedding；向量单独按需获取。
 const ENTRY_SELECT =
-  'id,user_id,source_id,category_id,title,summary,content,content_hash,source_url,capture_type,status,classification_status,classification_confidence,suggested_category_id,weight,recall_count,last_recalled_at,deleted_at,created_at,updated_at';
+  'id,user_id,source_id,category_id,title,summary,content,content_hash,source_url,source_name,source_mime,capture_type,title_source,summary_source,status,classification_status,classification_confidence,suggested_category_id,weight,recall_count,last_recalled_at,deleted_at,created_at,updated_at';
 
 /** 仅查询条目的向量列（避免大数组随普通查询返回） */
 export async function getEntryEmbedding(userId: string, entryId: string): Promise<number[] | null> {
@@ -39,6 +48,13 @@ interface SimilarEntry {
   entry_id: string;
   title: string;
   similarity: number;
+}
+
+export class EntryConflictError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'EntryConflictError';
+  }
 }
 
 async function findSimilarEntries(
@@ -106,20 +122,41 @@ export async function softDeleteEntry(userId: string, id: string): Promise<void>
   if (error) throw new Error(`删除条目失败: ${error.message}`);
 }
 
+export function buildEditedEntryPatch(input: {
+  current: Entry;
+  patch: { title?: string; content?: string; summary?: string | null };
+  hash: (content: string) => string;
+}): Partial<Entry> {
+  const patch: Partial<Entry> = { updated_at: nowIso() };
+  if (input.patch.title !== undefined) {
+    patch.title = input.patch.title.trim().slice(0, 200);
+    patch.title_source = 'manual';
+  }
+  if (input.patch.content !== undefined) {
+    const content = normalizeMarkdown(input.patch.content);
+    patch.content = content;
+    patch.content_hash = input.hash(content);
+  }
+  if (input.patch.summary !== undefined) {
+    patch.summary = input.patch.summary?.trim() || null;
+    patch.summary_source = 'manual';
+  }
+  return patch;
+}
+
 export async function updateEntry(
   userId: string,
   id: string,
   patch: { title?: string; content?: string; summary?: string | null; category_id?: string | null },
 ): Promise<Entry | null> {
   const client = getSupabaseClient();
-  const upd: Record<string, unknown> = { updated_at: nowIso() };
-  if (patch.title !== undefined) upd.title = patch.title.trim();
-  if (patch.content !== undefined) {
-    const normalized = normalizeContent(patch.content);
-    upd.content = normalized;
-    upd.content_hash = contentHash(normalized);
-  }
-  if (patch.summary !== undefined) upd.summary = patch.summary;
+  const current = await getEntry(userId, id);
+  if (!current) return null;
+  const upd = buildEditedEntryPatch({
+    current,
+    patch,
+    hash: (content) => contentHash(markdownToPlainText(content)),
+  }) as Record<string, unknown>;
   if (patch.category_id !== undefined) {
     upd.category_id = patch.category_id;
     if (patch.category_id) {
@@ -136,7 +173,12 @@ export async function updateEntry(
     .eq('user_id', userId)
     .select(ENTRY_SELECT)
     .single();
-  if (error) throw new Error(`更新条目失败: ${error.message}`);
+  if (error) {
+    if ((error as { code?: string }).code === '23505') {
+      throw new EntryConflictError('更新后的内容与已有知识重复');
+    }
+    throw new Error(`更新条目失败: ${error.message}`);
+  }
   return (data as unknown as Entry) ?? null;
 }
 
@@ -147,7 +189,36 @@ export interface IngestPayload {
   url?: string;
   content?: string;
   title?: string;
-  captureType?: 'web' | 'manual' | 'clip' | 'image';
+  captureType?: 'web' | 'manual' | 'clip' | 'image' | 'file';
+  sourceName?: string;
+  sourceMime?: string;
+}
+
+export function prepareIngestContent(input: {
+  title?: string;
+  content: string;
+  sourceName?: string;
+  sourceMime?: string;
+  captureType?: IngestPayload['captureType'];
+}) {
+  const content = normalizeMarkdown(input.content);
+  const derivedTitle = deriveTitle({
+    title: input.title,
+    fileName: input.sourceName,
+    content,
+  });
+  const summary = deriveSummary(content);
+  return {
+    content,
+    contentHash: contentHash(markdownToPlainText(content)),
+    title: derivedTitle.title,
+    titleSource: derivedTitle.source,
+    summary: summary || null,
+    summarySource: summary ? 'fallback' as const : null,
+    sourceName: input.sourceName?.trim() || null,
+    sourceMime: input.sourceMime?.trim() || null,
+    captureType: input.captureType ?? 'manual',
+  };
 }
 
 export async function ingest(userId: string, payload: IngestPayload) {
@@ -155,7 +226,9 @@ export async function ingest(userId: string, payload: IngestPayload) {
   const url = payload.url?.trim();
   const rawContent = payload.content?.trim() ?? '';
   const title = payload.title?.trim() ?? '';
-  const captureType = ['web', 'manual', 'clip', 'image'].includes(payload.captureType ?? '') ? payload.captureType! : 'manual';
+  const captureType = ['web', 'manual', 'clip', 'image', 'file'].includes(payload.captureType ?? '')
+    ? payload.captureType!
+    : 'manual';
 
   let sourceUrl: string | null = null;
   let sourceId: string | null = null;
@@ -176,9 +249,21 @@ export async function ingest(userId: string, payload: IngestPayload) {
     if (!rawContent) needsParse = true;
   }
 
-  const normalized = normalizeContent(rawContent);
-  const body = rawContent ? normalized : '';
-  const cHash = body ? contentHash(body) : sourceUrl ? urlHash(sourceUrl) : contentHash(title || 'untitled');
+  const prepared = rawContent
+    ? prepareIngestContent({
+      title,
+      content: rawContent,
+      sourceName: payload.sourceName,
+      sourceMime: payload.sourceMime,
+      captureType,
+    })
+    : null;
+  const body = prepared?.content ?? '';
+  const cHash = body
+    ? prepared!.contentHash
+    : sourceUrl
+      ? urlHash(sourceUrl)
+      : contentHash(title || 'untitled');
 
   // 1) 哈希去重：完全重复 → 合并权重，不新建
   if (body) {
@@ -216,10 +301,15 @@ export async function ingest(userId: string, payload: IngestPayload) {
       .insert({
         user_id: userId,
         source_id: sourceId,
-        title: title || (sourceUrl ? canonicalizeUrl(sourceUrl).domain : '未命名知识'),
+        title: prepared?.title || title || (sourceUrl ? canonicalizeUrl(sourceUrl).domain : '未命名知识'),
+        title_source: prepared?.titleSource ?? (title ? 'manual' : 'fallback'),
+        summary: prepared?.summary ?? null,
+        summary_source: prepared?.summarySource ?? null,
         content: body,
         content_hash: cHash,
         source_url: sourceUrl,
+        source_name: prepared?.sourceName ?? payload.sourceName?.trim() ?? null,
+        source_mime: prepared?.sourceMime ?? payload.sourceMime?.trim() ?? null,
         capture_type: captureType,
         status: needsParse ? 'pending' : 'parsed',
         classification_status: 'uncategorized',
@@ -308,7 +398,10 @@ export async function parseEntry(userId: string, entryId: string, url?: string |
       if (!entry.title || entry.title === canonicalizeUrl(url).domain) {
         // 尝试从标题标签提取
         const m = /<title[^>]*>([\s\S]*?)<\/title>/i.exec(text) ?? /<h1[^>]*>([\s\S]*?)<\/h1>/i.exec(text);
-        if (m) patch.title = htmlToText(m[1]).slice(0, 200) || entry.title;
+        if (m) {
+          patch.title = htmlToText(m[1]).slice(0, 200) || entry.title;
+          patch.title_source = 'imported';
+        }
       }
       await getSupabaseClient().from('entries').update(patch).eq('id', entryId).eq('user_id', userId);
       const updated = await getEntry(userId, entryId);
@@ -338,53 +431,71 @@ export async function classifyEntry(userId: string, entryId: string): Promise<En
   const autoTh = Number(profile.auto_classify_threshold) || 0.75;
   const reviewTh = Number(profile.review_threshold) || 0.5;
 
-  let suggestion: { name: string; confidence: number; summary?: string | null };
-  try {
-    suggestion = await classifyContent({ title: entry.title, content: entry.content || entry.summary || '', categories });
-  } catch (e) {
-    throw new Error(`AI 归类失败: ${e instanceof Error ? e.message : String(e)}`);
-  }
+  const allowTitle = profile.ai_auto_title !== false && entry.title_source !== 'manual';
+  const allowSummary = profile.ai_auto_summary !== false && entry.summary_source !== 'manual';
+  const allowClassification = profile.ai_auto_classify !== false;
+  const enrichment = await enrichContent({
+    title: entry.title,
+    content: entry.content || entry.summary || '',
+    categories,
+    allowTitle,
+    allowSummary,
+    allowClassification,
+  });
 
   const patch: Partial<Entry> = { status: 'classified', updated_at: nowIso() };
-  let autoCreatedId: string | null = null;
+  if (allowTitle && enrichment.title) {
+    patch.title = truncateText(enrichment.title, 200);
+    patch.title_source = enrichment.mode === 'ai' ? 'ai' : 'fallback';
+  }
+  if (allowSummary && enrichment.summary) {
+    patch.summary = truncateText(enrichment.summary, 300);
+    patch.summary_source = enrichment.mode === 'ai' ? 'ai' : 'fallback';
+  }
 
-  if (suggestion.name) {
-    const match = categories.find((c) => c.name.trim().toLowerCase() === suggestion.name.trim().toLowerCase());
-    patch.classification_confidence = suggestion.confidence;
+  if (allowClassification && enrichment.category) {
+    const match = categories.find(
+      (category) => category.name.trim().toLowerCase() === enrichment.category!.trim().toLowerCase(),
+    );
+    patch.classification_confidence = enrichment.confidence;
 
-    if (suggestion.confidence >= autoTh) {
+    if (enrichment.confidence >= autoTh) {
       if (match) {
         patch.category_id = match.id;
       } else {
-        // 高置信度且无匹配分类 → 自动新建分类
-        const created = await createCategory(userId, { name: suggestion.name });
+        const created = await createCategory(userId, { name: enrichment.category });
         patch.category_id = created.id;
-        autoCreatedId = created.id;
       }
       patch.classification_status = 'auto';
       patch.suggested_category_id = null;
-    } else if (suggestion.confidence >= reviewTh) {
-      // 待确认：暂不落库到正式分类，给出建议
+    } else if (enrichment.confidence >= reviewTh) {
       patch.classification_status = 'pending_review';
       patch.category_id = null;
       patch.suggested_category_id = match ? match.id : null;
     } else {
-      // 低置信度 → 未分类，不新建
       patch.classification_status = 'uncategorized';
       patch.category_id = null;
       patch.suggested_category_id = null;
     }
-    if (suggestion.summary) patch.summary = truncateText(suggestion.summary, 300);
   } else {
     patch.classification_status = 'uncategorized';
     patch.category_id = null;
-    patch.classification_confidence = suggestion.confidence || null;
+    patch.classification_confidence = allowClassification ? enrichment.confidence || null : null;
     patch.suggested_category_id = null;
   }
 
-  await getSupabaseClient().from('entries').update(patch as Record<string, unknown>).eq('id', entryId).eq('user_id', userId);
+  const client = getSupabaseClient();
+  await client.from('entries').update(patch as Record<string, unknown>).eq('id', entryId).eq('user_id', userId);
+  await client
+    .from('profiles')
+    .update({
+      ai_last_error: enrichment.error?.message ?? null,
+      ai_last_error_at: enrichment.error ? nowIso() : null,
+      updated_at: nowIso(),
+    })
+    .eq('user_id', userId);
   const updated = (await getEntry(userId, entryId)) as unknown as Entry & { suggested_category_id: string | null };
-  return { ...updated, suggested_category_id: autoCreatedId ?? patch.suggested_category_id ?? updated.suggested_category_id };
+  return { ...updated, suggested_category_id: patch.suggested_category_id ?? updated.suggested_category_id };
 }
 
 // ---------------------------------------------------------------------------

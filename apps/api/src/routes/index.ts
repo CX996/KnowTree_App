@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import multer from 'multer';
 import { requireAuth, ensureProfile } from '../middleware/auth.js';
 import * as categorySvc from '../services/categories.js';
 import * as entrySvc from '../services/entries.js';
@@ -7,7 +8,9 @@ import * as jobSvc from '../services/jobs.js';
 import { getJob, listJobs } from '../lib/task.js';
 import { getSupabaseClient } from '../storage/database/supabase-client.js';
 import { scheduleBackgroundTask } from '../lib/background.js';
-import type { Request, Response } from 'express';
+import { DocumentImportError, parseDocument } from '../services/document-import.js';
+import { EMBEDDING_DIM, isAiConfigured, testAiConnection } from '../services/ai.js';
+import type { NextFunction, Request, Response } from 'express';
 
 // 包装异步 handler，统一错误处理
 const h =
@@ -16,12 +19,31 @@ const h =
     fn(req, res).catch((e) => {
       const message = e instanceof Error ? e.message : String(e);
       console.error(`[api] ${req.method} ${req.originalUrl} -> ${message}`, '\n', e instanceof Error ? e.stack : '');
-      res.status(500).json({ error: message });
+      const status = e instanceof entrySvc.EntryConflictError ? 409 : 500;
+      res.status(status).json({ error: message });
     });
   };
 
 const r = Router();
 r.use(requireAuth);
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024, files: 1 },
+});
+
+const receiveDocument = (req: Request, res: Response, next: NextFunction) => {
+  upload.single('file')(req, res, (error) => {
+    if (!error) {
+      next();
+      return;
+    }
+    const message = error instanceof multer.MulterError && error.code === 'LIMIT_FILE_SIZE'
+      ? '文件超过 10 MB 限制'
+      : '文件上传失败';
+    res.status(400).json({ error: message, code: 'FILE_UPLOAD_FAILED' });
+  });
+};
 
 // Express query 值可能是 string | string[]，统一取单个字符串
 const str = (v: unknown): string | undefined => (typeof v === 'string' ? v : Array.isArray(v) ? v[0] : undefined);
@@ -50,6 +72,54 @@ r.patch('/me', h(async (req, res) => {
   const { data, error } = await getSupabaseClient().from('profiles').update(patch).eq('user_id', user.id).select().single();
   if (error) throw new Error(`更新配置失败: ${error.message}`);
   res.json(data);
+}));
+
+r.get('/ai/status', h(async (req, res) => {
+  const profile = await ensureProfile(req.user!.id);
+  res.json({
+    configured: isAiConfigured(),
+    mode: isAiConfigured() ? 'ai' : 'fallback',
+    chatModel: process.env.OPENAI_CHAT_MODEL?.trim() || null,
+    embeddingModel: process.env.OPENAI_EMBEDDING_MODEL?.trim() || null,
+    embeddingDimension: EMBEDDING_DIM,
+    features: {
+      autoTitle: profile.ai_auto_title !== false,
+      autoSummary: profile.ai_auto_summary !== false,
+      autoClassify: profile.ai_auto_classify !== false,
+      embeddings: profile.ai_embeddings_enabled !== false,
+    },
+    lastError: profile.ai_last_error,
+    lastErrorAt: profile.ai_last_error_at,
+  });
+}));
+
+r.patch('/ai/preferences', h(async (req, res) => {
+  const fields = {
+    ai_auto_title: 'autoTitle',
+    ai_auto_summary: 'autoSummary',
+    ai_auto_classify: 'autoClassify',
+    ai_embeddings_enabled: 'embeddings',
+  } as const;
+  const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  for (const [column, key] of Object.entries(fields)) {
+    if (typeof req.body[key] === 'boolean') patch[column] = req.body[key];
+  }
+  if (Object.keys(patch).length === 1) {
+    res.status(400).json({ error: '没有可更新的 AI 设置' });
+    return;
+  }
+  const { data, error } = await getSupabaseClient()
+    .from('profiles')
+    .update(patch)
+    .eq('user_id', req.user!.id)
+    .select()
+    .single();
+  if (error) throw new Error(`更新 AI 设置失败: ${error.message}`);
+  res.json(data);
+}));
+
+r.post('/ai/test', h(async (_req, res) => {
+  res.json(await testAiConnection());
 }));
 
 // 注销：彻底删除该用户全部数据 + auth 账号
@@ -104,6 +174,38 @@ r.post('/entries/ingest', h(async (req, res) => {
     scheduleBackgroundTask(() => jobSvc.runDueJobs(10));
   }
   res.status(201).json(result);
+}));
+
+r.post('/entries/import', receiveDocument, h(async (req, res) => {
+  if (!req.file) {
+    res.status(400).json({ error: '请选择一个文档', code: 'FILE_MISSING' });
+    return;
+  }
+
+  try {
+    const parsed = await parseDocument({
+      fileName: req.file.originalname,
+      mime: req.file.mimetype,
+      bytes: req.file.buffer,
+    });
+    const result = await entrySvc.ingest(req.user!.id, {
+      content: parsed.markdown,
+      title: str(req.body.title),
+      captureType: 'file',
+      sourceName: parsed.sourceName,
+      sourceMime: parsed.sourceMime,
+    });
+    if ('jobs' in result && result.jobs.length > 0) {
+      scheduleBackgroundTask(() => jobSvc.runDueJobs(10));
+    }
+    res.status(201).json(result);
+  } catch (error) {
+    if (error instanceof DocumentImportError) {
+      res.status(400).json({ error: error.message, code: error.code });
+      return;
+    }
+    throw error;
+  }
 }));
 
 // 列表（静态优先于 :id）
@@ -234,6 +336,11 @@ r.get('/entries/:id/links', h(async (req, res) => {
 
 // 触发归类
 r.post('/entries/:id/classify', h(async (req, res) => {
+  const user = req.user!;
+  res.json(await entrySvc.classifyEntry(user.id, pid(req)));
+}));
+
+r.post('/entries/:id/enrich', h(async (req, res) => {
   const user = req.user!;
   res.json(await entrySvc.classifyEntry(user.id, pid(req)));
 }));

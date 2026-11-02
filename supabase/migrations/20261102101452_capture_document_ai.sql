@@ -17,4 +17,6 @@ alter table public.profiles
   add column ai_auto_title boolean not null default true,
   add column ai_auto_summary boolean not null default true,
   add column ai_auto_classify boolean not null default true,
-  add column ai_embeddings_enabled boolean not null default true;
+  add column ai_embeddings_enabled boolean not null default true,
+  add column ai_last_error text,
+  add column ai_last_error_at timestamptz;

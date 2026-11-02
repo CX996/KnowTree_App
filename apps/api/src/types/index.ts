@@ -124,6 +124,8 @@ export interface Profile {
   ai_auto_summary: boolean;
   ai_auto_classify: boolean;
   ai_embeddings_enabled: boolean;
+  ai_last_error: string | null;
+  ai_last_error_at: string | null;
   created_at: string;
   updated_at: string;
 }
