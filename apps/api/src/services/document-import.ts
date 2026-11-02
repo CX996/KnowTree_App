@@ -127,6 +127,7 @@ async function extractPdf(bytes: Uint8Array): Promise<string> {
   } catch (error) {
     if (error instanceof DocumentImportError) throw error;
     const message = error instanceof Error ? error.message : String(error);
+    console.error('[document-import] PDF parse failed:', error);
     if (message === 'PDF_TIMEOUT') {
       throw new DocumentImportError('FILE_CORRUPT', 'PDF 解析超时，请换一个文件重试');
     }
