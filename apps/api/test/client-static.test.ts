@@ -67,6 +67,15 @@ test('production pages expose one main landmark', async () => {
   }
 });
 
+test('core pages expose headings and switch state', async () => {
+  for (const file of ['index.html', 'library.html', 'inbox.html', 'review.html', 'search.html', 'me.html']) {
+    const html = await readFile(path.join(clientDir, file), 'utf8');
+    assert.match(html, /<h1\b/, `${file} must contain a page heading`);
+  }
+  const me = await readFile(path.join(clientDir, 'me.html'), 'utf8');
+  assert.match(me, /role="switch"[^>]+aria-checked="false"/);
+});
+
 test('production styles include keyboard, motion and minimum target standards', async () => {
   const css = await readFile(path.join(clientDir, 'assets/app.css'), 'utf8');
   assert.match(css, /:focus-visible/);

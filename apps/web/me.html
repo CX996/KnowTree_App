@@ -26,7 +26,7 @@
       </button>
       <div class="row">
         <span data-ic="bell"></span><span class="grow">回溯提醒</span>
-        <button class="switch" id="remind" role="switch" aria-label="回溯提醒"></button>
+        <button class="switch" id="remind" role="switch" aria-label="回溯提醒" aria-checked="false"></button>
       </div>
     </div>
 
@@ -64,7 +64,9 @@
           '<div class="stat"><div class="v">' + s.total + '</div><div class="k">收录</div></div>' +
           '<div class="stat"><div class="v">' + KT.NODES.length + '</div><div class="k">分类</div></div>' +
           '<div class="stat"><div class="v">' + s.week + '</div><div class="k">本周沉淀</div></div>';
-        remind.classList.toggle('on', KT.getSetting('reviewReminder') !== false);
+        var reminderOn = KT.getSetting('reviewReminder') !== false;
+        remind.classList.toggle('on', reminderOn);
+        remind.setAttribute('aria-checked', String(reminderOn));
       }
 
       /* 数据导出：走后端 /export */
