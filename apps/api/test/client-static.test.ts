@@ -63,4 +63,5 @@ test('production styles include keyboard, motion and minimum target standards', 
   assert.match(css, /:focus-visible/);
   assert.match(css, /prefers-reduced-motion/);
   assert.match(css, /min-height:\s*44px/);
+  assert.equal(/--text3:\s*#6E6A63/i.test(css), false, '--text3 fails WCAG AA contrast');
 });
