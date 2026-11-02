@@ -20,14 +20,6 @@
         <span data-ic="download"></span><span class="grow">数据导出</span>
         <span class="val">JSON</span><span data-ic="chev" class="chev"></span>
       </button>
-      <button class="row" id="trashRow">
-        <span data-ic="trash"></span><span class="grow">回收站</span>
-        <span class="val" id="trashCount"></span><span data-ic="chev" class="chev"></span>
-      </button>
-      <button class="row" id="conn">
-        <span data-ic="shield"></span><span class="grow">后端与登录</span>
-        <span class="val" id="connVal"></span><span data-ic="chev" class="chev"></span>
-      </button>
       <button class="row" id="privacy">
         <span data-ic="shield"></span><span class="grow">隐私与训练声明</span>
         <span data-ic="chev" class="chev"></span>
@@ -39,10 +31,6 @@
     </div>
 
     <div class="rows mt16">
-      <button class="row" id="reset">
-        <span data-ic="refresh"></span><span class="grow">重置演示数据</span>
-        <span data-ic="chev" class="chev"></span>
-      </button>
       <button class="row" id="logout">
         <span data-ic="logout"></span><span class="grow">注销账号</span>
         <span data-ic="chev" class="chev"></span>
@@ -50,7 +38,7 @@
     </div>
 
     <div class="t3 s12 mt24" style="text-align:center;line-height:2">
-      知树 KnowTree · 演示原型<br />数据只保存在这台设备的浏览器里
+      知树 KnowTree<br />数据存储在你的 Supabase 账号中
     </div>
   </div>
 
@@ -62,7 +50,6 @@
     (async function () {
       var remind = document.getElementById('remind');
       var statsEl = document.getElementById('stats');
-      var connVal = document.getElementById('connVal');
 
       try {
         await KT.load();
@@ -77,12 +64,7 @@
           '<div class="stat"><div class="v">' + s.total + '</div><div class="k">收录</div></div>' +
           '<div class="stat"><div class="v">' + KT.NODES.length + '</div><div class="k">分类</div></div>' +
           '<div class="stat"><div class="v">' + s.week + '</div><div class="k">本周沉淀</div></div>';
-        document.getElementById('trashCount').textContent = '';
         remind.classList.toggle('on', KT.getSetting('reviewReminder') !== false);
-        if (connVal) {
-          var base = KT.getConfig().apiBase.replace(/^https?:\/\//, '');
-          connVal.textContent = base.length > 24 ? base.slice(0, 24) + '…' : base;
-        }
       }
 
       /* 数据导出：走后端 /export */
@@ -97,15 +79,6 @@
         }
         btn.disabled = false;
       });
-
-      /* 回收站：后端本期无恢复接口 */
-      document.getElementById('trashRow').addEventListener('click', function () {
-        UI.toast('后端本期未提供回收站 / 恢复接口');
-      });
-
-      /* 后端与登录 */
-      var conn = document.getElementById('conn');
-      if (conn) conn.addEventListener('click', function () { UI.go('login.html?next=me.html'); });
 
       /* 隐私与训练声明 */
       document.getElementById('privacy').addEventListener('click', function () {
@@ -129,11 +102,6 @@
         } catch (e) {
           UI.toast('保存失败：' + e.message);
         }
-      });
-
-      /* 重置演示数据：后端数据不支持重置 */
-      document.getElementById('reset').addEventListener('click', function () {
-        UI.toast('后端数据不支持重置为演示数据');
       });
 
       /* 注销账号：DELETE /me/account */

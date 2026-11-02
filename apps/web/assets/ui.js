@@ -11,23 +11,15 @@
     user: '<circle cx="12" cy="8" r="3.4"/><path d="M5 20c1.4-3.2 4-4.6 7-4.6s5.6 1.4 7 4.6"/>',
     back: '<path d="M14.5 5.5 8 12l6.5 6.5"/>',
     x: '<path d="M6 6l12 12M18 6 6 18"/>',
-    star: '<path d="m12 4 2.3 4.9 5.2.6-3.9 3.6 1.1 5.2L12 15.7l-4.7 2.6 1.1-5.2-3.9-3.6 5.2-.6L12 4Z"/>',
-    starfill: '<path fill="currentColor" stroke="none" d="m12 4 2.3 4.9 5.2.6-3.9 3.6 1.1 5.2L12 15.7l-4.7 2.6 1.1-5.2-3.9-3.6 5.2-.6L12 4Z"/>',
     trash: '<path d="M5 7h14M10 7V5h4v2M8 7l.6 12.1c.1 1 .9 1.9 1.9 1.9h3c1 0 1.8-.9 1.9-1.9L16 7"/>',
     move: '<path d="M3.5 7a2 2 0 0 1 2-2h4l2 2.4h7a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2V7Z"/><path d="M12 10.5v5.4M9.6 13.4l2.4 2.4 2.4-2.4"/>',
     link: '<path d="M10 14a4 4 0 0 0 6 .4l2.5-2.5a4 4 0 0 0-5.6-5.6L11.5 7.7"/><path d="M14 10a4 4 0 0 0-6-.4L5.5 12a4 4 0 0 0 5.6 5.6l1.4-1.4"/>',
-    check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
     download: '<path d="M12 4v11M7.5 11 12 15.5 16.5 11M5 19.5h14"/>',
     shield: '<path d="M12 3.5 5 6v5.5c0 4.2 2.8 7.4 7 9 4.2-1.6 7-4.8 7-9V6l-7-2.5Z"/><path d="m9 11.5 2.2 2.2 3.8-4"/>',
     bell: '<path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2.5h-15L6 16Z"/><path d="M10 20a2.2 2.2 0 0 0 4 0"/>',
-    refresh: '<path d="M19.2 12a7.2 7.2 0 1 1-2.1-5.1M19.2 3.6v4h-4"/>',
     logout: '<path d="M14 4.5H7a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h7M10.5 12h9.5M16.5 8.5 20 12l-3.5 3.5"/>',
     chev: '<path d="m9.5 5.5 6.5 6.5-6.5 6.5"/>',
-    plus: '<path d="M12 5.5v13M5.5 12h13"/>',
-    eye: '<path d="M2.5 12S6 5.8 12 5.8 21.5 12 21.5 12 18 18.2 12 18.2 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="2.6"/>',
-    merge: '<circle cx="6" cy="6" r="2.2"/><circle cx="6" cy="18" r="2.2"/><circle cx="18" cy="12" r="2.2"/><path d="M6 8.2v7.6M7.9 7.3 15.8 11M7.9 16.7l7.9-3.7"/>',
-    book: '<path d="M5 5.5A1.5 1.5 0 0 1 6.5 4H19v14.5H6.7A1.7 1.7 0 0 0 5 20.2V5.5Z"/><path d="M5 18.5V20a1.5 1.5 0 0 0 1.5 1.5H19"/>',
-    restore: '<path d="M4.8 9a7.5 7.5 0 1 1 .4 6M4.8 4.5V9h4.5"/>'
+    merge: '<circle cx="6" cy="6" r="2.2"/><circle cx="6" cy="18" r="2.2"/><circle cx="18" cy="12" r="2.2"/><path d="M6 8.2v7.6M7.9 7.3 15.8 11M7.9 16.7l7.9-3.7"/>'
   };
 
   function svg(name) {
@@ -108,15 +100,10 @@
     }
   }
 
-  function toastUndo(msg) {
-    /* 后端无撤销栈，退化为普通提示 */
-    toast(msg);
-  }
-
-  /* 跨页 toast：下一页加载后自动弹出；undo:true 时带「撤销」 */
-  function flash(msg, opts) {
+  /* 跨页 toast：下一页加载后自动弹出 */
+  function flash(msg) {
     try {
-      sessionStorage.setItem('kt_flash', JSON.stringify({ msg: msg, undo: !!(opts && opts.undo) }));
+      sessionStorage.setItem('kt_flash', JSON.stringify({ msg: msg }));
     } catch (e) { /* ignore */ }
   }
   function consumeFlash() {
@@ -245,7 +232,6 @@
       meta += '<span>' + esc(KT.nodeName(c.nodeId)) + '</span><span class="dot-sep"></span>';
     }
     meta += '<span>' + timeAgo(c.createdAt) + '</span>';
-    if (c.starred) meta += '<span class="dot-sep"></span><span style="color:var(--gold)">已收藏</span>';
     var tags = c.tags.map(function (t) { return '<span class="tag">' + esc(t) + '</span>'; }).join('');
     return '<a class="card" href="detail.html?id=' + encodeURIComponent(c.id) + '">' +
       '<div class="card__title">' + esc(c.title) + '</div>' +
@@ -270,7 +256,7 @@
   window.UI = {
     svg: svg, hydrateIcons: hydrateIcons,
     esc: esc, timeAgo: timeAgo, q: q, go: go, back: back,
-    toast: toast, toastUndo: toastUndo, flash: flash,
+    toast: toast, flash: flash,
     confirm: confirmDialog, openSheet: openSheet, nodePicker: nodePicker,
     cardHTML: cardHTML, emptyHTML: emptyHTML
   };

@@ -30,3 +30,30 @@ test('login page does not expose developer API and token fields', async () => {
   assert.match(login, /id="pwd"/);
   assert.match(login, /requestedNext/);
 });
+
+test('production UI exposes only supported core flows', async () => {
+  const pages = new Set(await readdir(clientDir));
+  assert.equal(pages.has('node.html'), false);
+
+  for (const page of ['index.html', 'library.html', 'detail.html', 'capture.html', 'me.html']) {
+    const html = await readFile(path.join(clientDir, page), 'utf8');
+    for (const forbidden of ['收藏', '回收站', '重置演示数据', '配置后端', 'node.html?id=']) {
+      assert.equal(html.includes(forbidden), false, `${page} still contains ${forbidden}`);
+    }
+  }
+
+  const index = await readFile(path.join(clientDir, 'index.html'), 'utf8');
+  const capture = await readFile(path.join(clientDir, 'capture.html'), 'utf8');
+  assert.equal(index.includes('7 个节点 · 9 条知识'), false);
+  assert.equal(capture.includes('PPO'), false);
+  assert.equal(capture.includes('从笔记导入'), false);
+});
+
+test('login uses standard form semantics', async () => {
+  const login = await readFile(path.join(clientDir, 'login.html'), 'utf8');
+  assert.match(login, /<form[^>]+id="loginForm"/);
+  assert.match(login, /<label[^>]+for="email"/);
+  assert.match(login, /type="email"/);
+  assert.match(login, /autocomplete="current-password"/);
+  assert.match(login, /type="submit"/);
+});

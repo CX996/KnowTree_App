@@ -22,12 +22,6 @@
 
     <textarea class="textarea mt16" id="text" placeholder="把脑子里那段想法、那段笔记，直接丢进来…"></textarea>
 
-    <div class="mt12" style="display:flex;gap:10px">
-      <button class="btn btn-ghost grow" id="import">
-        <span data-ic="book"></span>从笔记导入
-      </button>
-    </div>
-
     <button class="btn btn-primary btn-block mt16" id="submit">丢进去</button>
   </div>
 
@@ -37,7 +31,6 @@
     (async function () {
       var text = document.getElementById('text');
       var submit = document.getElementById('submit');
-      var importing = false;
 
       function leave() { UI.go('index.html'); }
       document.getElementById('bg').addEventListener('click', leave);
@@ -48,25 +41,6 @@
       } catch (e) {
         /* 未登录时 KT.load 会跳登录页，这里不打断 */
       }
-
-      document.getElementById('import').addEventListener('click', function () {
-        if (importing) return;
-        importing = true;
-        var sample = '重看 PPO 实现时注意：clip 裁的不是动作概率，而是重要性采样比超出 1±ε 后的更新意愿；A>0 只奖到上限，A<0 只罚到下限。另外 reward 曲线抖动先别慌，多半是学习率和 batch 不匹配，或者环境本身随机。';
-        text.value = '';
-        submit.disabled = true;
-        var i = 0;
-        var timer = setInterval(function () {
-          i += 4;
-          text.value = sample.slice(0, i);
-          if (i >= sample.length) {
-            clearInterval(timer);
-            submit.disabled = false;
-            importing = false;
-            text.focus();
-          }
-        }, 24);
-      });
 
       submit.addEventListener('click', async function () {
         var v = text.value.trim();

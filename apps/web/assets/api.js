@@ -158,7 +158,6 @@
       tags: cat ? [cat.name] : [],
       source: e.source_url || TYPE_LABEL[e.capture_type] || '手动丢入',
       createdAt: e.created_at,
-      starred: false,
       deleted: !!e.deleted_at,
       links: (cache.links[e.id] || []).map(function (l) {
         return { to: l.target_entry_id, sim: l.score, title: l.target ? l.target.title : '' };
@@ -268,11 +267,9 @@
       dups: all.filter(function (c) { return c.status === 'dup'; })
     };
   }
-  function starred() { return []; } /* 后端暂无收藏字段 */
   function uncategorized() {
     return visible().filter(function (c) { return !c.nodeId && c.status !== 'dup'; });
   }
-  function trash() { return []; } /* 后端软删除后不再返回，无回收站查询接口 */
   function stats() {
     var week = Date.now() - 7 * 864e5;
     var all = visible();
@@ -293,7 +290,7 @@
           c = {
             id: it.id, title: it.title || '（无标题）', summary: it.summary || '',
             body: [], nodeId: it.category_id || null, status: 'ok', tags: [],
-            source: it.source_url || '', createdAt: it.created_at, links: [], starred: false
+            source: it.source_url || '', createdAt: it.created_at, links: []
           };
         }
         c.score = it.score;
@@ -393,8 +390,6 @@
       return true;
     });
   }
-  function restoreCard() { return Promise.reject(new Error('后端暂未提供恢复接口（软删除后不可撤销）')); }
-  function toggleStar() { return Promise.reject(new Error('后端暂未提供收藏字段')); }
   function processAllInbox() {
     var list = inbox().pending.filter(function (c) { return c.suggestedNode; });
     var n = 0;
@@ -413,9 +408,6 @@
         return true;
       });
   }
-  function undo() { return false; } /* 无服务端撤销栈 */
-  function reset() { return Promise.reject(new Error('后端数据不支持重置为演示数据')); }
-
   function setSetting(key, value) {
     if (key !== 'reviewReminder') return Promise.resolve(false);
     return req('/me', { method: 'PATCH', body: { daily_recall_enabled: !!value } }).then(function (profile) {
@@ -527,12 +519,12 @@
     NODES: [],
     load: load, loadDetail: loadDetail, loadReview: loadReview, refreshEntry: refreshEntry,
     visible: visible, classified: classified, byId: byId, nodeName: nodeName,
-    nodeCards: nodeCards, countInNode: countInNode, inbox: inbox, starred: starred,
-    uncategorized: uncategorized, trash: trash, search: search, reviewQueue: reviewQueue,
+    nodeCards: nodeCards, countInNode: countInNode, inbox: inbox,
+    uncategorized: uncategorized, search: search, reviewQueue: reviewQueue,
     stats: stats,
     capture: capture, pollJobs: pollJobs, assign: assign, mergeDup: mergeDup, keepDup: keepDup,
-    removeCard: removeCard, restoreCard: restoreCard, toggleStar: toggleStar,
-    processAllInbox: processAllInbox, markSeen: markSeen, undo: undo, reset: reset,
+    removeCard: removeCard,
+    processAllInbox: processAllInbox, markSeen: markSeen,
     setSetting: setSetting, getSetting: getSetting,
     exportFile: exportFile, wipe: wipe,
     loadPublicConfig: loadPublicConfig,

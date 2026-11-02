@@ -16,9 +16,15 @@
       </div>
     </div>
 
-    <input class="textarea mt24" id="email" style="min-height:48px" placeholder="邮箱" autocomplete="username" />
-    <input class="textarea mt8" id="pwd" type="password" style="min-height:48px" placeholder="密码" autocomplete="current-password" />
-    <button class="btn btn-primary btn-block mt16" id="login">登录</button>
+    <form id="loginForm" class="mt24" novalidate>
+      <label class="t3 s12" for="email">邮箱</label>
+      <input class="textarea mt8" id="email" type="email" style="min-height:48px" placeholder="name@example.com" autocomplete="email" required />
+
+      <label class="t3 s12 mt16" for="pwd">密码</label>
+      <input class="textarea mt8" id="pwd" type="password" style="min-height:48px" placeholder="输入密码" autocomplete="current-password" required />
+
+      <button class="btn btn-primary btn-block mt16" id="login" type="submit">登录</button>
+    </form>
     <div class="t3 s12 mt20" id="msg" aria-live="polite"></div>
     <div class="t3 s12 mt12">账号目前由管理员预先创建。登录凭证只保存在当前浏览器的本地存储中。</div>
   </div>
@@ -30,6 +36,7 @@
       function el(id) { return document.getElementById(id); }
       var requestedNext = UI.q('next') || 'index.html';
       var next = /^[A-Za-z0-9_-]+\.html(?:\?.*)?$/.test(requestedNext) ? requestedNext : 'index.html';
+      var form = el('loginForm');
       var button = el('login');
 
       function msg(text) { el('msg').textContent = text || ''; }
@@ -41,9 +48,15 @@
         button.disabled = true;
       });
 
-      el('login').addEventListener('click', function () {
+      form.addEventListener('submit', function (event) {
+        event.preventDefault();
         var email = el('email').value.trim();
         var password = el('pwd').value;
+        if (!email || !password) {
+          msg('请输入邮箱和密码');
+          (!email ? el('email') : el('pwd')).focus();
+          return;
+        }
         button.disabled = true;
         msg('登录中…');
         KT.loginWithPassword(email, password).then(function () {

@@ -23,8 +23,13 @@
     <div class="seg mt16" id="seg">
       <button data-f="all" class="on">全部 <span class="n"></span></button>
       <button data-f="pending">待确认 <span class="n"></span></button>
-      <button data-f="star">未分类 <span class="n"></span></button>
+      <button data-f="uncategorized">未分类 <span class="n"></span></button>
     </div>
+
+    <label class="t3 s12 mt16" for="categoryFilter">按分类筛选</label>
+    <select class="textarea mt8" id="categoryFilter" style="min-height:48px">
+      <option value="">全部分类</option>
+    </select>
 
     <div class="mt16" id="list"></div>
   </div>
@@ -38,6 +43,8 @@
       var filter = 'all';
       var seg = document.getElementById('seg');
       var list = document.getElementById('list');
+      var categoryFilter = document.getElementById('categoryFilter');
+      var requestedCategory = UI.q('category') || '';
 
       list.innerHTML = UI.emptyHTML('加载中…', '正在从后端取知识库');
       try {
@@ -52,28 +59,40 @@
         return {
           all: KT.visible().length,
           pending: box.pending.length + box.dups.length,
-          star: KT.uncategorized().length
+          uncategorized: KT.uncategorized().length
         };
+      }
+
+      function syncSegments() {
+        seg.querySelectorAll('button').forEach(function (button) {
+          button.classList.toggle('on', button.getAttribute('data-f') === filter);
+        });
       }
 
       function render() {
         var c = counts();
         seg.querySelector('[data-f="all"] .n').textContent = c.all;
         seg.querySelector('[data-f="pending"] .n').textContent = c.pending;
-        seg.querySelector('[data-f="star"] .n').textContent = c.star;
+        seg.querySelector('[data-f="uncategorized"] .n').textContent = c.uncategorized;
 
         var cards;
         if (filter === 'pending') {
           var box = KT.inbox();
           cards = box.pending.concat(box.dups);
-        } else if (filter === 'star') {
+        } else if (filter === 'uncategorized') {
           cards = KT.uncategorized();
         } else {
           cards = KT.visible();
         }
 
+        if (categoryFilter.value) {
+          cards = cards.filter(function (card) {
+            return card.nodeId === categoryFilter.value;
+          });
+        }
+
         if (!cards.length) {
-          list.innerHTML = filter === 'star'
+          list.innerHTML = filter === 'uncategorized'
             ? UI.emptyHTML('没有未分类的条目', '待确认的条目处理完就会归到分类下')
             : UI.emptyHTML('这里空空如也', '丢一条进来，系统会试着挂到树上');
           return;
@@ -85,7 +104,24 @@
         var b = e.target.closest('button');
         if (!b) return;
         filter = b.getAttribute('data-f');
-        seg.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); });
+        syncSegments();
+        render();
+      });
+
+      KT.NODES.forEach(function (node) {
+        var option = document.createElement('option');
+        option.value = node.id;
+        option.textContent = node.name;
+        categoryFilter.appendChild(option);
+      });
+
+      categoryFilter.value = KT.NODES.some(function (node) {
+        return node.id === requestedCategory;
+      }) ? requestedCategory : '';
+
+      categoryFilter.addEventListener('change', function () {
+        filter = 'all';
+        syncSegments();
         render();
       });
 

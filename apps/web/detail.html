@@ -17,7 +17,6 @@
   </div>
 
   <div class="actionbar" id="actionbar" hidden>
-    <button id="starBtn"><span data-ic="star"></span><span>收藏</span></button>
     <button id="moveBtn"><span data-ic="move"></span><span>改节点</span></button>
     <button id="delBtn"><span data-ic="trash"></span><span>删除</span></button>
   </div>
@@ -55,7 +54,7 @@
 
         var html = '';
         if (c.nodeId) {
-          html += '<a class="t3 s13" href="node.html?id=' + encodeURIComponent(c.nodeId) + '">知识树 / ' + UI.esc(KT.nodeName(c.nodeId)) + '</a>';
+          html += '<a class="t3 s13" href="library.html?category=' + encodeURIComponent(c.nodeId) + '">知识库 / ' + UI.esc(KT.nodeName(c.nodeId)) + '</a>';
         } else {
           html += '<span class="t3 s13">未归类</span>';
         }
@@ -107,10 +106,6 @@
         });
       }
 
-      document.getElementById('starBtn').addEventListener('click', function () {
-        UI.toast('后端暂未提供收藏字段');
-      });
-
       document.getElementById('moveBtn').addEventListener('click', function () {
         var c = card();
         if (!c) return;
@@ -129,7 +124,7 @@
       document.getElementById('delBtn').addEventListener('click', function () {
         UI.confirm({
           title: '删除这条知识？',
-          desc: '后端会把它软删除，之后不再出现在知识库里（本期无恢复接口）。',
+          desc: '删除后，这条知识不再出现在知识库中。',
           ok: '删除'
         }).then(async function (ok) {
           if (!ok) return;

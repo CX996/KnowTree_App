@@ -46,7 +46,7 @@
         var q = input.value.trim();
         var my = ++seq;
         if (!q) {
-          out.innerHTML = '<div class="empty"><div class="t">搜点什么</div><div>试试「PPO」「探索」「认知负荷」</div></div>';
+          out.innerHTML = '<div class="empty"><div class="t">搜索你的知识</div><div>输入标题、标签或正文中的关键词</div></div>';
           return;
         }
         out.innerHTML = '<div class="t3 s13 mt20">搜索中…</div>';
@@ -63,7 +63,7 @@
         if (r.nodes.length) {
           html += '<div class="mt20 mb12 t3 s13">命中分类</div><div style="display:flex;gap:8px;flex-wrap:wrap">' +
             r.nodes.map(function (n) {
-              return '<a class="nchip" style="min-height:36px;padding:4px 14px;font-size:14px" href="node.html?id=' +
+              return '<a class="nchip" style="min-height:36px;padding:4px 14px;font-size:14px" href="library.html?category=' +
                 encodeURIComponent(n.id) + '">' + UI.esc(n.name) + ' · ' + KT.countInNode(n.id) + ' 条</a>';
             }).join('') + '</div>';
         }
