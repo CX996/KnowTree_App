@@ -58,6 +58,15 @@ test('login uses standard form semantics', async () => {
   assert.match(login, /type="submit"/);
 });
 
+test('production pages expose one main landmark', async () => {
+  const files = (await readdir(clientDir)).filter((file) => file.endsWith('.html'));
+  for (const file of files) {
+    const html = await readFile(path.join(clientDir, file), 'utf8');
+    assert.equal((html.match(/<main\b/g) ?? []).length, 1, `${file} must contain one <main>`);
+    assert.equal((html.match(/<\/main>/g) ?? []).length, 1, `${file} must close <main>`);
+  }
+});
+
 test('production styles include keyboard, motion and minimum target standards', async () => {
   const css = await readFile(path.join(clientDir, 'assets/app.css'), 'utf8');
   assert.match(css, /:focus-visible/);
