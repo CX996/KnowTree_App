@@ -49,7 +49,7 @@ test('extracts text-layer pdf', async () => {
   const result = await parseDocument({
     fileName: 'report.pdf',
     mime: 'application/pdf',
-    bytes: await pdf.save(),
+    bytes: Buffer.from(await pdf.save()),
   });
 
   assert.match(result.markdown, /PDF body text for KnowTree import/);

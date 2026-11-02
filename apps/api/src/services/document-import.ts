@@ -98,13 +98,14 @@ function createTurndownService(): TurndownService {
 }
 
 async function extractPdf(bytes: Uint8Array): Promise<string> {
-  if (!hasPdfMagic(bytes)) {
+  const binary = new Uint8Array(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  if (!hasPdfMagic(binary)) {
     throw new DocumentImportError('FILE_CORRUPT', 'PDF 文件头无效');
   }
 
   let timer: NodeJS.Timeout | undefined;
   try {
-    const pdf = await getDocumentProxy(bytes, { maxImageSize: 16_777_216 });
+    const pdf = await getDocumentProxy(binary, { maxImageSize: 16_777_216 });
     if (pdf.numPages > MAX_PDF_PAGES) {
       throw new DocumentImportError('FILE_TOO_LARGE', 'PDF 页数超过 200 页');
     }
