@@ -159,10 +159,18 @@
     bd.className = 'backdrop';
     var sheet = document.createElement('div');
     sheet.className = 'sheet';
-    sheet.innerHTML = '<div class="sheet__handle"></div>' +
-      (title ? '<div class="h-sec mb12"></div>' : '') +
+    sheet.setAttribute('role', 'dialog');
+    sheet.setAttribute('aria-modal', 'true');
+    if (title) sheet.setAttribute('aria-label', title);
+    var region = document.createElement('section');
+    region.className = 'sheet__region';
+    region.setAttribute('role', 'region');
+    region.setAttribute('aria-label', title || '弹层内容');
+    region.innerHTML = '<div class="sheet__handle"></div>' +
+      (title ? '<h2 class="h-sec mb12"></h2>' : '') +
       '<div class="sheet__body"></div>';
-    if (title) sheet.querySelector('.h-sec').textContent = title;
+    sheet.appendChild(region);
+    if (title) region.querySelector('.h-sec').textContent = title;
     document.body.appendChild(bd);
     document.body.appendChild(sheet);
     function close() {
@@ -171,7 +179,7 @@
       setTimeout(function () { bd.remove(); sheet.remove(); }, 180);
     }
     bd.addEventListener('click', close);
-    buildBody(sheet.querySelector('.sheet__body'), close);
+    buildBody(region.querySelector('.sheet__body'), close);
     return close;
   }
 

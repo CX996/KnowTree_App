@@ -101,11 +101,14 @@
 
     function statusBanner(cardValue) {
       if (cardValue.status === 'pending' || cardValue.status === 'processing') {
+        const message = cardValue.status === 'processing'
+          ? '解析中，稍后自动归类'
+          : cardValue.suggestedNode
+            ? '建议挂到「' + UI.esc(KT.nodeName(cardValue.suggestedNode)) + '」 · 置信度 ' +
+              (typeof cardValue.confidence === 'number' ? cardValue.confidence.toFixed(2) : '—')
+            : '尚未确定分类 · 去收件箱确认';
         return '<a class="banner mt16" href="inbox.html"><span data-ic="bell"></span>' +
-          '<span class="grow">' + (cardValue.status === 'processing'
-            ? '解析中，稍后自动归类'
-            : '建议挂到「' + UI.esc(KT.nodeName(cardValue.suggestedNode)) + '」 · 置信度 ' +
-              (typeof cardValue.confidence === 'number' ? cardValue.confidence.toFixed(2) : '—')) +
+          '<span class="grow">' + message +
           '</span><span data-ic="chev" style="color:var(--gold)"></span></a>';
       }
       if (cardValue.status === 'dup') {
@@ -116,6 +119,18 @@
           '</span><span data-ic="chev" style="color:var(--gold)"></span></a>';
       }
       return '';
+    }
+
+    function bodyMarkdown(current) {
+      const raw = String(current.rawContent || '');
+      const match = raw.match(/^(#[ \t]+.+?)(?:\n{2,}|\n?$)/);
+      if (match) {
+        const heading = match[1].replace(/^#[ \t]+/, '').trim();
+        if (heading === String(current.title || '').trim()) {
+          return raw.slice(match[0].length);
+        }
+      }
+      return raw;
     }
 
     function render() {
@@ -140,7 +155,7 @@
       if (current.summary) {
         html += '<div class="quote detail-summary">' + UI.esc(current.summary) + '</div>';
       }
-      html += '<article class="markdown-body mt20">' + renderMarkdown(current.rawContent) + '</article>';
+      html += '<article class="markdown-body mt20">' + renderMarkdown(bodyMarkdown(current)) + '</article>';
       html += '<div class="detail-tools mt20"><button class="text-btn" id="retryEnrich" type="button">重新整理标题和摘要</button></div>';
 
       if (current.tags && current.tags.length) {

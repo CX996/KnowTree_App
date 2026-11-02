@@ -106,6 +106,12 @@ test('me page exposes ai capability management', async () => {
   assert.match(me, /id="aiTest"/);
 });
 
+test('bottom sheets expose landmark content', async () => {
+  const ui = await readFile(path.join(clientDir, 'assets/ui.js'), 'utf8');
+  assert.match(ui, /setAttribute\('role', 'region'\)/);
+  assert.match(ui, /setAttribute\('aria-modal', 'true'\)/);
+});
+
 test('production styles include keyboard, motion and minimum target standards', async () => {
   const css = await readFile(path.join(clientDir, 'assets/app.css'), 'utf8');
   assert.match(css, /:focus-visible/);
