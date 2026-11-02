@@ -10,6 +10,7 @@
     "build": "pnpm --dir apps/api build",
     "dev": "pnpm --dir apps/api dev",
     "lint": "pnpm --dir apps/api lint && pnpm --dir apps/api exec tsc -p ../../tsconfig.json",
+    "preflight": "node scripts/deploy-preflight.mjs",
     "test": "node --test scripts/tests/*.test.mjs && pnpm --dir apps/api test",
     "worker": "pnpm --dir apps/api worker"
   },
