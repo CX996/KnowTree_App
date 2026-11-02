@@ -6,7 +6,7 @@ import router from './routes/index.js';
 import { runDueJobs } from './services/jobs.js';
 import { getSupabasePublicConfig } from './storage/database/supabase-client.js';
 
-const defaultStaticDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../client');
+const defaultStaticDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../web');
 
 interface AppOptions {
   staticDir?: string | false;

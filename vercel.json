@@ -3,7 +3,7 @@
   "functions": {
     "server.ts": {
       "maxDuration": 300,
-      "includeFiles": "client/**/*"
+      "includeFiles": "apps/web/**/*"
     }
   },
   "crons": [

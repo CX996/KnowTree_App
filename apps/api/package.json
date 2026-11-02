@@ -1,5 +1,5 @@
 {
-  "name": "@knowtree/server",
+  "name": "@knowtree/api",
   "private": true,
   "type": "module",
   "scripts": {

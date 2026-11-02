@@ -22,7 +22,7 @@ test('createApp exposes a health endpoint without starting its own listener', as
 });
 
 test('Vercel root entrypoint exports the same Express application contract', async (t) => {
-  const { default: vercelApp } = await import('../../server.js');
+  const { default: vercelApp } = await import('../../../server.js');
   const server = createServer(vercelApp);
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
   t.after(() => closeServer(server));

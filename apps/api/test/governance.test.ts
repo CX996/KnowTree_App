@@ -4,7 +4,7 @@ import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 
 async function sourceText(dir: string): Promise<string> {
   const files = await readdir(dir, { recursive: true, withFileTypes: true });
@@ -18,9 +18,9 @@ async function sourceText(dir: string): Promise<string> {
 
 test('production source has no Coze or direct Postgres coupling', async () => {
   const production = [
-    await sourceText(path.join(root, 'server/src')),
-    await sourceText(path.join(root, 'client')),
-    await readFile(path.join(root, 'server/package.json'), 'utf8'),
+    await sourceText(path.join(root, 'apps/api/src')),
+    await sourceText(path.join(root, 'apps/web')),
+    await readFile(path.join(root, 'apps/api/package.json'), 'utf8'),
   ].join('\n');
 
   assert.equal(production.includes('coze-coding-dev-sdk'), false);
@@ -30,7 +30,7 @@ test('production source has no Coze or direct Postgres coupling', async () => {
 });
 
 test('serverless app has no persistent listener or timer', async () => {
-  const app = await readFile(path.join(root, 'server/src/app.ts'), 'utf8');
+  const app = await readFile(path.join(root, 'apps/api/src/app.ts'), 'utf8');
 
   assert.equal(app.includes('.listen('), false);
   assert.equal(app.includes('setInterval('), false);
@@ -71,15 +71,15 @@ test('Vercel uses the root Express entrypoint and a protected daily cron', async
   };
 
   assert.match(entry, /import express from 'express'/);
-  assert.match(entry, /path\.join\(process\.cwd\(\), 'client'\)/);
+  assert.match(entry, /path\.join\(process\.cwd\(\), 'apps\/web'\)/);
   assert.equal(rootPackage.dependencies?.express, '4.22.3');
-  assert.equal(vercel.functions?.['server.ts']?.includeFiles, 'client/**/*');
+  assert.equal(vercel.functions?.['server.ts']?.includeFiles, 'apps/web/**/*');
   assert.equal(vercel.functions?.['server.ts']?.maxDuration, 300);
   assert.deepEqual(vercel.crons, [{ path: '/api/v1/cron/jobs', schedule: '0 8 * * *' }]);
 });
 
 test('authenticated requests verify the token and run inside the user RLS context', async () => {
-  const auth = await readFile(path.join(root, 'server/src/middleware/auth.ts'), 'utf8');
+  const auth = await readFile(path.join(root, 'apps/api/src/middleware/auth.ts'), 'utf8');
 
   assert.match(auth, /createUserClient\(token\)/);
   assert.match(auth, /getUser\(token\)/);

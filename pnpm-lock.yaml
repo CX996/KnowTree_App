@@ -8,9 +8,9 @@ importers:
 
   .:
     dependencies:
-      '@knowtree/server':
+      '@knowtree/api':
         specifier: workspace:*
-        version: link:server
+        version: link:apps/api
       express:
         specifier: 4.22.3
         version: 4.22.3
@@ -25,7 +25,7 @@ importers:
         specifier: 5.9.3
         version: 5.9.3
 
-  server:
+  apps/api:
     dependencies:
       '@supabase/supabase-js':
         specifier: 2.118.0

@@ -4,7 +4,7 @@ import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-const clientDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../client');
+const clientDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../web');
 
 test('production HTML has no Coze runtime injection', async () => {
   const files = (await readdir(clientDir)).filter((file) => file.endsWith('.html'));
