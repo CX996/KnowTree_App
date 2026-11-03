@@ -44,6 +44,7 @@ Vercel / Express
 ```
 
 - 用户请求使用 publishable key + access token，执行受 RLS 约束。
+- 浏览器登录、注册、找回密码走同源 `/api/v1/auth/*` 代理，不直接依赖手机访问 Supabase 域名。
 - 后台任务和账号管理使用只存在服务端的 Supabase secret key。
 - 收录后由 Vercel `waitUntil` 处理任务，Cron 负责补偿重试。
 - 未配置 AI 时使用规则分类和关键词搜索降级。

@@ -28,19 +28,17 @@ export function parseAuthCallback(hash) {
   };
 }
 
-function authUrl(config, path, redirectTo) {
-  const base = String(config?.supabaseUrl || '').replace(/\/+$/, '');
+function authUrl(path, redirectTo) {
   const query = redirectTo
     ? `?${new URLSearchParams({ redirect_to: redirectTo }).toString()}`
     : '';
-  return `${base}/auth/v1/${path}${query}`;
+  return `/api/v1/auth/${path}${query}`;
 }
 
-async function authRequest(url, apiKey, init) {
+async function authRequest(url, init) {
   const response = await fetch(url, {
     ...init,
     headers: {
-      apikey: apiKey,
       'Content-Type': 'application/json',
       ...(init?.headers || {}),
     },
@@ -61,8 +59,7 @@ async function authRequest(url, apiKey, init) {
 
 export async function signUpWithPassword(config, email, password, emailRedirectTo) {
   const body = await authRequest(
-    authUrl(config, 'signup', emailRedirectTo),
-    config.supabaseKey,
+    authUrl('register', emailRedirectTo),
     {
       method: 'POST',
       body: JSON.stringify({
@@ -87,8 +84,7 @@ export async function signUpWithPassword(config, email, password, emailRedirectT
 
 export async function requestPasswordReset(config, email, redirectTo) {
   return authRequest(
-    authUrl(config, 'recover', redirectTo),
-    config.supabaseKey,
+    authUrl('recover', redirectTo),
     {
       method: 'POST',
       body: JSON.stringify({ email }),
@@ -98,11 +94,10 @@ export async function requestPasswordReset(config, email, redirectTo) {
 
 export async function updatePassword(config, accessToken, password) {
   return authRequest(
-    authUrl(config, 'user'),
-    config.supabaseKey,
+    authUrl('password'),
     {
       method: 'PUT',
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers: { 'x-session': accessToken },
       body: JSON.stringify({ password }),
     },
   );

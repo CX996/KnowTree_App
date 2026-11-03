@@ -52,6 +52,14 @@ test('login page does not expose developer API and token fields', async () => {
   assert.match(login, /requestedNext/);
 });
 
+test('browser auth and refresh use same-origin proxy endpoints', async () => {
+  const api = await readFile(path.join(clientDir, 'assets/api.js'), 'utf8');
+  assert.match(api, /req\('\/auth\/login'/);
+  assert.match(api, /req\('\/auth\/refresh'/);
+  assert.match(api, /req\('\/auth\/refresh',\s*\{[\s\S]*_retryAuth: true/);
+  assert.equal(api.includes('/auth/v1/token?grant_type=password'), false);
+});
+
 test('production UI exposes only supported core flows', async () => {
   const pages = new Set(await readdir(clientDir));
   assert.equal(pages.has('node.html'), false);

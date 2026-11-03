@@ -4,6 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import router from './routes/index.js';
 import { runDueJobs } from './services/jobs.js';
+import { forwardSupabaseAuth } from './services/auth-proxy.js';
 import { getSupabasePublicConfig } from './storage/database/supabase-client.js';
 
 const defaultStaticDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../web');
@@ -39,6 +40,90 @@ export function configureApp(app: express.Express, options: AppOptions = {}) {
       res.status(503).json({ error: '服务配置暂时未加载，请刷新页面重试' });
     }
   });
+
+  const authRoute = (
+    handler: (req: Request) => Promise<Awaited<ReturnType<typeof forwardSupabaseAuth>>>,
+  ) => async (req: Request, res: Response) => {
+    try {
+      const result = await handler(req);
+      res.setHeader('Cache-Control', 'no-store');
+      res.status(result.status).type(result.contentType).send(result.body);
+    } catch (error) {
+      console.error('[api] auth proxy failed:', error instanceof Error ? error.message : String(error));
+      res.setHeader('Cache-Control', 'no-store');
+      res.status(503).json({ error: '登录服务暂时不可用，请稍后重试' });
+    }
+  };
+
+  app.post('/api/v1/auth/login', authRoute(async (req) => {
+    const email = typeof req.body?.email === 'string' ? req.body.email.trim() : '';
+    const password = typeof req.body?.password === 'string' ? req.body.password : '';
+    if (!email || !password) {
+      return { status: 400, contentType: 'application/json; charset=utf-8', body: JSON.stringify({ error: '请输入邮箱和密码' }) };
+    }
+    return forwardSupabaseAuth({
+      path: 'token?grant_type=password',
+      body: { email, password },
+    });
+  }));
+
+  app.post('/api/v1/auth/register', authRoute(async (req) => {
+    const email = typeof req.body?.email === 'string' ? req.body.email.trim() : '';
+    const password = typeof req.body?.password === 'string' ? req.body.password : '';
+    const redirectTo = typeof req.body?.redirectTo === 'string' ? req.body.redirectTo : '';
+    if (!email || !password) {
+      return { status: 400, contentType: 'application/json; charset=utf-8', body: JSON.stringify({ error: '请输入邮箱和密码' }) };
+    }
+    const query = redirectTo ? `?${new URLSearchParams({ redirect_to: redirectTo }).toString()}` : '';
+    return forwardSupabaseAuth({
+      path: `signup${query}`,
+      body: {
+        email,
+        password,
+        data: {},
+        gotrue_meta_security: { captcha_token: null },
+      },
+    });
+  }));
+
+  app.post('/api/v1/auth/recover', authRoute(async (req) => {
+    const email = typeof req.body?.email === 'string' ? req.body.email.trim() : '';
+    const redirectTo = typeof req.body?.redirectTo === 'string' ? req.body.redirectTo : '';
+    if (!email) {
+      return { status: 400, contentType: 'application/json; charset=utf-8', body: JSON.stringify({ error: '请输入注册邮箱' }) };
+    }
+    const query = redirectTo ? `?${new URLSearchParams({ redirect_to: redirectTo }).toString()}` : '';
+    return forwardSupabaseAuth({
+      path: `recover${query}`,
+      body: { email },
+    });
+  }));
+
+  app.post('/api/v1/auth/refresh', authRoute(async (req) => {
+    const refreshToken = typeof req.body?.refresh_token === 'string' ? req.body.refresh_token : '';
+    if (!refreshToken) {
+      return { status: 400, contentType: 'application/json; charset=utf-8', body: JSON.stringify({ error: '登录状态已失效' }) };
+    }
+    return forwardSupabaseAuth({
+      path: 'token?grant_type=refresh_token',
+      body: { refresh_token: refreshToken },
+    });
+  }));
+
+  app.put('/api/v1/auth/password', authRoute(async (req) => {
+    const password = typeof req.body?.password === 'string' ? req.body.password : '';
+    const raw = req.headers['x-session'];
+    const accessToken = Array.isArray(raw) ? raw[0] : raw;
+    if (!password || !accessToken) {
+      return { status: 400, contentType: 'application/json; charset=utf-8', body: JSON.stringify({ error: '重置链接无效或已过期' }) };
+    }
+    return forwardSupabaseAuth({
+      path: 'user',
+      method: 'PUT',
+      body: { password },
+      accessToken,
+    });
+  }));
 
   app.get('/api/v1/cron/jobs', async (req, res) => {
     const secret = process.env.CRON_SECRET?.trim();

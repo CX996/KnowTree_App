@@ -589,41 +589,29 @@
   function refreshAccessToken() {
     var savedRefresh = refreshToken();
     if (!savedRefresh) return Promise.reject(new Error('没有可用的刷新令牌'));
-    return loadPublicConfig().then(function (config) {
-      var url = String(config.supabaseUrl).replace(/\/+$/, '');
-      return fetch(url + '/auth/v1/token?grant_type=refresh_token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', apikey: config.supabaseKey },
-        body: JSON.stringify({ refresh_token: savedRefresh })
-      });
-    }).then(function (response) {
-      return response.json().then(function (body) {
-        if (!response.ok || !body.access_token) {
-          throw new Error(body.error_description || body.msg || body.error || '刷新登录失败');
-        }
-        setToken(body.access_token, body.refresh_token || savedRefresh);
-        return body;
-      });
+    return req('/auth/refresh', {
+      method: 'POST',
+      body: { refresh_token: savedRefresh },
+      timeoutMs: 30000,
+      _retryAuth: true
+    }).then(function (body) {
+      if (!body.access_token) throw new Error('刷新登录失败');
+      setToken(body.access_token, body.refresh_token || savedRefresh);
+      return body;
     });
   }
 
-  /* 登录：Supabase 邮箱密码。账号由项目管理员预先创建。 */
+  /* 登录通过同源 API 代理，避免移动网络直接访问 Supabase 域名。 */
   function loginWithPassword(email, password) {
     if (!email || !password) return Promise.reject(new Error('请输入邮箱和密码'));
-    return loadPublicConfig().then(function (config) {
-      var url = String(config.supabaseUrl).replace(/\/+$/, '');
-      return fetch(url + '/auth/v1/token?grant_type=password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', apikey: config.supabaseKey },
-        body: JSON.stringify({ email: email, password: password })
-      });
-    }).then(function (response) {
-      return response.json().then(function (body) {
-        if (!response.ok) throw new Error(body.error_description || body.msg || body.error || '登录失败');
-        if (!body.access_token) throw new Error('登录响应缺少 access_token');
-        setToken(body.access_token, body.refresh_token || '');
-        return body;
-      });
+    return req('/auth/login', {
+      method: 'POST',
+      body: { email: email, password: password },
+      timeoutMs: 30000
+    }).then(function (body) {
+      if (!body.access_token) throw new Error('登录响应缺少 access_token');
+      setToken(body.access_token, body.refresh_token || '');
+      return body;
     });
   }
 

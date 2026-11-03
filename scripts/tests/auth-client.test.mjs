@@ -58,9 +58,12 @@ test('sign up requests email confirmation through Supabase Auth', async (t) => {
     'https://knowtree-app.vercel.app/login.html?confirmed=1',
   );
 
-  assert.match(requestUrl, /\/auth\/v1\/signup\?redirect_to=/);
+  assert.equal(
+    requestUrl,
+    '/api/v1/auth/register?redirect_to=https%3A%2F%2Fknowtree-app.vercel.app%2Flogin.html%3Fconfirmed%3D1',
+  );
   assert.equal(requestInit.method, 'POST');
-  assert.equal(requestInit.headers.apikey, 'public-key');
+  assert.equal(requestInit.headers.apikey, undefined);
   assert.deepEqual(JSON.parse(requestInit.body), {
     email: 'reader@example.com',
     password: 'abc12345',
@@ -89,7 +92,10 @@ test('password recovery uses the reset page as its redirect target', async (t) =
     'https://knowtree-app.vercel.app/reset-password.html',
   );
 
-  assert.match(requestUrl, /\/auth\/v1\/recover\?redirect_to=/);
+  assert.equal(
+    requestUrl,
+    '/api/v1/auth/recover?redirect_to=https%3A%2F%2Fknowtree-app.vercel.app%2Freset-password.html',
+  );
   assert.equal(requestInit.method, 'POST');
   assert.deepEqual(JSON.parse(requestInit.body), { email: 'reader@example.com' });
 });
@@ -113,8 +119,8 @@ test('password update uses the recovery access token and new password', async (t
     'newpass123',
   );
 
-  assert.equal(requestUrl, 'https://project.supabase.co/auth/v1/user');
+  assert.equal(requestUrl, '/api/v1/auth/password');
   assert.equal(requestInit.method, 'PUT');
-  assert.equal(requestInit.headers.Authorization, 'Bearer recovery-access');
+  assert.equal(requestInit.headers['x-session'], 'recovery-access');
   assert.deepEqual(JSON.parse(requestInit.body), { password: 'newpass123' });
 });
