@@ -84,6 +84,14 @@ test('Vercel uses an API function, static output, and a protected daily cron', a
   assert.deepEqual(vercel.crons, [{ path: '/api/v1/cron/jobs', schedule: '0 8 * * *' }]);
 });
 
+test('Vercel functions run in the primary database region', async () => {
+  const vercel = JSON.parse(await readFile(path.join(root, 'vercel.json'), 'utf8')) as {
+    regions?: string[];
+  };
+
+  assert.deepEqual(vercel.regions, ['sin1']);
+});
+
 test('authenticated requests verify the token and run inside the user RLS context', async () => {
   const auth = await readFile(path.join(root, 'apps/api/src/middleware/auth.ts'), 'utf8');
 

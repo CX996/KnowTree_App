@@ -2,6 +2,10 @@
 
 目标架构：一个 Vercel 项目同时托管 `apps/web` 和 `/api/v1`，Supabase 提供 Auth、Postgres 和 pgvector。
 
+主数据库部署在 Supabase `ap-southeast-1`（新加坡），因此 Vercel Functions
+固定使用 `sin1`，避免每次鉴权和数据库读写跨太平洋往返。若以后迁移 Supabase
+项目区域，必须同步修改 `vercel.json` 的 `regions`。
+
 ## 1. 创建 Supabase 项目
 
 在 Supabase Dashboard 新建一个空项目，记录 Project Ref、Project URL、publishable key 和 secret key。
