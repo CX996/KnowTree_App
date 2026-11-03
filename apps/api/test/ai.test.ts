@@ -122,6 +122,54 @@ test('AI enrichment parses one structured response', async (t) => {
   assert.deepEqual(result.keywords, ['PPO', '强化学习']);
 });
 
+test('DeepSeek enrichment disables thinking and requests JSON output', async (t) => {
+  const previousKey = process.env.OPENAI_API_KEY;
+  const previousModel = process.env.OPENAI_CHAT_MODEL;
+  const previousBaseUrl = process.env.OPENAI_BASE_URL;
+  process.env.OPENAI_API_KEY = 'test-key';
+  process.env.OPENAI_CHAT_MODEL = 'deepseek-flash';
+  process.env.OPENAI_BASE_URL = 'https://api.deepseek.com';
+  t.after(() => {
+    if (previousKey === undefined) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = previousKey;
+    if (previousModel === undefined) delete process.env.OPENAI_CHAT_MODEL;
+    else process.env.OPENAI_CHAT_MODEL = previousModel;
+    if (previousBaseUrl === undefined) delete process.env.OPENAI_BASE_URL;
+    else process.env.OPENAI_BASE_URL = previousBaseUrl;
+  });
+
+  let requestBody: Record<string, unknown> = {};
+  t.mock.method(globalThis, 'fetch', async (_url: string | URL | Request, init?: RequestInit) => {
+    requestBody = JSON.parse(String(init?.body || '{}')) as Record<string, unknown>;
+    return new Response(JSON.stringify({
+      choices: [{
+        message: {
+          content: JSON.stringify({
+            title: 'DeepSeek 整理',
+            summary: '使用非思考模式生成结构化知识。',
+            category: '技术',
+            confidence: 0.9,
+            keywords: ['DeepSeek', 'JSON'],
+          }),
+        },
+      }],
+    }), { status: 200 });
+  });
+
+  const result = await enrichContent({
+    title: '',
+    content: '记录 DeepSeek 接入。',
+    categories: [{ id: '1', name: '技术' }],
+    allowTitle: true,
+    allowSummary: true,
+    allowClassification: true,
+  });
+
+  assert.equal(result.mode, 'ai');
+  assert.deepEqual(requestBody.thinking, { type: 'disabled' });
+  assert.deepEqual(requestBody.response_format, { type: 'json_object' });
+});
+
 test('AI enrichment honors disabled capabilities', async (t) => {
   const previousKey = process.env.OPENAI_API_KEY;
   const previousModel = process.env.OPENAI_CHAT_MODEL;

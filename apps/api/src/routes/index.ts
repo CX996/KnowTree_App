@@ -56,6 +56,21 @@ const pid = (req: Request): string => {
 // ---------------------------------------------------------------------------
 // 我的账号 / 配置
 // ---------------------------------------------------------------------------
+r.get('/bootstrap', h(async (req, res) => {
+  const user = req.user!;
+  const mePromise = ensureProfile(user.id).then((profile) => ({ user, profile })).catch(() => null);
+  const [categories, entries, me, recalls] = await Promise.all([
+    categorySvc.listCategories(user.id),
+    entrySvc.listEntries(user.id, { page: 1, size: 100 }),
+    mePromise,
+    recallSvc.listRecalls(user.id).catch(() => []),
+  ]);
+  const settledCategories = categories.length > 0 || !me
+    ? categories
+    : await categorySvc.listCategories(user.id).catch(() => categories);
+  res.json({ categories: settledCategories, entries, me, recalls });
+}));
+
 r.get('/me', h(async (_req, res) => {
   const user = _req.user!;
   const profile = await ensureProfile(user.id);

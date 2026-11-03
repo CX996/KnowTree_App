@@ -21,6 +21,12 @@ test('browser data layer defaults to the same-origin API base', async () => {
   assert.equal(api.includes('knowtree-api-vercel.vercel.app'), false);
 });
 
+test('initial application data loads through one bootstrap request', async () => {
+  const api = await readFile(path.join(clientDir, 'assets/api.js'), 'utf8');
+  assert.match(api, /req\('\/bootstrap'\)/);
+  assert.equal(/req\('\/categories'\)[\s\S]*req\('\/entries\?page=1&size=100'\)/.test(api), false);
+});
+
 test('login page does not expose developer API and token fields', async () => {
   const login = await readFile(path.join(clientDir, 'login.html'), 'utf8');
   assert.equal(login.includes('id="apiBase"'), false);
@@ -56,6 +62,39 @@ test('login uses standard form semantics', async () => {
   assert.match(login, /type="email"/);
   assert.match(login, /autocomplete="current-password"/);
   assert.match(login, /type="submit"/);
+});
+
+test('login restores email confirmation sessions from the callback hash', async () => {
+  const login = await readFile(path.join(clientDir, 'login.html'), 'utf8');
+  assert.match(login, /parseAuthCallback\(location\.hash\)/);
+  assert.match(login, /KT\.setToken\(callback\.accessToken, callback\.refreshToken\)/);
+  assert.match(login, /register\.html/);
+  assert.match(login, /forgot-password\.html/);
+});
+
+test('registration collects a confirmed email password', async () => {
+  const register = await readFile(path.join(clientDir, 'register.html'), 'utf8');
+  assert.match(register, /<form[^>]+id="registerForm"/);
+  assert.match(register, /type="email"/);
+  assert.match(register, /id="email"/);
+  assert.match(register, /id="pwd"/);
+  assert.match(register, /id="pwdConfirm"/);
+  assert.match(register, /autocomplete="new-password"/);
+  assert.match(register, /KT\.loadPublicConfig\(\)/);
+  assert.match(register, /signUpWithPassword/);
+  assert.match(register, /login\.html/);
+});
+
+test('password recovery pages request and complete a reset', async () => {
+  const forgot = await readFile(path.join(clientDir, 'forgot-password.html'), 'utf8');
+  const reset = await readFile(path.join(clientDir, 'reset-password.html'), 'utf8');
+
+  assert.match(forgot, /id="recoverForm"/);
+  assert.match(forgot, /requestPasswordReset/);
+  assert.match(forgot, /reset-password\.html/);
+  assert.match(reset, /id="resetForm"/);
+  assert.match(reset, /parseAuthCallback\(location\.hash\)/);
+  assert.match(reset, /updatePassword/);
 });
 
 test('production pages expose one main landmark', async () => {

@@ -68,6 +68,20 @@ function aiBaseUrl(): string {
   return (process.env.OPENAI_BASE_URL?.trim() || 'https://api.openai.com/v1').replace(/\/+$/, '');
 }
 
+function providerChatOptions(): Record<string, unknown> {
+  try {
+    if (new URL(aiBaseUrl()).hostname === 'api.deepseek.com') {
+      return {
+        thinking: { type: 'disabled' },
+        response_format: { type: 'json_object' },
+      };
+    }
+  } catch {
+    // Invalid base URLs fail in postOpenAi with the provider's request error.
+  }
+  return {};
+}
+
 function safeParseJson<T>(raw: string): T | null {
   const normalized = raw.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
   try {
@@ -176,6 +190,7 @@ ${categoryLines}
     const response = await postOpenAi('chat/completions', {
       model: process.env.OPENAI_CHAT_MODEL,
       temperature: 0.2,
+      ...providerChatOptions(),
       messages: [
         { role: 'system', content: system },
         { role: 'user', content: user },

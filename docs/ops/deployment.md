@@ -27,13 +27,21 @@ pnpm dlx supabase@2.122.0 db push
 - `vector` 扩展已安装。
 - migration 列表只有本次基线。
 
-## 3. 关闭公开注册
+## 3. 配置邮箱注册
 
-在 Supabase Auth 设置中关闭 Email public signup。不要允许匿名登录。
+在 Supabase Auth 设置中：
+
+- 开启 Email signup 和 Email confirmation。
+- 关闭 Anonymous sign-in。
+- 密码最小长度设为 8，并要求同时包含字母和数字。
+- Site URL 设为 `https://knowtree-app.vercel.app`。
+- Redirect URLs 至少包含 `https://knowtree-app.vercel.app/**`、`http://localhost:8080/**` 和 `http://localhost:9091/**`。
+
+公开推广前配置自有 SMTP。Supabase 默认邮件服务只适合小规模测试。
 
 ## 4. 创建首个账号
 
-在 Supabase Authentication → Users 中预先创建邮箱账号，并设置密码。首次登录后，应用会自动创建 profile 和 4 个默认分类。
+打开 `/register.html`，使用真实邮箱完成注册和邮件确认。首次登录后，应用会自动创建 profile 和 4 个默认分类。
 
 ## 5. 配置 Vercel 环境变量
 
@@ -66,7 +74,7 @@ GitHub 授权完成后，Vercel 会跟踪 `master`：推送到 `master` 自动�
 
 1. `GET /api/v1/health` 返回 `{"status":"ok"}`。
 2. `GET /api/v1/config` 返回 Supabase URL 和 publishable key，不包含 secret key。
-3. 使用预创建账号登录。
+3. 注册新账号，确认收到验证邮件，并通过邮件链接回到登录页。
 4. 首页知识树和统计正常加载。
 5. 收录一条文字，任务完成并出现在知识库。
 6. 分别导入 Markdown、DOCX 和文本型 PDF，确认标题、摘要和来源信息生成。
@@ -76,7 +84,8 @@ GitHub 授权完成后，Vercel 会跟踪 `master`：推送到 `master` 自动�
 10. 从首页进入采集，详情返回首页而不是采集页。
 11. “我的 → AI 整理”显示配置状态、模型和四个能力开关。
 12. 分类筛选、搜索、收件箱和每日回溯可用。
-13. 浏览器控制台无错误，刷新页面后登录状态可恢复。
+13. 测试忘记密码，确认重置链接可打开并设置新密码。
+14. 浏览器控制台无错误，刷新页面后登录状态可恢复。
 
 ## 8. 发布 Production
 

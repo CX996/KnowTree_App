@@ -189,16 +189,11 @@
       needLogin();
       return Promise.reject(new Error('未登录'));
     }
-    return Promise.all([
-      req('/categories'),
-      req('/entries?page=1&size=100'),
-      req('/me').catch(function () { return null; }),
-      req('/recalls').catch(function () { return []; })
-    ]).then(function (res) {
-      cache.categories = res[0] || [];
-      cache.entries = res[1] || [];
-      cache.me = res[2] || null;
-      cache.recalls = res[3] || [];
+    return req('/bootstrap').then(function (data) {
+      cache.categories = data.categories || [];
+      cache.entries = data.entries || [];
+      cache.me = data.me || null;
+      cache.recalls = data.recalls || [];
       rebuildNodes();
       return cache;
     });

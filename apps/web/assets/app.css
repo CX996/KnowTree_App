@@ -51,7 +51,25 @@ svg { display: block; }
 .page--tab { padding-bottom: calc(96px + var(--sab)); }
 .page--bar { padding-bottom: calc(96px + var(--sab)); }
 .page--tabcta { padding-bottom: calc(168px + var(--sab)); }
-.page--auth { padding-top: 32px; }
+.page--auth {
+  position: relative;
+  overflow: clip;
+  padding-top: 32px;
+  padding-bottom: calc(32px + var(--sab));
+}
+.page--auth::before {
+  content: "";
+  position: absolute;
+  inset: -120px -120px auto auto;
+  width: 330px;
+  height: 330px;
+  border: 1px solid rgba(201, 169, 107, .13);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 34px rgba(201, 169, 107, .035),
+    0 0 0 68px rgba(201, 169, 107, .022);
+  pointer-events: none;
+}
 
 .topbar {
   display: flex;
@@ -69,6 +87,83 @@ svg { display: block; }
   letter-spacing: .01em;
 }
 .h-sec { font-size: 17px; font-weight: 500; }
+.auth-brand {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+  color: var(--text2);
+  font-size: 12px;
+  letter-spacing: .08em;
+}
+.auth-brand__mark {
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--gold);
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 4px var(--bg), inset 0 0 0 5px rgba(201, 169, 107, .45);
+}
+.auth-hero { position: relative; z-index: 1; }
+.auth-kicker {
+  color: var(--gold);
+  font-size: 11px;
+  letter-spacing: .16em;
+}
+.auth-card {
+  position: relative;
+  z-index: 1;
+  padding: 20px 18px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: rgba(20, 20, 22, .84);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, .22);
+  backdrop-filter: blur(12px);
+}
+.auth-label {
+  display: block;
+  color: var(--text2);
+  font-size: 12px;
+}
+.auth-input {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 8px;
+  padding: 11px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  outline: 0;
+  background: var(--surface2);
+  color: var(--text);
+  font-size: 15px;
+}
+.auth-input:focus { border-color: rgba(201, 169, 107, .48); }
+.auth-input::placeholder { color: var(--text3); }
+.auth-hint { line-height: 1.6; }
+.auth-status { position: relative; z-index: 1; min-height: 21px; text-align: center; }
+.auth-links {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--text3);
+  font-size: 13px;
+}
+.auth-links a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--gold);
+}
+.auth-note {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  line-height: 1.8;
+}
 .sr-only {
   position: absolute;
   width: 1px;

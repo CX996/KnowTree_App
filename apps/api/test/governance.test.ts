@@ -53,11 +53,14 @@ test('Supabase migration enables RLS and installs vector and queue functions', a
   assert.match(sql, /with check \(\(select auth\.uid\(\)\) = user_id\)/i);
 });
 
-test('local and hosted auth are configured for pre-created accounts', async () => {
+test('local auth is configured for confirmed self registration', async () => {
   const config = await readFile(path.join(root, 'supabase/config.toml'), 'utf8');
   assert.match(config, /auto_expose_new_tables = false/);
-  assert.match(config, /\[auth\][\s\S]*?enable_signup = false/);
-  assert.match(config, /\[auth\.email\][\s\S]*?enable_signup = false/);
+  assert.match(config, /\[auth\][\s\S]*?enable_signup = true/);
+  assert.match(config, /\[auth\.email\][\s\S]*?enable_signup = true/);
+  assert.match(config, /\[auth\.email\][\s\S]*?enable_confirmations = true/);
+  assert.match(config, /minimum_password_length = 8/);
+  assert.match(config, /password_requirements = "letters_digits"/);
 });
 
 test('Vercel uses an API function, static output, and a protected daily cron', async () => {
@@ -98,6 +101,14 @@ test('authenticated requests verify the token and run inside the user RLS contex
   assert.match(auth, /createUserClient\(token\)/);
   assert.match(auth, /getUser\(token\)/);
   assert.match(auth, /runWithUserClient\(client, next\)/);
+});
+
+test('bootstrap endpoint aggregates initial data after one authentication', async () => {
+  const routes = await readFile(path.join(root, 'apps/api/src/routes/index.ts'), 'utf8');
+  assert.match(routes, /r\.get\('\/bootstrap'/);
+  assert.match(routes, /Promise\.all\(\[[\s\S]*listCategories\(user\.id\)/);
+  assert.match(routes, /listEntries\(user\.id,[\s\S]*size: 100/);
+  assert.match(routes, /listRecalls\(user\.id\)/);
 });
 
 test('documentation does not point to removed source directories', async () => {

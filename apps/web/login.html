@@ -9,64 +9,81 @@
 </head>
 <body>
   <main class="page page--auth">
-    <div class="topbar">
-      <div class="grow">
-        <h1 class="h-big">回到你的知树</h1>
-        <div class="t3 s13">用已开通的邮箱账号登录</div>
-      </div>
+    <a class="auth-brand" href="login.html" aria-label="知树 KnowTree">
+      <span class="auth-brand__mark" aria-hidden="true"></span>
+      <span>知树 KnowTree</span>
+    </a>
+
+    <div class="auth-hero mt32">
+      <div class="auth-kicker">回到你的知识树</div>
+      <h1 class="h-big mt12">让读过的，<br />重新长回来。</h1>
+      <p class="t3 s13 mt12">登录后继续收录、整理与回溯。</p>
     </div>
 
-    <form id="loginForm" class="mt24" novalidate>
-      <label class="t3 s12" for="email">邮箱</label>
-      <input class="textarea mt8" id="email" type="email" style="min-height:48px" placeholder="name@example.com" autocomplete="email" required />
+    <form id="loginForm" class="auth-card mt24" novalidate>
+      <label class="auth-label" for="email">邮箱</label>
+      <input class="auth-input" id="email" type="email" placeholder="name@example.com" autocomplete="email" required />
 
-      <label class="t3 s12 mt16" for="pwd">密码</label>
-      <input class="textarea mt8" id="pwd" type="password" style="min-height:48px" placeholder="输入密码" autocomplete="current-password" required />
+      <label class="auth-label mt16" for="pwd">密码</label>
+      <input class="auth-input" id="pwd" type="password" placeholder="输入密码" autocomplete="current-password" required />
 
       <button class="btn btn-primary btn-block mt16" id="login" type="submit">登录</button>
     </form>
-    <div class="t3 s12 mt20" id="msg" aria-live="polite"></div>
-    <div class="t3 s12 mt12">账号目前由管理员预先创建。登录凭证只保存在当前浏览器的本地存储中。</div>
+    <div class="auth-status t3 s12 mt16" id="msg" aria-live="polite"></div>
+    <div class="auth-links mt16">
+      <a href="register.html">创建账号</a>
+      <span aria-hidden="true">·</span>
+      <a href="forgot-password.html">忘记密码</a>
+    </div>
+    <div class="auth-note t3 s12 mt20">登录凭证只保存在当前浏览器；知识内容保存在你的 Supabase 账号中。</div>
   </main>
 
   <script src="assets/api.js"></script>
-  <script src="assets/ui.js"></script>
-  <script>
-    (function () {
-      function el(id) { return document.getElementById(id); }
-      var requestedNext = UI.q('next') || 'index.html';
-      var next = /^[A-Za-z0-9_-]+\.html(?:\?.*)?$/.test(requestedNext) ? requestedNext : 'index.html';
-      var form = el('loginForm');
-      var button = el('login');
+  <script type="module">
+    import { parseAuthCallback, safeNextPage } from './assets/auth-client.js';
 
-      function msg(text) { el('msg').textContent = text || ''; }
+    const form = document.getElementById('loginForm');
+    const button = document.getElementById('login');
+    const message = (text) => { document.getElementById('msg').textContent = text || ''; };
+    const requestedNext = new URLSearchParams(location.search).get('next');
+    const next = safeNextPage(requestedNext || 'index.html');
+    const callback = parseAuthCallback(location.hash);
 
-      KT.loadPublicConfig().then(function () {
-        msg('服务已就绪');
-      }, function (error) {
-        msg('服务未配置：' + error.message);
-        button.disabled = true;
+    if (callback.errorDescription) {
+      message('登录链接已失效：' + callback.errorDescription);
+    } else if (callback.accessToken) {
+      KT.setToken(callback.accessToken, callback.refreshToken);
+      history.replaceState(null, '', location.pathname + location.search);
+      location.replace(next);
+    } else if (new URLSearchParams(location.search).get('confirmed') === '1') {
+      message('邮箱验证成功，请输入密码登录');
+    }
+
+    KT.loadPublicConfig().then(() => {
+      if (!callback.accessToken && !callback.errorDescription) message('服务已就绪');
+    }, (error) => {
+      message('服务未配置：' + error.message);
+      button.disabled = true;
+    });
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('pwd').value;
+      if (!email || !password) {
+        message('请输入邮箱和密码');
+        (!email ? document.getElementById('email') : document.getElementById('pwd')).focus();
+        return;
+      }
+      button.disabled = true;
+      message('登录中…');
+      KT.loginWithPassword(email, password).then(() => {
+        location.replace(next);
+      }, (error) => {
+        button.disabled = false;
+        message('登录失败：' + error.message);
       });
-
-      form.addEventListener('submit', function (event) {
-        event.preventDefault();
-        var email = el('email').value.trim();
-        var password = el('pwd').value;
-        if (!email || !password) {
-          msg('请输入邮箱和密码');
-          (!email ? el('email') : el('pwd')).focus();
-          return;
-        }
-        button.disabled = true;
-        msg('登录中…');
-        KT.loginWithPassword(email, password).then(function () {
-          location.replace(next);
-        }, function (error) {
-          button.disabled = false;
-          msg('登录失败：' + error.message);
-        });
-      });
-    })();
+    });
   </script>
 </body>
 </html>
