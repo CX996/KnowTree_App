@@ -8,3 +8,4 @@ node_modules/
 !.env.example
 .vercel
 apps/api/dist/
+/apps/web/public-config.json

@@ -25,6 +25,7 @@ test('public config retries a transient failure without exposing environment nam
   const api = await readFile(path.join(clientDir, 'assets/api.js'), 'utf8');
   assert.match(api, /fetchPublicConfig\(attempt \+ 1\)/);
   assert.match(api, /fetchPublicConfig\(1\)/);
+  assert.match(api, /public-config\.json/);
   assert.match(api, /服务配置暂时未加载，请刷新页面重试/);
 });
 

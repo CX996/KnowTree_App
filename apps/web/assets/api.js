@@ -561,10 +561,19 @@
     });
   }
 
+  function fetchStaticPublicConfig() {
+    return fetch('/public-config.json', { cache: 'no-cache' }).then(function (response) {
+      if (!response.ok) throw new Error('static public config unavailable');
+      return response.json();
+    });
+  }
+
   function loadPublicConfig(force) {
     if (publicConfig && !force) return Promise.resolve(publicConfig);
     if (publicConfigPromise && !force) return publicConfigPromise;
-    publicConfigPromise = fetchPublicConfig(1).then(function (config) {
+    publicConfigPromise = fetchStaticPublicConfig().catch(function () {
+      return fetchPublicConfig(1);
+    }).then(function (config) {
       if (!config || !config.supabaseUrl || !config.supabaseKey) {
         throw new Error('Supabase 公共配置不完整');
       }

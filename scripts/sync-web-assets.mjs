@@ -1,6 +1,7 @@
 import { copyFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { writePublicConfig } from './public-config.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const vendorDir = path.join(root, 'apps/web/assets/vendor');
@@ -17,4 +18,10 @@ await Promise.all([
   ),
 ]);
 
-console.log('Web vendor assets synced.');
+const generatedPublicConfig = await writePublicConfig(root);
+
+console.log(
+  generatedPublicConfig
+    ? 'Web vendor assets and public config synced.'
+    : 'Web vendor assets synced; public config uses the API fallback.',
+);
