@@ -31,13 +31,13 @@ pnpm dlx supabase@2.122.0 db push
 
 在 Supabase Auth 设置中：
 
-- 开启 Email signup 和 Email confirmation。
+- 开启 Email signup。当前无自有 SMTP 的测试阶段临时关闭 Email confirmation；配置 SMTP 后必须重新开启。
 - 关闭 Anonymous sign-in。
 - 密码最小长度设为 8，并要求同时包含字母和数字。
 - Site URL 设为 `https://knowtree-app.vercel.app`。
 - Redirect URLs 至少包含 `https://knowtree-app.vercel.app/**`、`http://localhost:8080/**` 和 `http://localhost:9091/**`。
 
-公开推广前配置自有 SMTP。Supabase 默认邮件服务只适合小规模测试。
+公开推广前配置自有 SMTP。Supabase 默认邮件服务只适合小规模测试，且每小时通常最多发送 2 封邮件。
 
 ## 4. 创建首个账号
 

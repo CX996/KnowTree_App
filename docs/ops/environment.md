@@ -25,7 +25,7 @@
 - 配置 AI 后，模型 embedding 维度必须为 1024；切换 embedding 模型时应重新生成旧向量。
 - “我的 → AI 整理”只管理自动标题、自动摘要、自动分类和语义检索开关；API Key 与 Base URL 永不下发浏览器。
 - AI 失败时保留确定性标题、摘要和规则分类，并在 profile 中记录最近错误。
-- 邮箱自助注册开启并要求邮件确认；密码至少 8 位且同时包含字母和数字。
+- 邮箱自助注册开启；当前 SMTP 未配置阶段临时关闭邮件确认。密码至少 8 位且同时包含字母和数字。
 - 匿名登录保持关闭，注册与邮件发送使用 Supabase 内置限速。
 
 ## 本机配置
@@ -55,8 +55,8 @@ pnpm preflight
 - Site URL：`https://knowtree-app.vercel.app`
 - Redirect URLs：生产域名 `/**`，本地开发允许 `http://localhost:8080/**` 和 `http://localhost:9091/**`
 - Email signup：开启
-- Email confirmation：开启
+- Email confirmation：临时关闭，注册后直接登录
 - Anonymous sign-in：关闭
 - Password：至少 8 位，同时包含字母和数字
 
-Supabase 默认邮件服务适合小规模测试；公开推广前应配置自有 SMTP，避免默认邮件额度限制。
+Supabase 默认邮件服务每小时只能发送 2 封邮件。配置自有 SMTP 后应重新开启 Email confirmation；公开推广前必须恢复邮件验证。
