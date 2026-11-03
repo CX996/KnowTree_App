@@ -53,7 +53,7 @@
       config = value;
       message('服务已就绪');
     }, (error) => {
-      message('服务未配置：' + error.message);
+      message('服务暂时不可用：' + error.message);
       button.disabled = true;
     });
 

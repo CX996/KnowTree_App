@@ -548,18 +548,31 @@
     });
   }
 
+  function fetchPublicConfig(attempt) {
+    return req('/config').catch(function () {
+      if (attempt >= 2) {
+        throw new Error('服务配置暂时未加载，请刷新页面重试');
+      }
+      return new Promise(function (resolve) {
+        setTimeout(resolve, 450);
+      }).then(function () {
+        return fetchPublicConfig(attempt + 1);
+      });
+    });
+  }
+
   function loadPublicConfig(force) {
     if (publicConfig && !force) return Promise.resolve(publicConfig);
     if (publicConfigPromise && !force) return publicConfigPromise;
-    publicConfigPromise = req('/config').then(function (config) {
+    publicConfigPromise = fetchPublicConfig(1).then(function (config) {
       if (!config || !config.supabaseUrl || !config.supabaseKey) {
         throw new Error('Supabase 公共配置不完整');
       }
       publicConfig = config;
       return config;
-    }).catch(function (error) {
+    }).catch(function () {
       publicConfigPromise = null;
-      throw error;
+      throw new Error('服务配置暂时未加载，请刷新页面重试');
     });
     return publicConfigPromise;
   }

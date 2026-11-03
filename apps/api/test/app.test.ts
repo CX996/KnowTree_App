@@ -71,6 +71,7 @@ test('public config exposes only the Supabase URL and publishable key', async (t
     supabaseUrl: 'https://example.supabase.co',
     supabaseKey: 'sb_publishable_public',
   });
+  assert.match(response.headers.get('cache-control') || '', /s-maxage=300/);
   assert.equal(JSON.stringify(body).includes('sb_secret_must_not_leak'), false);
 });
 

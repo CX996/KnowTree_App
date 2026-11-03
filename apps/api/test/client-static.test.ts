@@ -21,6 +21,13 @@ test('browser data layer defaults to the same-origin API base', async () => {
   assert.equal(api.includes('knowtree-api-vercel.vercel.app'), false);
 });
 
+test('public config retries a transient failure without exposing environment names', async () => {
+  const api = await readFile(path.join(clientDir, 'assets/api.js'), 'utf8');
+  assert.match(api, /fetchPublicConfig\(attempt \+ 1\)/);
+  assert.match(api, /fetchPublicConfig\(1\)/);
+  assert.match(api, /服务配置暂时未加载，请刷新页面重试/);
+});
+
 test('initial application data loads through one bootstrap request', async () => {
   const api = await readFile(path.join(clientDir, 'assets/api.js'), 'utf8');
   assert.match(api, /req\('\/bootstrap'\)/);

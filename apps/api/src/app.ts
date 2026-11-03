@@ -31,9 +31,12 @@ export function configureApp(app: express.Express, options: AppOptions = {}) {
 
   app.get('/api/v1/config', (_req, res) => {
     try {
+      res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=86400');
       res.json(getSupabasePublicConfig());
     } catch (error) {
-      res.status(503).json({ error: error instanceof Error ? error.message : String(error) });
+      console.error('[api] public config unavailable:', error instanceof Error ? error.message : String(error));
+      res.setHeader('Cache-Control', 'no-store');
+      res.status(503).json({ error: '服务配置暂时未加载，请刷新页面重试' });
     }
   });
 
