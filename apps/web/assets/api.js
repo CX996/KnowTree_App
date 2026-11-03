@@ -12,6 +12,8 @@
   var TOKEN_KEY = 'knowtree_token';
   var REFRESH_KEY = 'knowtree_refresh_token';
   var DUP_KEY = 'knowtree_dups';
+  var BOOTSTRAP_KEY = 'knowtree_bootstrap_v1';
+  var BOOTSTRAP_CACHE_TTL_MS = 20000;
   var DEFAULT_BASE = '/api/v1';
 
   var publicConfig = null;
@@ -23,10 +25,12 @@
   function setToken(t, refresh) {
     localStorage.setItem(TOKEN_KEY, t || '');
     if (refresh !== undefined) localStorage.setItem(REFRESH_KEY, refresh || '');
+    clearBootstrapCache();
   }
   function clearToken() {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(REFRESH_KEY);
+    clearBootstrapCache();
   }
   function getConfig() {
     return {
@@ -46,6 +50,7 @@
   /* ---------- 请求 ---------- */
   function req(path, opts) {
     opts = opts || {};
+    var method = String(opts.method || 'GET').toUpperCase();
     var headers = {};
     if (!opts.form) headers['Content-Type'] = 'application/json';
     var t = token();
@@ -56,7 +61,7 @@
     var timer = ctl ? setTimeout(function () { ctl.abort(); }, timeoutMs) : null;
 
     return fetch(apiBase() + path, {
-      method: opts.method || 'GET',
+      method: method,
       headers: headers,
       body: opts.form ? opts.form : opts.body ? JSON.stringify(opts.body) : undefined,
       signal: ctl ? ctl.signal : undefined
@@ -86,6 +91,7 @@
           throw new Error(msg || ('HTTP ' + r.status));
         });
       }
+      if (method !== 'GET') clearBootstrapCache();
       if (opts.raw) return r;
       var ct = r.headers.get('content-type') || '';
       if (ct.indexOf('json') >= 0) return r.json();
@@ -107,6 +113,47 @@
   }
   function saveDups() {
     try { localStorage.setItem(DUP_KEY, JSON.stringify(cache.dups)); } catch (e) { /* 满则忽略 */ }
+  }
+
+  function bootstrapTokenFingerprint(value) {
+    var hash = 2166136261;
+    for (var i = 0; i < value.length; i += 1) {
+      hash ^= value.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
+    }
+    return String(hash >>> 0);
+  }
+
+  function clearBootstrapCache() {
+    try { sessionStorage.removeItem(BOOTSTRAP_KEY); } catch (e) { /* 浏览器禁用存储时忽略 */ }
+  }
+
+  function readBootstrapCache() {
+    try {
+      var saved = JSON.parse(sessionStorage.getItem(BOOTSTRAP_KEY) || 'null');
+      if (!saved || Date.now() - Number(saved.savedAt || 0) > BOOTSTRAP_CACHE_TTL_MS) {
+        clearBootstrapCache();
+        return null;
+      }
+      if (saved.token !== bootstrapTokenFingerprint(token())) {
+        clearBootstrapCache();
+        return null;
+      }
+      return saved.data || null;
+    } catch (e) {
+      clearBootstrapCache();
+      return null;
+    }
+  }
+
+  function writeBootstrapCache(data) {
+    try {
+      sessionStorage.setItem(BOOTSTRAP_KEY, JSON.stringify({
+        savedAt: Date.now(),
+        token: bootstrapTokenFingerprint(token()),
+        data: data
+      }));
+    } catch (e) { /* 容量不足时继续使用内存缓存 */ }
   }
 
   function catById(id) {
@@ -184,18 +231,25 @@
     });
   }
 
+  function applyBootstrap(data) {
+    cache.categories = data.categories || [];
+    cache.entries = data.entries || [];
+    cache.me = data.me || null;
+    cache.recalls = data.recalls || [];
+    rebuildNodes();
+    return cache;
+  }
+
   function load() {
     if (!token()) {
       needLogin();
       return Promise.reject(new Error('未登录'));
     }
+    var cached = readBootstrapCache();
+    if (cached) return Promise.resolve(applyBootstrap(cached));
     return req('/bootstrap').then(function (data) {
-      cache.categories = data.categories || [];
-      cache.entries = data.entries || [];
-      cache.me = data.me || null;
-      cache.recalls = data.recalls || [];
-      rebuildNodes();
-      return cache;
+      writeBootstrapCache(data);
+      return applyBootstrap(data);
     });
   }
 
@@ -203,6 +257,7 @@
   function refreshEntry(id) {
     return req('/entries/' + encodeURIComponent(id)).then(function (e) {
       upsert(e);
+      writeBootstrapCache({ categories: cache.categories, entries: cache.entries, me: cache.me, recalls: cache.recalls });
       return toCard(e);
     });
   }
@@ -214,6 +269,7 @@
     ]).then(function (res) {
       upsert(res[0]);
       cache.links[id] = res[1] || [];
+      writeBootstrapCache({ categories: cache.categories, entries: cache.entries, me: cache.me, recalls: cache.recalls });
       return toCard(res[0]);
     });
   }

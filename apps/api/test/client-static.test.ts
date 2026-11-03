@@ -27,6 +27,13 @@ test('initial application data loads through one bootstrap request', async () =>
   assert.equal(/req\('\/categories'\)[\s\S]*req\('\/entries\?page=1&size=100'\)/.test(api), false);
 });
 
+test('bootstrap cache is short-lived and invalidated by writes', async () => {
+  const api = await readFile(path.join(clientDir, 'assets/api.js'), 'utf8');
+  assert.match(api, /BOOTSTRAP_KEY = 'knowtree_bootstrap_v1'/);
+  assert.match(api, /BOOTSTRAP_CACHE_TTL_MS = 20000/);
+  assert.match(api, /method !== 'GET'[\s\S]*clearBootstrapCache\(\)/);
+});
+
 test('login page does not expose developer API and token fields', async () => {
   const login = await readFile(path.join(clientDir, 'login.html'), 'utf8');
   assert.equal(login.includes('id="apiBase"'), false);
