@@ -106,6 +106,12 @@ test('me page exposes ai capability management', async () => {
   assert.match(me, /id="aiTest"/);
 });
 
+test('semantic search is disabled when no embedding model is configured', async () => {
+  const me = await readFile(path.join(clientDir, 'me.html'), 'utf8');
+  assert.match(me, /embeddingAvailable = Boolean\(status\.embeddingModel\)/);
+  assert.match(me, /button\.disabled = !configured \|\| !featureAvailable/);
+});
+
 test('bottom sheets expose landmark content', async () => {
   const ui = await readFile(path.join(clientDir, 'assets/ui.js'), 'utf8');
   assert.match(ui, /setAttribute\('role', 'region'\)/);

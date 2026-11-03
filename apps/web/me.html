@@ -127,21 +127,26 @@
 
           function renderStatus(status) {
             var configured = !!status.configured;
+            var embeddingAvailable = Boolean(status.embeddingModel);
             var state = body.querySelector('#aiStatus');
             var models = body.querySelector('#aiModels');
             var error = body.querySelector('#aiError');
-            state.textContent = configured ? 'AI 已配置' : 'AI 未配置 · 当前使用规则降级';
+            state.textContent = configured
+              ? (embeddingAvailable ? 'AI 已配置' : 'AI 已配置 · 语义检索未配置')
+              : 'AI 未配置 · 当前使用规则降级';
             models.innerHTML =
               '<div>聊天模型：' + UI.esc(status.chatModel || '未设置') + '</div>' +
               '<div>Embedding：' + UI.esc(status.embeddingModel || '未设置') +
-                ' · ' + Number(status.embeddingDimension || 1024) + ' 维</div>';
+                (embeddingAvailable ? ' · ' + Number(status.embeddingDimension || 1024) + ' 维' : '（语义检索不可用）') +
+              '</div>';
             error.textContent = status.lastError ? '最近错误：' + status.lastError : '';
             switches.forEach(function (item) {
               var button = body.querySelector('#' + item[0]);
-              var on = !!status.features[item[1]];
+              var featureAvailable = item[1] !== 'embeddings' || embeddingAvailable;
+              var on = featureAvailable && !!status.features[item[1]];
               button.classList.toggle('on', on);
               button.setAttribute('aria-checked', String(on));
-              button.disabled = !configured;
+              button.disabled = !configured || !featureAvailable;
             });
             document.getElementById('aiModeLabel').textContent = configured ? 'AI' : '规则';
           }
