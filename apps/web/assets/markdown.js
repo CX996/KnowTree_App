@@ -22,6 +22,17 @@ export function renderMarkdown(markdown) {
 
   const template = document.createElement('template');
   template.innerHTML = clean;
+  template.content.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach((heading) => {
+    const headingLevel = Number(heading.tagName.slice(1));
+    const nextLevel = Math.min(headingLevel + 1, 6);
+    if (nextLevel === headingLevel) return;
+    const replacement = document.createElement(`h${nextLevel}`);
+    for (const attribute of heading.attributes) {
+      replacement.setAttribute(attribute.name, attribute.value);
+    }
+    while (heading.firstChild) replacement.appendChild(heading.firstChild);
+    heading.replaceWith(replacement);
+  });
   template.content.querySelectorAll('a[href]').forEach((link) => {
     const href = link.getAttribute('href') || '';
     if (/^https?:\/\//i.test(href)) {

@@ -127,12 +127,15 @@ test('capture page supports document drop and replaces history after success', a
 
 test('detail page exposes safe markdown reading and editing', async () => {
   const detail = await readFile(path.join(clientDir, 'detail.html'), 'utf8');
+  const markdown = await readFile(path.join(clientDir, 'assets/markdown.js'), 'utf8');
   assert.match(detail, /type="module"/);
   assert.match(detail, /assets\/markdown\.js/);
   assert.match(detail, /id="editBtn"/);
   assert.match(detail, /id="editPane"/);
   assert.match(detail, /id="preview"/);
   assert.match(detail, /id="saveBtn"/);
+  assert.match(markdown, /querySelectorAll\('h1, h2, h3, h4, h5, h6'\)/);
+  assert.match(markdown, /Math\.min\(headingLevel \+ 1, 6\)/);
 });
 
 test('me page exposes ai capability management', async () => {
