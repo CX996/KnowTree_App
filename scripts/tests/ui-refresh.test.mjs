@@ -71,3 +71,28 @@ test('knowledge pages use the new shared browsing structure', async () => {
   assert.match(search, /class="search-hero"/);
   assert.match(inbox, /class="page app-page knowledge-page"/);
 });
+
+test('library applies URL category only after data load and resets status on category change', async () => {
+  const library = await readFile(path.join(web, 'library.html'), 'utf8');
+  assert.ok(
+    library.indexOf('await KT.load();') < library.indexOf('selectedCategory = KT.NODES.some'),
+    'URL category must be validated after KT.load'
+  );
+  assert.match(library, /filter = 'all';\s*syncSegments\(\);/);
+  assert.match(library, /item\.classList\.toggle\('is-active', active\)/);
+  assert.match(library, /item\.setAttribute\('aria-pressed', String\(active\)\)/);
+});
+
+test('inbox CTA closes its container before main', async () => {
+  const inbox = await readFile(path.join(web, 'inbox.html'), 'utf8');
+  const start = inbox.indexOf('id="ctaBar"');
+  const end = inbox.indexOf('</main>', start);
+  assert.ok(start >= 0 && end > start, 'inbox ctaBar/main structure');
+  assert.ok(inbox.slice(start, end).includes('</div>'), 'ctaBar must close before main');
+});
+
+test('knowledge controls meet the 44px target', async () => {
+  const css = await readFile(path.join(web, 'assets/styles/pages.css'), 'utf8');
+  assert.match(css, /\.filter-chip\s*\{[^}]*min-height:\s*44px/s);
+  assert.match(css, /\.status-switch button\s*\{[^}]*min-height:\s*44px/s);
+});

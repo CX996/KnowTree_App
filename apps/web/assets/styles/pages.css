@@ -188,7 +188,7 @@
 }
 .filter-scroll::-webkit-scrollbar { display: none; }
 .filter-chip {
-  min-height: 40px;
+  min-height: 44px;
   padding: 0 13px;
   color: var(--text-muted);
   border: 1px solid var(--line);
@@ -199,7 +199,7 @@
 .filter-chip span { margin-left: 7px; color: var(--gold); }
 .filter-chip.is-active { color: var(--ink); background: var(--paper); }
 .status-switch { display: flex; gap: 4px; margin: 8px 0 18px; }
-.status-switch button { min-height: 40px; padding: 0 12px; border-radius: 10px; color: var(--text-muted); }
+.status-switch button { min-height: 44px; padding: 0 12px; border-radius: 10px; color: var(--text-muted); }
 .status-switch button[aria-selected="true"] { color: var(--text); background: var(--surface-raised); }
 .knowledge-list { display: grid; gap: 10px; }
 .search-hero {

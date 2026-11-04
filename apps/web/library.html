@@ -39,9 +39,7 @@
       var list = document.getElementById('list');
       var categoryRail = document.getElementById('categoryRail');
       var requestedCategory = UI.q('category') || '';
-      var selectedCategory = KT.NODES.some(function (node) {
-        return node.id === requestedCategory;
-      }) ? requestedCategory : '';
+      var selectedCategory = '';
 
       list.innerHTML = UI.emptyHTML('加载中…', '正在从后端取知识库');
       try {
@@ -50,6 +48,10 @@
         list.innerHTML = KT.errorHTML(e);
         return;
       }
+
+      selectedCategory = KT.NODES.some(function (node) {
+        return node.id === requestedCategory;
+      }) ? requestedCategory : '';
 
       function counts() {
         var box = KT.inbox();
@@ -123,10 +125,17 @@
         var button = e.target.closest('[data-category]');
         if (!button) return;
         selectedCategory = button.getAttribute('data-category');
-        renderCategoryRail();
+        filter = 'all';
+        syncSegments();
+        categoryRail.querySelectorAll('[data-category]').forEach(function (item) {
+          var active = item.getAttribute('data-category') === selectedCategory;
+          item.classList.toggle('is-active', active);
+          item.setAttribute('aria-pressed', String(active));
+        });
         render();
       });
 
+      syncSegments();
       renderCategoryRail();
       render();
     })();
