@@ -11,6 +11,7 @@
   <script>
     localStorage.clear();
     sessionStorage.clear();
+    localStorage.setItem('knowtree.pet.collapsed.v1', '1');
     let pendingInbox = false;
     window.KT = {
       inbox: function () {
@@ -45,8 +46,29 @@
       check(mount().dataset.state === 'carry', 'pending inbox must show carry');
       check(document.querySelectorAll('.pet-bubble').length === 1, 'only one bubble may exist');
       check(bubble().hidden === false, 'pending inbox bubble must be visible');
+      check(mount().hidden === false, 'legacy collapse preference must not hide the pet');
+      check(document.querySelector('.pet-collapse') === null, 'collapse control must be absent');
 
       const petButton = document.querySelector('.pet-hit');
+      const initialLeft = mount().style.left;
+      const initialTop = mount().style.top;
+      petButton.dispatchEvent(new PointerEvent('pointerdown', {
+        bubbles: true, pointerId: 1, clientX: 100, clientY: 100,
+      }));
+      document.dispatchEvent(new PointerEvent('pointermove', {
+        bubbles: true, pointerId: 1, clientX: 150, clientY: 140,
+      }));
+      document.dispatchEvent(new PointerEvent('pointerup', {
+        bubbles: true, pointerId: 1, clientX: 150, clientY: 140,
+      }));
+      await wait(20);
+      check(mount().style.left !== initialLeft || mount().style.top !== initialTop,
+        'dragging must move the pet');
+      check(
+        JSON.parse(localStorage.getItem('knowtree.pet.position.v1') || 'null') !== null,
+        'dragging must persist pet position',
+      );
+
       petButton.click();
       await wait(20);
       const menu = document.querySelector('.pet-menu');
@@ -83,17 +105,11 @@
       await wait(20);
       check(bubble().hidden === true, 'dismissed hint must not reappear');
 
-      document.querySelector('.pet-collapse').click();
-      await wait(20);
-      check(mount().hidden === true, 'collapse must hide pet');
-      check(localStorage.getItem('knowtree.pet.collapsed.v1') === '1', 'collapse must persist');
-
       document.querySelectorAll('[data-pet-mount]').forEach((node) => node.remove());
       await import('../../../apps/web/assets/pet.js?browser-contract=2');
       await wait(30);
-      check(mount().hidden === true, 'persisted collapse must survive reload');
+      check(mount().hidden === false, 'pet must remain visible after reload');
 
-      localStorage.setItem('knowtree.pet.collapsed.v1', '0');
       localStorage.setItem('knowtree.pet.motion.v1', '1');
       document.querySelectorAll('[data-pet-mount]').forEach((node) => node.remove());
       await import('../../../apps/web/assets/pet.js?browser-contract=3');

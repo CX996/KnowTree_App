@@ -9,6 +9,7 @@ import {
   resolvePetState,
   canShowHint,
   rememberDismissedHint,
+  clampPetPosition,
 } from '../../apps/web/assets/pet/pet-core.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -45,6 +46,23 @@ test('all animated UI states have an approved transparent frame', () => {
   assert.deepEqual(Object.keys(PET_FRAMES).sort(), [
     'carry', 'celebrate', 'error', 'idle', 'listen', 'run', 'sniff', 'walk',
   ]);
+});
+
+test('dragged pet position stays inside the viewport', () => {
+  assert.deepEqual(
+    clampPetPosition({
+      left: -20, top: 900, width: 80, height: 94,
+      viewportWidth: 390, viewportHeight: 844, margin: 8,
+    }),
+    { left: 8, top: 742 },
+  );
+  assert.deepEqual(
+    clampPetPosition({
+      left: 320, top: 20, width: 80, height: 94,
+      viewportWidth: 390, viewportHeight: 844, margin: 8,
+    }),
+    { left: 302, top: 20 },
+  );
 });
 
 test('pet WebP frames stay under 250 KB', async () => {

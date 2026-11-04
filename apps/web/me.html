@@ -31,14 +31,6 @@
       </div>
       <div class="switch-row">
         <span>
-          <b id="petEnabledLabel">显示宠物</b>
-          <small>在安全区显示陪伴角色</small>
-        </span>
-        <button class="switch" id="petEnabled" type="button" role="switch"
-          aria-labelledby="petEnabledLabel" aria-checked="true"></button>
-      </div>
-      <div class="switch-row">
-        <span>
           <b id="petMotionLabel">减少宠物动作</b>
           <small>保留静态状态，不播放走动和跳跃</small>
         </span>
@@ -93,7 +85,6 @@
     (async function () {
       var remind = document.getElementById('remind');
       var statsEl = document.getElementById('stats');
-      var petEnabled = document.getElementById('petEnabled');
       var petMotion = document.getElementById('petMotion');
 
       function readPreference(key, fallback) {
@@ -114,24 +105,10 @@
       }
 
       function syncPetPreferences() {
-        var visible = readPreference('knowtree.pet.collapsed.v1', '0') !== '1';
         var reduced = readPreference('knowtree.pet.motion.v1', '0') === '1';
-        petEnabled.classList.toggle('on', visible);
-        petEnabled.setAttribute('aria-checked', String(visible));
         petMotion.classList.toggle('on', reduced);
         petMotion.setAttribute('aria-checked', String(reduced));
       }
-
-      petEnabled.addEventListener('click', function () {
-        var next = nextSwitchState(petEnabled.getAttribute('aria-checked'));
-        var preference = petPreferenceUpdate('visibility', next.on);
-        writePreference(preference.key, preference.value);
-        petEnabled.classList.toggle('on', next.on);
-        petEnabled.setAttribute('aria-checked', next.ariaChecked);
-        document.dispatchEvent(new CustomEvent('knowtree:pet-visibility', {
-          detail: { visible: next.on }
-        }));
-      });
 
       petMotion.addEventListener('click', function () {
         var next = nextSwitchState(petMotion.getAttribute('aria-checked'));

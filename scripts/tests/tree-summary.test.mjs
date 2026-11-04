@@ -5,6 +5,7 @@ import {
   countSince,
   startOfMonth,
 } from '../../apps/web/assets/tree-summary.mjs';
+import { renderKnowledgeTree } from '../../apps/web/assets/tree-view.mjs';
 
 test('selects five highest category counts without deleting the rest', () => {
   const nodes = Array.from({ length: 9 }, (_, index) => ({
@@ -34,4 +35,19 @@ test('monthly leaves use createdAt only', () => {
 
   assert.equal(countSince(entries, startOfMonth(now)), 2);
   assert.equal(countSince([], startOfMonth(now)), 0);
+});
+
+test('knowledge tree renders a natural trunk, branches and leaf categories', () => {
+  const svg = renderKnowledgeTree([
+    { id: 'ai', name: 'AI 学习', count: 12 },
+    { id: 'product', name: '产品思考', count: 7 },
+  ]);
+
+  assert.match(svg, /class="tree-trunk"/);
+  assert.match(svg, /class="tree-branch/);
+  assert.match(svg, /class="tree-foliage/);
+  assert.match(svg, /class="tree-category"/);
+  assert.match(svg, /data-node="ai"/);
+  assert.match(svg, /AI 学习/);
+  assert.doesNotMatch(svg, /class="tree-node"|<circle cx="180"/);
 });

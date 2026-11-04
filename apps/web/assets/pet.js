@@ -3,10 +3,11 @@ import {
   resolvePetState,
   canShowHint,
   rememberDismissedHint,
+  clampPetPosition,
 } from './pet/pet-core.mjs';
 
-const COLLAPSED = 'knowtree.pet.collapsed.v1';
 const MOTION = 'knowtree.pet.motion.v1';
+const POSITION = 'knowtree.pet.position.v1';
 const CELEBRATE = 'knowtree.pet.celebrate.v1';
 const HINT_SHOWN = 'knowtree.pet.hintShown.v1';
 const HINT_DISMISSED = 'knowtree.pet.hintDismissed.v1';
@@ -33,6 +34,24 @@ function readNumber(key, fallback = 0) {
     return Number(localStorage.getItem(key) || fallback);
   } catch {
     return fallback;
+  }
+}
+
+function readPosition() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(POSITION) || 'null');
+    if (!parsed || !Number.isFinite(parsed.left) || !Number.isFinite(parsed.top)) return null;
+    return { left: parsed.left, top: parsed.top };
+  } catch {
+    return null;
+  }
+}
+
+function writePosition(position) {
+  try {
+    localStorage.setItem(POSITION, JSON.stringify(position));
+  } catch {
+    // Position remains active for the current page when storage is blocked.
   }
 }
 
@@ -92,8 +111,7 @@ mount.innerHTML =
   '<div class="pet-bubble" role="status" aria-live="polite" hidden>' +
     '<span class="pet-bubble__text"></span>' +
     '<button class="pet-bubble__close" type="button" aria-label="关闭提示">知道了</button>' +
-  '</div>' +
-  '<button class="pet-collapse" type="button" aria-label="收起小黑狐">×</button>';
+  '</div>';
 
 const button = mount.querySelector('.pet-hit');
 const image = mount.querySelector('.pet-frame');
@@ -101,11 +119,42 @@ const bubble = mount.querySelector('.pet-bubble');
 const bubbleText = mount.querySelector('.pet-bubble__text');
 const menu = mount.querySelector('.pet-menu');
 const menuInbox = menu.querySelector('[data-pet-action="inbox"]');
-let collapsed = readFlag(COLLAPSED);
 let typing = false;
 let requesting = false;
 let reduced = readFlag(MOTION) ||
   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+let dragState = null;
+let suppressClick = false;
+
+function applyPosition(position, persist = false) {
+  const rect = mount.getBoundingClientRect();
+  const clamped = clampPetPosition({
+    left: position.left,
+    top: position.top,
+    width: rect.width || 84,
+    height: rect.height || 94,
+    viewportWidth: window.innerWidth,
+    viewportHeight: window.innerHeight,
+  });
+  mount.style.left = clamped.left + 'px';
+  mount.style.top = clamped.top + 'px';
+  mount.style.right = 'auto';
+  mount.style.bottom = 'auto';
+  mount.dataset.horizontal = clamped.left < window.innerWidth / 2 ? 'left' : 'right';
+  mount.dataset.vertical = clamped.top < window.innerHeight / 2 ? 'top' : 'bottom';
+  if (persist) writePosition(clamped);
+  return clamped;
+}
+
+function restorePosition() {
+  const saved = readPosition();
+  if (saved) applyPosition(saved);
+}
+
+function moveByKeyboard(deltaX, deltaY) {
+  const rect = mount.getBoundingClientRect();
+  applyPosition({ left: rect.left + deltaX, top: rect.top + deltaY }, true);
+}
 
 image.addEventListener('error', () => {
   mount.hidden = true;
@@ -136,11 +185,10 @@ function renderState(state) {
 
 function refresh(extra = {}) {
   return renderState(resolvePetState({
-    collapsed,
     typing,
     requesting,
     pendingCount: pendingCount(),
-    hintAllowed: !collapsed && canShowHint({
+    hintAllowed: canShowHint({
       now: Date.now(),
       lastShownAt: readNumber(HINT_SHOWN),
       dismissedKeys: readDismissedHints(),
@@ -153,7 +201,6 @@ function refresh(extra = {}) {
 }
 
 function setState(requested) {
-  if (collapsed) return renderState('hidden');
   if (typing && requested !== 'error') return renderState('listen');
   renderState(PET_FRAMES[requested] ? requested : 'idle');
 }
@@ -171,7 +218,6 @@ function menuLinks() {
 }
 
 function openMenu() {
-  if (collapsed) return;
   menuInbox.hidden = pendingCount() <= 0;
   bubble.hidden = true;
   menu.hidden = false;
@@ -184,7 +230,7 @@ function openMenu() {
 function closeMenu(returnFocus = false) {
   menu.hidden = true;
   button.setAttribute('aria-expanded', 'false');
-  if (returnFocus && !collapsed) button.focus();
+  if (returnFocus) button.focus();
 }
 
 function toggleMenu() {
@@ -193,7 +239,7 @@ function toggleMenu() {
 }
 
 function showInboxHint() {
-  if (pendingCount() <= 0 || typing || collapsed) return;
+  if (pendingCount() <= 0 || typing) return;
   if (!canShowHint({
     now: Date.now(),
     lastShownAt: readNumber(HINT_SHOWN),
@@ -206,7 +252,67 @@ function showInboxHint() {
   renderState('carry');
 }
 
-button.addEventListener('click', toggleMenu);
+button.addEventListener('pointerdown', (event) => {
+  if (event.button !== 0) return;
+  const rect = mount.getBoundingClientRect();
+  dragState = {
+    pointerId: event.pointerId,
+    startX: event.clientX,
+    startY: event.clientY,
+    left: rect.left,
+    top: rect.top,
+    moved: false,
+  };
+  button.setPointerCapture?.(event.pointerId);
+  mount.classList.add('is-dragging');
+});
+
+document.addEventListener('pointermove', (event) => {
+  if (!dragState || event.pointerId !== dragState.pointerId) return;
+  const deltaX = event.clientX - dragState.startX;
+  const deltaY = event.clientY - dragState.startY;
+  if (!dragState.moved && Math.hypot(deltaX, deltaY) < 6) return;
+  dragState.moved = true;
+  applyPosition({
+    left: dragState.left + deltaX,
+    top: dragState.top + deltaY,
+  });
+  event.preventDefault();
+});
+
+document.addEventListener('pointerup', (event) => {
+  if (!dragState || event.pointerId !== dragState.pointerId) return;
+  const moved = dragState.moved;
+  const rect = mount.getBoundingClientRect();
+  dragState = null;
+  mount.classList.remove('is-dragging');
+  if (moved) {
+    applyPosition({ left: rect.left, top: rect.top }, true);
+    suppressClick = true;
+    setTimeout(() => { suppressClick = false; }, 300);
+  }
+});
+
+button.addEventListener('click', (event) => {
+  if (suppressClick && event.detail > 0) {
+    event.preventDefault();
+    return;
+  }
+  toggleMenu();
+});
+
+button.addEventListener('keydown', (event) => {
+  const distance = event.shiftKey ? 48 : 16;
+  const movement = {
+    ArrowLeft: [-distance, 0],
+    ArrowRight: [distance, 0],
+    ArrowUp: [0, -distance],
+    ArrowDown: [0, distance],
+  }[event.key];
+  if (!movement) return;
+  event.preventDefault();
+  moveByKeyboard(movement[0], movement[1]);
+});
 bubble.addEventListener('click', (event) => {
   event.stopPropagation();
   navigateFromPet();
@@ -217,12 +323,6 @@ mount.querySelector('.pet-bubble__close').addEventListener('click', (event) => {
   dismissHint('inbox');
   markHintShown();
   refresh({ ready: false });
-});
-
-mount.querySelector('.pet-collapse').addEventListener('click', () => {
-  collapsed = true;
-  writeFlag(COLLAPSED, true);
-  renderState('hidden');
 });
 
 menu.addEventListener('click', (event) => {
@@ -276,10 +376,6 @@ document.addEventListener('knowtree:request-error', () => {
   requesting = false;
   setState('error');
 });
-document.addEventListener('knowtree:pet-visibility', (event) => {
-  collapsed = !event.detail.visible;
-  renderState(collapsed ? 'hidden' : 'idle');
-});
 document.addEventListener('knowtree:pet-motion', (event) => {
   reduced = Boolean(event.detail.reduced);
   renderState(mount.dataset.state || 'idle');
@@ -287,16 +383,6 @@ document.addEventListener('knowtree:pet-motion', (event) => {
 
 window.KTPet = {
   setState,
-  collapse() {
-    collapsed = true;
-    writeFlag(COLLAPSED, true);
-    renderState('hidden');
-  },
-  expand() {
-    collapsed = false;
-    writeFlag(COLLAPSED, false);
-    refresh();
-  },
 };
 
 if (document.body.dataset.petMode === 'focus') {
@@ -315,3 +401,10 @@ if (consumeCelebration()) {
     setTimeout(() => refresh({ ready: false }), 1000);
   }, 240);
 }
+
+restorePosition();
+window.addEventListener('resize', () => {
+  if (!mount.style.left || !mount.style.top) return;
+  const rect = mount.getBoundingClientRect();
+  applyPosition({ left: rect.left, top: rect.top }, true);
+});

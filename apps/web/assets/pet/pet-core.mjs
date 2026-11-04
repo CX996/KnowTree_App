@@ -49,3 +49,20 @@ export function rememberDismissedHint(dismissedKeys, key) {
   if (!key || dismissedKeys.includes(key)) return dismissedKeys.slice();
   return dismissedKeys.concat(key);
 }
+
+export function clampPetPosition({
+  left,
+  top,
+  width,
+  height,
+  viewportWidth,
+  viewportHeight,
+  margin = 8,
+}) {
+  const maxLeft = Math.max(margin, viewportWidth - width - margin);
+  const maxTop = Math.max(margin, viewportHeight - height - margin);
+  return {
+    left: Math.min(Math.max(left, margin), maxLeft),
+    top: Math.min(Math.max(top, margin), maxTop),
+  };
+}

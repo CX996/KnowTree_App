@@ -130,7 +130,7 @@ test('reading and review keep controls on paper surfaces', async () => {
 
 test('account exposes pet preferences and auth pages stay pet-free', async () => {
   const me = await readFile(path.join(web, 'me.html'), 'utf8');
-  assert.match(me, /id="petEnabled"/);
+  assert.doesNotMatch(me, /id="petEnabled"/);
   assert.match(me, /id="petMotion"/);
   assert.match(me, /class="settings-card"/);
   assert.match(me, /class="switch-row"/);
@@ -149,12 +149,18 @@ test('account exposes pet preferences and auth pages stay pet-free', async () =>
 test('account uses testable preference helpers and removes app chrome on logout', async () => {
   const me = await readFile(path.join(web, 'me.html'), 'utf8');
   assert.match(me, /assets\/me-state\.mjs/);
-  assert.match(me, /petPreferenceUpdate\('visibility'/);
   assert.match(me, /petPreferenceUpdate\('motion'/);
   assert.ok(
     me.indexOf('removeAuthenticatedChrome(document)') < me.indexOf('page.innerHTML'),
     'logout must clean app chrome before rendering the logged-out state',
   );
+});
+
+test('companion has no user-facing collapse control', async () => {
+  const pet = await readFile(path.join(web, 'assets/pet.js'), 'utf8');
+  const styles = await readFile(path.join(web, 'assets/styles/pet.css'), 'utf8');
+  assert.equal(pet.includes('pet-collapse'), false);
+  assert.equal(styles.includes('.pet-collapse'), false);
 });
 
 test('companion runtime loads only on authenticated application pages', async () => {

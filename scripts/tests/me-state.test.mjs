@@ -13,13 +13,10 @@ test('switch state toggles aria-checked deterministically', () => {
 
 test('pet preferences map to the approved local storage keys', () => {
   assert.deepEqual(
-    petPreferenceUpdate('visibility', false),
-    { key: 'knowtree.pet.collapsed.v1', value: '1' },
-  );
-  assert.deepEqual(
     petPreferenceUpdate('motion', true),
     { key: 'knowtree.pet.motion.v1', value: '1' },
   );
+  assert.throws(() => petPreferenceUpdate('visibility', false), /Unsupported/);
   assert.throws(() => petPreferenceUpdate('unknown', true), /Unsupported/);
 });
 

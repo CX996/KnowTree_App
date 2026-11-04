@@ -4,9 +4,6 @@ export function nextSwitchState(ariaChecked) {
 }
 
 export function petPreferenceUpdate(kind, on) {
-  if (kind === 'visibility') {
-    return { key: 'knowtree.pet.collapsed.v1', value: on ? '0' : '1' };
-  }
   if (kind === 'motion') {
     return { key: 'knowtree.pet.motion.v1', value: on ? '1' : '0' };
   }

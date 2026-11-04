@@ -57,6 +57,7 @@
   <script type="module" src="assets/pet.js"></script>
   <script type="module">
     import { selectHomeCategories, countSince, startOfMonth } from './assets/tree-summary.mjs';
+    import { renderKnowledgeTree } from './assets/tree-view.mjs';
 
     const KT = window.KT;
     const UI = window.UI;
@@ -69,14 +70,6 @@
         statsEl.innerHTML = '加载失败 · <a href="login.html" style="color:var(--gold)">去登录</a>';
         return;
       }
-
-      const positions = [
-        { x: 180, y: 72 },
-        { x: 72, y: 132 },
-        { x: 288, y: 132 },
-        { x: 104, y: 224 },
-        { x: 256, y: 224 },
-      ];
 
       const categories = KT.NODES.map((node) => ({
         id: node.id,
@@ -94,21 +87,7 @@
         viewAll.hidden = true;
         empty.hidden = false;
       } else {
-        tree.innerHTML =
-          '<path class="tree-branch" d="M180 292V134M180 174L72 132M180 174L288 132M180 206L104 224M180 206L256 224"></path>' +
-          visible.map((node, index) => {
-            const point = positions[index];
-            return (
-              '<g class="tree-node" data-node="' + UI.esc(node.id) +
-              '" tabindex="0" role="link" aria-label="' + UI.esc(node.name) + '">' +
-              '<circle cx="' + point.x + '" cy="' + point.y + '" r="' + (node.count ? 24 : 18) + '"></circle>' +
-              '<text class="tree-node__count" x="' + point.x + '" y="' + (point.y + 5) +
-              '" text-anchor="middle">' + node.count + '</text>' +
-              '<text class="tree-node__label" x="' + point.x + '" y="' + (point.y + 44) +
-              '" text-anchor="middle">' + UI.esc(node.name) + '</text>' +
-              '</g>'
-            );
-          }).join('');
+        tree.innerHTML = renderKnowledgeTree(visible);
 
         tree.querySelectorAll('[data-node]').forEach((node) => {
           const open = () => {
