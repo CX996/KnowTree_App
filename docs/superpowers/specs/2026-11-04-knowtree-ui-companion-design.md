@@ -250,7 +250,7 @@
 状态优先级从高到低：
 
 ```text
-error > listen > celebrate > carry > run > walk > idle
+hidden > error > listen > celebrate > carry > sniff > run > walk > idle
 ```
 
 用户收起宠物时，任何事件都不能强制把宠物重新展开。
