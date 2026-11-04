@@ -187,6 +187,7 @@ test('production styles include keyboard, motion and minimum target standards', 
   const css = [
     await readFile(path.join(clientDir, 'assets/styles/base.css'), 'utf8'),
     await readFile(path.join(clientDir, 'assets/styles/components.css'), 'utf8'),
+    await readFile(path.join(clientDir, 'assets/styles/pages.css'), 'utf8'),
   ].join('\n');
   assert.match(css, /:focus-visible/);
   assert.match(css, /prefers-reduced-motion/);

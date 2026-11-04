@@ -196,3 +196,27 @@ test('companion runtime is navigation-only and publishes safe data events', asyn
   assert.doesNotMatch(api, /emit\('knowtree:[^']+',\s*\{[^}]*token/i);
 });
 
+test('all pages load transitions and no legacy app.css reference remains', async () => {
+  for (const page of await htmlPages()) {
+    const html = await readFile(path.join(web, page), 'utf8');
+    assert.match(html, /assets\/styles\/transitions\.css/);
+    assert.match(html, /assets\/transitions\.js/);
+    assert.equal(html.includes('assets/app.css'), false, `${page} legacy stylesheet`);
+  }
+});
+
+test('page-specific legacy selectors live in pages.css', async () => {
+  const components = await readFile(path.join(web, 'assets/styles/components.css'), 'utf8');
+  const pages = await readFile(path.join(web, 'assets/styles/pages.css'), 'utf8');
+  for (const selector of ['.auth-card', '.capture-panel', '.review-stage', '.markdown-body', '.actionbar']) {
+    assert.equal(components.includes(selector), false, `${selector} still in components`);
+    assert.match(pages, new RegExp(selector.replace('.', '\\.')));
+  }
+});
+
+test('transition styles provide reduced-motion-safe cross-document navigation', async () => {
+  const css = await readFile(path.join(web, 'assets/styles/transitions.css'), 'utf8');
+  assert.match(css, /@view-transition\s*\{\s*navigation:\s*auto/);
+  assert.match(css, /prefers-reduced-motion/);
+});
+
