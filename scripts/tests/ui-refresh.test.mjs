@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFile, readdir, stat } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
@@ -28,7 +28,10 @@ test('every page loads style layers in cascade order', async () => {
 
 test('design tokens expose the approved palette', async () => {
   const css = (await readFile(path.join(web, 'assets/styles/tokens.css'), 'utf8')).toLowerCase();
-  for (const value of ['#10110e', '#e7ddc7', '#c6a15b', '#4d5947', '#d46a5e']) {
+  for (const value of [
+    '#10110e', '#e7ddc7', '#c6a15b', '#4d5947', '#d46a5e',
+    '--surface2', '--text2', '--text3', '--gold-ink',
+  ]) {
     assert.ok(css.includes(value), value);
   }
 });
