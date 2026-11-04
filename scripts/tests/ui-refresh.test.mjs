@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFile, readdir } from 'node:fs/promises';
+import { readFile, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
@@ -154,4 +154,13 @@ test('account uses testable preference helpers and removes app chrome on logout'
     me.indexOf('removeAuthenticatedChrome(document)') < me.indexOf('page.innerHTML'),
     'logout must clean app chrome before rendering the logged-out state',
   );
+});
+
+test('pet WebP frames stay under 250 KB', async () => {
+  const petDir = path.join(web, 'assets/pet');
+  const files = (await readdir(petDir)).filter((name) => name.endsWith('.webp'));
+  assert.equal(files.length, 6);
+  let total = 0;
+  for (const file of files) total += (await stat(path.join(petDir, file))).size;
+  assert.ok(total <= 250 * 1024, `pet assets are ${total} bytes`);
 });
