@@ -79,7 +79,13 @@
   <script src="assets/api.js"></script>
   <script src="assets/ui.js"></script>
   <script src="assets/shell.js"></script>
-  <script>
+  <script type="module">
+    import {
+      nextSwitchState,
+      petPreferenceUpdate,
+      removeAuthenticatedChrome,
+    } from './assets/me-state.mjs';
+
     (async function () {
       var remind = document.getElementById('remind');
       var statsEl = document.getElementById('stats');
@@ -113,22 +119,24 @@
       }
 
       petEnabled.addEventListener('click', function () {
-        var next = petEnabled.getAttribute('aria-checked') !== 'true';
-        writePreference('knowtree.pet.collapsed.v1', next ? '0' : '1');
-        petEnabled.classList.toggle('on', next);
-        petEnabled.setAttribute('aria-checked', String(next));
+        var next = nextSwitchState(petEnabled.getAttribute('aria-checked'));
+        var preference = petPreferenceUpdate('visibility', next.on);
+        writePreference(preference.key, preference.value);
+        petEnabled.classList.toggle('on', next.on);
+        petEnabled.setAttribute('aria-checked', next.ariaChecked);
         document.dispatchEvent(new CustomEvent('knowtree:pet-visibility', {
-          detail: { visible: next }
+          detail: { visible: next.on }
         }));
       });
 
       petMotion.addEventListener('click', function () {
-        var next = petMotion.getAttribute('aria-checked') !== 'true';
-        writePreference('knowtree.pet.motion.v1', next ? '1' : '0');
-        petMotion.classList.toggle('on', next);
-        petMotion.setAttribute('aria-checked', String(next));
+        var next = nextSwitchState(petMotion.getAttribute('aria-checked'));
+        var preference = petPreferenceUpdate('motion', next.on);
+        writePreference(preference.key, preference.value);
+        petMotion.classList.toggle('on', next.on);
+        petMotion.setAttribute('aria-checked', next.ariaChecked);
         document.dispatchEvent(new CustomEvent('knowtree:pet-motion', {
-          detail: { reduced: next }
+          detail: { reduced: next.on }
         }));
       });
 
@@ -303,6 +311,7 @@
             UI.toast('注销失败：' + e.message);
             return;
           }
+          removeAuthenticatedChrome(document);
           var page = document.querySelector('.page');
           page.innerHTML =
             '<div style="min-height:80dvh;display:flex;flex-direction:column;align-items:center;justify-content:center">' +

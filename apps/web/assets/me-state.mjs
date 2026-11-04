@@ -1,0 +1,24 @@
+export function nextSwitchState(ariaChecked) {
+  const on = ariaChecked !== 'true';
+  return { on, ariaChecked: String(on) };
+}
+
+export function petPreferenceUpdate(kind, on) {
+  if (kind === 'visibility') {
+    return { key: 'knowtree.pet.collapsed.v1', value: on ? '0' : '1' };
+  }
+  if (kind === 'motion') {
+    return { key: 'knowtree.pet.motion.v1', value: on ? '1' : '0' };
+  }
+  throw new Error('Unsupported pet preference: ' + kind);
+}
+
+export function removeAuthenticatedChrome(root) {
+  const removed = [];
+  root.querySelectorAll('.app-rail, .pet-mount, [data-pet-mount]').forEach((node) => {
+    removed.push(node);
+    node.remove();
+  });
+  if (root.body && root.body.classList) root.body.classList.remove('has-app-shell');
+  return removed;
+}

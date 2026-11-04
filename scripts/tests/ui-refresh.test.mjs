@@ -144,3 +144,14 @@ test('account exposes pet preferences and auth pages stay pet-free', async () =>
     assert.equal(html.includes('assets/pet.js'), false, `${page} must not load pet`);
   }
 });
+
+test('account uses testable preference helpers and removes app chrome on logout', async () => {
+  const me = await readFile(path.join(web, 'me.html'), 'utf8');
+  assert.match(me, /assets\/me-state\.mjs/);
+  assert.match(me, /petPreferenceUpdate\('visibility'/);
+  assert.match(me, /petPreferenceUpdate\('motion'/);
+  assert.ok(
+    me.indexOf('removeAuthenticatedChrome(document)') < me.indexOf('page.innerHTML'),
+    'logout must clean app chrome before rendering the logged-out state',
+  );
+});
