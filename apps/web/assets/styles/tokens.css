@@ -1,0 +1,29 @@
+:root {
+  --bg: #10110E;
+  --bg-deep: #0A0B09;
+  --surface: #171813;
+  --surface-raised: #20211B;
+  --paper: #E7DDC7;
+  --paper-high: #F2EBDC;
+  --ink: #28241B;
+  --text: #F1EBDD;
+  --text-muted: #AAA393;
+  --gold: #C6A15B;
+  --gold-soft: #DFC27F;
+  --moss: #4D5947;
+  --danger: #D46A5E;
+  --line: rgba(241, 235, 221, .10);
+  --line-strong: rgba(241, 235, 221, .18);
+  --font-display: "Noto Serif SC", "Source Han Serif SC", "Songti SC", SimSun, serif;
+  --font-ui: "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei UI", sans-serif;
+  --font-reading: "Noto Serif SC", "Source Han Serif SC", "Songti SC", SimSun, serif;
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --shadow-float: 0 18px 48px rgba(0, 0, 0, .24);
+  --motion-fast: 120ms;
+  --motion-base: 200ms;
+  --motion-page: 320ms;
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+}

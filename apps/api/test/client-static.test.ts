@@ -184,7 +184,10 @@ test('bottom sheets expose landmark content', async () => {
 });
 
 test('production styles include keyboard, motion and minimum target standards', async () => {
-  const css = await readFile(path.join(clientDir, 'assets/app.css'), 'utf8');
+  const css = [
+    await readFile(path.join(clientDir, 'assets/styles/base.css'), 'utf8'),
+    await readFile(path.join(clientDir, 'assets/styles/components.css'), 'utf8'),
+  ].join('\n');
   assert.match(css, /:focus-visible/);
   assert.match(css, /prefers-reduced-motion/);
   assert.match(css, /min-height:\s*44px/);
