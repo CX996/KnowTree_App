@@ -3,6 +3,7 @@
 
   var seen = new Set();
   var connection = navigator.connection || {};
+  var pointerTimer = null;
 
   function canPrefetch() {
     return !connection.saveData &&
@@ -24,14 +25,26 @@
   document.addEventListener('pointerover', function (event) {
     var anchor = event.target.closest('a[href]');
     if (!anchor || anchor.dataset.noPrefetch !== undefined) return;
-    window.setTimeout(function () {
+    window.clearTimeout(pointerTimer);
+    pointerTimer = window.setTimeout(function () {
       prefetch(anchor.href);
     }, 80);
+  }, { passive: true });
+
+  document.addEventListener('pointerout', function (event) {
+    var anchor = event.target.closest('a[href]');
+    if (!anchor) return;
+    var related = event.relatedTarget;
+    if (!related || !anchor.contains(related)) window.clearTimeout(pointerTimer);
   }, { passive: true });
 
   document.addEventListener('focusin', function (event) {
     var anchor = event.target.closest('a[href]');
     if (anchor && anchor.dataset.noPrefetch === undefined) prefetch(anchor.href);
+  });
+
+  document.addEventListener('focusout', function () {
+    window.clearTimeout(pointerTimer);
   });
 
   window.addEventListener('pagehide', function () {

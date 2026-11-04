@@ -125,6 +125,7 @@ test('reading and review keep controls on paper surfaces', async () => {
   assert.match(review, /id="forgot"/);
   assert.match(review, /id="known"/);
   assert.match(review, /查看全文/);
+  assert.match(review, /<i aria-hidden="true"/);
 });
 
 test('account exposes pet preferences and auth pages stay pet-free', async () => {
@@ -187,6 +188,10 @@ test('companion runtime is navigation-only and publishes safe data events', asyn
   const api = await readFile(path.join(web, 'assets/api.js'), 'utf8');
   assert.match(pet, /location\.href/);
   assert.equal(/KT\.(ingest|assign|delete|merge|updateEntry|markSeen)\s*\(/.test(pet), false);
+  assert.match(pet, /role="dialog"[^>]*aria-label="小黑狐快捷入口"/);
+  assert.match(pet, /href="capture\.html">记一条/);
+  assert.match(pet, /href="inbox\.html"[^>]*>处理待归类/);
+  assert.match(pet, /href="review\.html">看看今天的回顾/);
   assert.match(pet, /knowtree:input-focus/);
   assert.match(pet, /knowtree:input-blur/);
   assert.match(api, /knowtree:data-ready/);
@@ -222,5 +227,12 @@ test('transition styles provide reduced-motion-safe cross-document navigation', 
   const css = await readFile(path.join(web, 'assets/styles/transitions.css'), 'utf8');
   assert.match(css, /@view-transition\s*\{\s*navigation:\s*auto/);
   assert.match(css, /prefers-reduced-motion/);
+});
+
+test('prefetch timer is cancelled when pointer or focus leaves a link', async () => {
+  const source = await readFile(path.join(web, 'assets/transitions.js'), 'utf8');
+  assert.match(source, /pointerout/);
+  assert.match(source, /focusout/);
+  assert.match(source, /clearTimeout\(pointerTimer\)/);
 });
 

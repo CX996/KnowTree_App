@@ -10,26 +10,6 @@
 .page--tab { padding-bottom: calc(96px + var(--sab)); }
 .page--bar { padding-bottom: calc(96px + var(--sab)); }
 .page--tabcta { padding-bottom: calc(168px + var(--sab)); }
-.page--auth {
-  position: relative;
-  overflow: clip;
-  padding-top: 32px;
-  padding-bottom: calc(32px + var(--sab));
-}
-.page--auth::before {
-  content: "";
-  position: absolute;
-  inset: -120px -120px auto auto;
-  width: 330px;
-  height: 330px;
-  border: 1px solid rgba(201, 169, 107, .13);
-  border-radius: 50%;
-  box-shadow:
-    0 0 0 34px rgba(201, 169, 107, .035),
-    0 0 0 68px rgba(201, 169, 107, .022);
-  pointer-events: none;
-}
-
 .topbar {
   display: flex;
   align-items: center;

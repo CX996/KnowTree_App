@@ -61,7 +61,7 @@
       function dots() {
         var html = '<div class="dots mt24">';
         for (var i = 0; i < queue.length; i++) {
-          html += '<i class="' + (i === idx ? 'on' : '') + '"></i>';
+          html += '<i aria-hidden="true" class="' + (i === idx ? 'on' : '') + '"></i>';
         }
         return html + '</div><div class="t3 s12 mt8" style="text-align:center">' + (idx + 1) + ' / ' + queue.length + '</div>';
       }
