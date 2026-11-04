@@ -110,3 +110,19 @@ test('capture uses focus mode and preserves file and history semantics', async (
   assert.match(html, /knowtree:input-focus/);
   assert.match(html, /knowtree:input-blur/);
 });
+
+test('reading and review keep controls on paper surfaces', async () => {
+  const detail = await readFile(path.join(web, 'detail.html'), 'utf8');
+  const review = await readFile(path.join(web, 'review.html'), 'utf8');
+
+  assert.match(detail, /class="reading-column"/);
+  assert.match(detail, /class="reading-sheet"/);
+  for (const id of ['back', 'main', 'editPane', 'editTitle', 'editSummary', 'editContent', 'preview', 'saveBtn', 'editBtn', 'moveBtn', 'delBtn']) {
+    assert.match(detail, new RegExp(`id="${id}"`), `detail missing ${id}`);
+  }
+
+  assert.match(review, /class="review-sheet"/);
+  assert.match(review, /id="forgot"/);
+  assert.match(review, /id="known"/);
+  assert.match(review, /查看全文/);
+});

@@ -12,32 +12,36 @@
   <link rel="stylesheet" href="assets/styles/shell.css" />
 </head>
 <body data-tab="lib">
-  <main class="page page--bar">
-    <div class="topbar">
-      <button class="icon-btn" id="back" aria-label="返回" data-ic="back"></button>
-      <div class="grow"></div>
-    </div>
-
-    <div id="main"></div>
-
-    <section class="edit-pane" id="editPane" aria-label="编辑知识" hidden>
-      <label class="t3 s12" for="editTitle">标题</label>
-      <input class="textarea mt8" id="editTitle" type="text" maxlength="200" />
-
-      <label class="t3 s12 mt16" for="editSummary">摘要</label>
-      <textarea class="textarea textarea--summary mt8" id="editSummary" maxlength="300"></textarea>
-
-      <label class="t3 s12 mt16" for="editContent">正文 Markdown</label>
-      <textarea class="textarea textarea--source mt8" id="editContent"></textarea>
-
-      <div class="h-sec mt24 mb12">预览</div>
-      <article class="markdown-body markdown-body--preview" id="preview"></article>
-
-      <div class="edit-actions mt20">
-        <button class="btn btn-ghost" id="cancelEdit" type="button">取消</button>
-        <button class="btn btn-primary" id="saveBtn" type="button">保存修改</button>
+  <main class="page page--bar app-page reading-page">
+    <div class="reading-column">
+      <div class="topbar">
+        <button class="icon-btn" id="back" aria-label="返回" data-ic="back"></button>
+        <div class="grow"></div>
       </div>
-    </section>
+
+      <section class="reading-sheet" id="readingSheet" aria-label="知识正文">
+        <div id="main"></div>
+      </section>
+
+      <section class="edit-pane" id="editPane" aria-label="编辑知识" hidden>
+        <label class="t3 s12" for="editTitle">标题</label>
+        <input class="textarea mt8" id="editTitle" type="text" maxlength="200" />
+
+        <label class="t3 s12 mt16" for="editSummary">摘要</label>
+        <textarea class="textarea textarea--summary mt8" id="editSummary" maxlength="300"></textarea>
+
+        <label class="t3 s12 mt16" for="editContent">正文 Markdown</label>
+        <textarea class="textarea textarea--source mt8" id="editContent"></textarea>
+
+        <div class="h-sec mt24 mb12">预览</div>
+        <article class="markdown-body markdown-body--preview" id="preview"></article>
+
+        <div class="edit-actions mt20">
+          <button class="btn btn-ghost" id="cancelEdit" type="button">取消</button>
+          <button class="btn btn-primary" id="saveBtn" type="button">保存修改</button>
+        </div>
+      </section>
+    </div>
 
     <div class="actionbar" id="actionbar" hidden>
       <button id="editBtn"><span data-ic="edit"></span><span>编辑</span></button>
@@ -52,10 +56,12 @@
   <script type="module">
     import { renderMarkdown } from './assets/markdown.js';
 
+    async function boot() {
     const KT = window.KT;
     const UI = window.UI;
     const id = UI.q('id');
     const main = document.getElementById('main');
+    const readingSheet = document.getElementById('readingSheet');
     const actionbar = document.getElementById('actionbar');
     const editPane = document.getElementById('editPane');
     const editTitle = document.getElementById('editTitle');
@@ -97,7 +103,7 @@
     } catch (error) {
       main.innerHTML = KT.errorHTML(error);
       actionbar.hidden = true;
-      throw error;
+      return;
     }
 
     function card() {
@@ -185,6 +191,7 @@
 
       main.innerHTML = html;
       main.hidden = false;
+      readingSheet.hidden = false;
       actionbar.hidden = false;
       UI.hydrateIcons(main);
 
@@ -214,6 +221,7 @@
       dirty = false;
       editing = true;
       main.hidden = true;
+      readingSheet.hidden = true;
       actionbar.hidden = true;
       editPane.hidden = false;
       editTitle.focus();
@@ -232,6 +240,7 @@
       dirty = false;
       editPane.hidden = true;
       main.hidden = false;
+      readingSheet.hidden = false;
       actionbar.hidden = false;
     }
 
@@ -248,6 +257,7 @@
         editing = false;
         editPane.hidden = true;
         main.hidden = false;
+        readingSheet.hidden = false;
         render();
         UI.toast('修改已保存');
       } catch (error) {
@@ -323,6 +333,9 @@
     });
 
     render();
+    }
+
+    boot();
   </script>
 </body>
 </html>

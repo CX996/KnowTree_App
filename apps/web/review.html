@@ -12,17 +12,21 @@
   <link rel="stylesheet" href="assets/styles/shell.css" />
 </head>
 <body data-tab="review">
-  <main class="page page--bar">
-    <div class="topbar">
-      <button class="icon-btn" id="close" aria-label="关闭" data-ic="x"></button>
-      <h1 class="h-sec" style="flex:1;text-align:center">每日回溯</h1>
-      <span class="icon-btn" style="visibility:hidden"></span>
-    </div>
-    <div class="review-stage" id="stage"></div>
-  <div class="cta-bar" id="bar" hidden>
-    <div class="row2">
-      <button class="btn btn-ghost" id="forgot">忘了</button>
-      <button class="btn btn-primary" id="known">记得</button>
+  <main class="page page--bar app-page review-page">
+    <header class="page-head">
+      <div>
+        <p class="page-kicker">DAILY RECALL</p>
+        <h1>每日回顾</h1>
+      </div>
+      <div class="review-head-actions">
+        <span class="page-head__meta" id="progress"></span>
+        <button class="icon-btn" id="close" aria-label="关闭" data-ic="x"></button>
+      </div>
+    </header>
+    <section class="review-stage" id="stage"></section>
+    <div class="cta-bar review-actions" id="bar" hidden>
+      <button class="btn btn-ghost" id="forgot">稍后再看</button>
+      <button class="btn btn-primary" id="known">已理解</button>
     </div>
   </main>
 
@@ -33,6 +37,7 @@
     (async function () {
       var stage = document.getElementById('stage');
       var bar = document.getElementById('bar');
+      var progress = document.getElementById('progress');
       var queue = [];
       var idx = 0;
 
@@ -59,12 +64,14 @@
 
       function render() {
         if (!queue.length) {
+          progress.textContent = '';
           stage.innerHTML = '<div class="empty"><div class="t">今天没有需要回溯的知识</div><div>先丢几条进来，遗忘曲线会负责把它们送回来</div></div>' +
             '<a class="btn btn-primary btn-block mt16" href="index.html">回到知识树</a>';
           bar.hidden = true;
           return;
         }
         if (idx >= queue.length) {
+          progress.textContent = queue.length + ' / ' + queue.length;
           stage.innerHTML = '<div style="text-align:center">' +
             '<div class="h-big">今天的看完了</div>' +
             '<div class="t3 s13 mt8">明天会按遗忘曲线再送 ' + Math.min(queue.length, 3) + ' 条过来</div></div>' +
@@ -73,14 +80,15 @@
           return;
         }
         var c = queue[idx];
+        progress.textContent = (idx + 1) + ' / ' + queue.length;
         stage.innerHTML =
-          '<div class="card review-card">' +
-            '<div class="card__meta mb8"><span class="nchip">' + UI.esc(KT.nodeName(c.nodeId)) + '</span>' +
-            '<span>收录于 ' + UI.timeAgo(c.createdAt) + '</span></div>' +
-            '<div class="card__title" style="font-size:19px">' + UI.esc(c.title) + '</div>' +
-            '<div class="card__sum mt8" style="-webkit-line-clamp:4">' + UI.esc(c.summary) + '</div>' +
-            '<div class="mt12"><a class="t3 s13" style="color:var(--gold)" href="detail.html?id=' + encodeURIComponent(c.id) + '">查看全文</a></div>' +
-          '</div>' + dots();
+          '<article class="review-sheet">' +
+            '<p class="page-kicker">' + UI.esc(KT.nodeName(c.nodeId)) + '</p>' +
+            '<h2>' + UI.esc(c.title) + '</h2>' +
+            '<p>' + UI.esc(c.summary) + '</p>' +
+            '<div class="review-meta">收录于 ' + UI.timeAgo(c.createdAt) + '</div>' +
+            '<a href="detail.html?id=' + encodeURIComponent(c.id) + '">查看全文 →</a>' +
+          '</article>' + dots();
         bar.hidden = false;
       }
 
@@ -91,6 +99,9 @@
         if (!c) return;
         try {
           await KT.markSeen(c.id, status);
+          document.dispatchEvent(new CustomEvent('knowtree:request-success', {
+            detail: { scope: 'review' }
+          }));
         } catch (e) {
           UI.toast('回溯状态没存上：' + e.message);
         }
