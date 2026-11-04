@@ -79,8 +79,10 @@ test('library applies URL category only after data load and resets status on cat
     'URL category must be validated after KT.load'
   );
   assert.match(library, /filter = nextFilterOnCategoryChange\(\);\s*syncSegments\(\);/);
-  assert.match(library, /item\.classList\.toggle\('is-active', active\)/);
-  assert.match(library, /item\.setAttribute\('aria-pressed', String\(active\)\)/);
+  assert.match(
+    library,
+    /updateCategorySelection\(\s*categoryRail\.querySelectorAll\('\[data-category\]'\),\s*selectedCategory\s*\)/
+  );
   assert.match(library, /library-state\.mjs/);
 });
 

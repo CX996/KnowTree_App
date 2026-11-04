@@ -33,7 +33,11 @@
   <script src="assets/ui.js"></script>
   <script src="assets/shell.js"></script>
   <script type="module">
-    import { resolveCategory, nextFilterOnCategoryChange } from './assets/library-state.mjs';
+    import {
+      resolveCategory,
+      nextFilterOnCategoryChange,
+      updateCategorySelection
+    } from './assets/library-state.mjs';
 
     (async function () {
       var filter = 'all';
@@ -127,11 +131,10 @@
         selectedCategory = button.getAttribute('data-category');
         filter = nextFilterOnCategoryChange();
         syncSegments();
-        categoryRail.querySelectorAll('[data-category]').forEach(function (item) {
-          var active = item.getAttribute('data-category') === selectedCategory;
-          item.classList.toggle('is-active', active);
-          item.setAttribute('aria-pressed', String(active));
-        });
+        updateCategorySelection(
+          categoryRail.querySelectorAll('[data-category]'),
+          selectedCategory
+        );
         render();
       });
 
