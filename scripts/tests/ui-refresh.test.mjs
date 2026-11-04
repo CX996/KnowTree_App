@@ -208,9 +208,13 @@ test('all pages load transitions and no legacy app.css reference remains', async
 test('page-specific legacy selectors live in pages.css', async () => {
   const components = await readFile(path.join(web, 'assets/styles/components.css'), 'utf8');
   const pages = await readFile(path.join(web, 'assets/styles/pages.css'), 'utf8');
-  for (const selector of ['.auth-card', '.capture-panel', '.review-stage', '.markdown-body', '.actionbar']) {
+  const selectors = [
+    '.auth-', '.capture-', '.drop-zone', '.file-chip', '.tree', '.tree-wrap',
+    '.tnode', '.review-', '.markdown-body', '.detail-', '.edit-', '.actionbar',
+  ];
+  for (const selector of selectors) {
     assert.equal(components.includes(selector), false, `${selector} still in components`);
-    assert.match(pages, new RegExp(selector.replace('.', '\\.')));
+    assert.ok(pages.includes(selector), `${selector} missing from pages`);
   }
 });
 

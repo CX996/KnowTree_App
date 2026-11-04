@@ -1,3 +1,206 @@
+/* ===== Migrated page-specific selectors ===== */
+
+.auth-brand {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+  color: var(--text2);
+  font-size: 12px;
+  letter-spacing: .08em;
+}
+
+.auth-brand__mark {
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--gold);
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 4px var(--bg), inset 0 0 0 5px rgba(201, 169, 107, .45);
+}
+
+.auth-hero { position: relative; z-index: 1; }
+
+.auth-kicker {
+  color: var(--gold);
+  font-size: 11px;
+  letter-spacing: .16em;
+}
+
+.auth-label {
+  display: block;
+  color: var(--text2);
+  font-size: 12px;
+}
+
+.auth-input {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 8px;
+  padding: 11px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  outline: 0;
+  background: var(--surface2);
+  color: var(--text);
+  font-size: 15px;
+}
+
+.auth-input:focus { border-color: rgba(201, 169, 107, .48); }
+
+.auth-input::placeholder { color: var(--text3); }
+
+.auth-hint { line-height: 1.6; }
+
+.auth-status { position: relative; z-index: 1; min-height: 21px; text-align: center; }
+
+.auth-links {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--text3);
+  font-size: 13px;
+}
+
+.auth-links a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--gold);
+}
+
+.auth-note {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  line-height: 1.8;
+}
+
+/* ---------- 知识树 ---------- */
+.tree-wrap { margin: 8px -6px 0; }
+
+.tree { width: 100%; height: auto; }
+
+.tree .branch {
+  fill: none;
+  stroke: var(--gold);
+  stroke-opacity: .42;
+  stroke-width: 1.2;
+  stroke-linecap: round;
+}
+
+.tnode { cursor: pointer; }
+
+.tnode .ring {
+  fill: var(--surface);
+  stroke: var(--gold);
+  stroke-opacity: .55;
+  stroke-width: 1.1;
+  transition: stroke-opacity .15s ease;
+}
+
+.tnode .hit { fill: transparent; }
+
+.tnode .cnt { fill: var(--gold); font-size: 15px; font-weight: 500; text-anchor: middle; dominant-baseline: central; }
+
+.tnode .cnt--big { font-size: 17px; }
+
+.tnode .lbl { fill: var(--text2); font-size: 12px; text-anchor: middle; }
+
+.tnode:active .ring { stroke-opacity: 1; }
+
+.detail-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.detail-summary { margin-top: 18px; }
+
+.detail-tools { display: flex; justify-content: flex-end; }
+
+/* ---------- 回溯 ---------- */
+
+/* ---------- 收录 ---------- */
+.capture-bg {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .6);
+}
+
+.capture-mode {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 4px;
+  background: var(--surface2);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+
+.capture-mode__tab {
+  min-height: 44px;
+  border-radius: 10px;
+  color: var(--text3);
+  font-size: 14px;
+}
+
+.capture-mode__tab.is-active {
+  color: var(--text);
+  background: rgba(201, 169, 107, .14);
+  box-shadow: inset 0 0 0 1px rgba(201, 169, 107, .28);
+}
+
+.drop-zone {
+  min-height: 190px;
+  border: 1px dashed rgba(201, 169, 107, .38);
+  border-radius: 16px;
+  padding: 24px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+  background: rgba(201, 169, 107, .04);
+  transition: border-color .15s ease, background .15s ease;
+}
+
+.drop-zone.is-dragging {
+  border-color: var(--gold);
+  background: rgba(201, 169, 107, .11);
+}
+
+.drop-zone__icon { width: 30px; height: 30px; color: var(--gold); }
+
+.drop-zone__title { font-size: 16px; font-weight: 500; }
+
+.file-chip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--surface2);
+  border: 1px solid var(--line);
+}
+
+.file-chip > svg { color: var(--gold); flex: none; }
+
+.file-chip__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+}
+
+.capture-status { min-height: 21px; }
+
 .app-page {
   width: 100%;
   max-width: 920px;

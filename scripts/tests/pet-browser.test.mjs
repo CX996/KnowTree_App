@@ -76,3 +76,36 @@ test('pet runtime passes a real DOM behavior contract in headless Edge', async (
     await rm(profile, { recursive: true, force: true });
   }
 });
+
+test('responsive shell and transition fixture pass at five target widths', async (t) => {
+  const browser = findBrowser();
+  if (!browser) {
+    t.skip('Microsoft Edge is not installed');
+    return;
+  }
+  const server = await startServer();
+  try {
+    const address = server.address();
+    const url = `http://127.0.0.1:${address.port}/scripts/tests/fixtures/layout-runtime.html`;
+    for (const width of [360, 390, 768, 1280, 1440]) {
+      const profile = await mkdtemp(path.join(os.tmpdir(), `knowtree-layout-${width}-`));
+      try {
+        const args = [
+          '--headless=new', '--disable-gpu', '--no-first-run', '--disable-extensions',
+          `--user-data-dir=${profile}`, `--window-size=${width},900`,
+          '--virtual-time-budget=1200', '--dump-dom',
+        ];
+        args.push(url);
+        const { stdout } = await execFileAsync(browser, args, {
+          timeout: 20_000,
+          maxBuffer: 8 * 1024 * 1024,
+        });
+        assert.match(stdout, /data-test-result="pass"/, `${width}px layout failed`);
+      } finally {
+        await rm(profile, { recursive: true, force: true });
+      }
+    }
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});

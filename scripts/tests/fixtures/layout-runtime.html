@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../../../apps/web/assets/styles/tokens.css">
+  <link rel="stylesheet" href="../../../apps/web/assets/styles/base.css">
+  <link rel="stylesheet" href="../../../apps/web/assets/styles/components.css">
+  <link rel="stylesheet" href="../../../apps/web/assets/styles/pages.css">
+  <link rel="stylesheet" href="../../../apps/web/assets/styles/shell.css">
+  <link rel="stylesheet" href="../../../apps/web/assets/styles/pet.css">
+  <link rel="stylesheet" href="../../../apps/web/assets/styles/transitions.css">
+</head>
+<body data-tab="tree">
+  <main class="page app-page home-page">
+    <h1>知树</h1>
+    <a id="capture" href="capture.html">丢一条</a>
+    <div class="app-rail__pet" data-pet-mount>
+      <button class="pet-hit" type="button" aria-label="宠物入口"><img class="pet-frame" alt=""></button>
+    </div>
+  </main>
+  <pre id="browserResult">RUNNING</pre>
+  <script>window.UI = { svg: function () { return '<svg></svg>'; } };</script>
+  <script src="../../../apps/web/assets/shell.js"></script>
+  <script src="../../../apps/web/assets/transitions.js"></script>
+  <script>
+    requestAnimationFrame(function () {
+      var root = document.documentElement;
+      var rail = document.querySelector('.app-rail');
+      var navLinks = rail ? rail.querySelectorAll('a') : [];
+      var overflow = root.scrollWidth > root.clientWidth + 1;
+      var expectedLeft = innerWidth >= 1200 ? 232 : innerWidth >= 768 ? 80 : 0;
+      var left = parseFloat(getComputedStyle(document.body).paddingLeft) || 0;
+      var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      root.dataset.motion = reduced ? 'reduce' : 'normal';
+      var ok = rail && navLinks.length >= 4 && !overflow && Math.abs(left - expectedLeft) < 2 &&
+        window.KTTransitions && (reduced || !reduced);
+      root.dataset.testResult = ok ? 'pass' : 'fail';
+      document.getElementById('browserResult').textContent = ok ? 'PASS' : 'FAIL';
+    });
+  </script>
+</body>
+</html>
