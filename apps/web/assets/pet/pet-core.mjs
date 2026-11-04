@@ -44,3 +44,8 @@ export function canShowHint({
   if (typing || dismissedKeys.includes(key)) return false;
   return now - lastShownAt >= cooldownMs;
 }
+
+export function rememberDismissedHint(dismissedKeys, key) {
+  if (!key || dismissedKeys.includes(key)) return dismissedKeys.slice();
+  return dismissedKeys.concat(key);
+}

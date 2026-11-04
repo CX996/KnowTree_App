@@ -1,9 +1,15 @@
-import { PET_FRAMES, resolvePetState, canShowHint } from './pet/pet-core.mjs';
+import {
+  PET_FRAMES,
+  resolvePetState,
+  canShowHint,
+  rememberDismissedHint,
+} from './pet/pet-core.mjs';
 
 const COLLAPSED = 'knowtree.pet.collapsed.v1';
 const MOTION = 'knowtree.pet.motion.v1';
 const CELEBRATE = 'knowtree.pet.celebrate.v1';
 const HINT_SHOWN = 'knowtree.pet.hintShown.v1';
+const HINT_DISMISSED = 'knowtree.pet.hintDismissed.v1';
 
 function readFlag(key, fallback = false) {
   try {
@@ -35,6 +41,26 @@ function markHintShown() {
     localStorage.setItem(HINT_SHOWN, String(Date.now()));
   } catch {
     // The hint still works for this page visit.
+  }
+}
+
+function readDismissedHints() {
+  try {
+    const parsed = JSON.parse(sessionStorage.getItem(HINT_DISMISSED) || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function dismissHint(key) {
+  try {
+    sessionStorage.setItem(
+      HINT_DISMISSED,
+      JSON.stringify(rememberDismissedHint(readDismissedHints(), key)),
+    );
+  } catch {
+    // The current page remains usable when session storage is blocked.
   }
 }
 
@@ -88,7 +114,10 @@ function renderState(state) {
   mount.dataset.state = state;
   mount.dataset.motion = reduced ? 'reduce' : 'full';
   mount.hidden = state === 'hidden';
-  image.src = '/assets/pet/' + (PET_FRAMES[state] || PET_FRAMES.idle);
+  image.src = new URL(
+    './pet/' + (PET_FRAMES[state] || PET_FRAMES.idle),
+    import.meta.url,
+  ).href;
   image.alt = state === 'hidden' ? '' : '知树小黑狐';
   button.setAttribute(
     'aria-label',
@@ -106,7 +135,7 @@ function refresh(extra = {}) {
     hintAllowed: !collapsed && canShowHint({
       now: Date.now(),
       lastShownAt: readNumber(HINT_SHOWN),
-      dismissedKeys: [],
+      dismissedKeys: readDismissedHints(),
       key: 'inbox',
       typing,
     }),
@@ -134,7 +163,7 @@ function showInboxHint() {
   if (!canShowHint({
     now: Date.now(),
     lastShownAt: readNumber(HINT_SHOWN),
-    dismissedKeys: [],
+    dismissedKeys: readDismissedHints(),
     key: 'inbox',
     typing,
   })) return;
@@ -148,6 +177,7 @@ bubble.addEventListener('click', navigateFromPet);
 mount.querySelector('.pet-bubble__close').addEventListener('click', (event) => {
   event.stopPropagation();
   bubble.hidden = true;
+  dismissHint('inbox');
   markHintShown();
   refresh({ ready: false });
 });

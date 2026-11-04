@@ -8,6 +8,7 @@ import {
   PET_STATES,
   resolvePetState,
   canShowHint,
+  rememberDismissedHint,
 } from '../../apps/web/assets/pet/pet-core.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -32,6 +33,8 @@ test('hint cooldown, dismissal and typing are enforced', () => {
   assert.equal(canShowHint({ ...base, dismissedKeys: ['inbox'] }), false);
   assert.equal(canShowHint({ ...base, lastShownAt: 70_000 }), false);
   assert.equal(canShowHint({ ...base, lastShownAt: 50_000 }), true);
+  assert.deepEqual(rememberDismissedHint([], 'inbox'), ['inbox']);
+  assert.deepEqual(rememberDismissedHint(['inbox'], 'inbox'), ['inbox']);
 });
 
 test('all animated UI states have an approved transparent frame', () => {

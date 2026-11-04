@@ -38,6 +38,7 @@
 }
 .pet-bubble__close {
   min-height: 44px;
+  min-width: 44px;
   margin-top: 4px;
   padding: 0;
   color: #7e5a38;

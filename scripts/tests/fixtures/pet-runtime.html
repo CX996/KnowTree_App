@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="../../../apps/web/assets/styles/pet.css">
+</head>
+<body data-pet-mode="ambient">
+  <input id="focusInput" aria-label="test input">
+  <div data-pet-mount></div>
+  <pre id="browserResult">PENDING</pre>
+  <script>
+    localStorage.clear();
+    sessionStorage.clear();
+    let pendingInbox = false;
+    window.KT = {
+      inbox: function () {
+        return {
+          pending: pendingInbox ? [{ id: 'pending-1' }] : [],
+          dups: []
+        };
+      }
+    };
+  </script>
+  <script type="module">
+    const failures = [];
+    const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    const check = (condition, message) => {
+      if (!condition) failures.push(message);
+    };
+    const emit = (name, detail) => {
+      document.dispatchEvent(new CustomEvent(name, { detail: detail || {} }));
+    };
+    const mount = () => document.querySelector('[data-pet-mount]');
+    const bubble = () => document.querySelector('.pet-bubble');
+
+    try {
+      await import('../../../apps/web/assets/pet.js?browser-contract=1');
+      await wait(80);
+      window.pendingInbox = true;
+      pendingInbox = true;
+      localStorage.setItem('knowtree.pet.hintShown.v1', String(Date.now() - 60_000));
+      emit('knowtree:data-ready');
+      await wait(40);
+
+      check(mount().dataset.state === 'carry', 'pending inbox must show carry');
+      check(document.querySelectorAll('.pet-bubble').length === 1, 'only one bubble may exist');
+      check(bubble().hidden === false, 'pending inbox bubble must be visible');
+
+      emit('knowtree:input-focus');
+      await wait(20);
+      check(mount().dataset.state === 'listen', 'input focus must switch to listen');
+      check(bubble().hidden === true, 'input focus must hide bubble');
+
+      localStorage.setItem('knowtree.pet.hintShown.v1', String(Date.now() - 60_000));
+      emit('knowtree:input-blur');
+      await wait(20);
+      emit('knowtree:data-ready');
+      await wait(20);
+      document.querySelector('.pet-bubble__close').click();
+      await wait(20);
+      check(bubble().hidden === true, 'close must hide bubble');
+      check(
+        JSON.parse(sessionStorage.getItem('knowtree.pet.hintDismissed.v1') || '[]').includes('inbox'),
+        'dismissal must be remembered for the session',
+      );
+      emit('knowtree:data-ready');
+      await wait(20);
+      check(bubble().hidden === true, 'dismissed hint must not reappear');
+
+      document.querySelector('.pet-collapse').click();
+      await wait(20);
+      check(mount().hidden === true, 'collapse must hide pet');
+      check(localStorage.getItem('knowtree.pet.collapsed.v1') === '1', 'collapse must persist');
+
+      document.querySelectorAll('[data-pet-mount]').forEach((node) => node.remove());
+      await import('../../../apps/web/assets/pet.js?browser-contract=2');
+      await wait(30);
+      check(mount().hidden === true, 'persisted collapse must survive reload');
+
+      localStorage.setItem('knowtree.pet.collapsed.v1', '0');
+      localStorage.setItem('knowtree.pet.motion.v1', '1');
+      document.querySelectorAll('[data-pet-mount]').forEach((node) => node.remove());
+      await import('../../../apps/web/assets/pet.js?browser-contract=3');
+      await wait(30);
+      check(mount().dataset.motion === 'reduce', 'reduced motion preference must render static state');
+    } catch (error) {
+      failures.push(error && error.stack ? error.stack : String(error));
+    }
+
+    const result = failures.length ? 'FAIL\n' + failures.join('\n') : 'PASS';
+    document.getElementById('browserResult').textContent = result;
+    document.body.dataset.testResult = failures.length ? 'fail' : 'pass';
+  </script>
+</body>
+</html>
