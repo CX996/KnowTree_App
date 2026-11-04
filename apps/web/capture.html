@@ -10,57 +10,54 @@
   <link rel="stylesheet" href="assets/styles/components.css" />
   <link rel="stylesheet" href="assets/styles/pages.css" />
 </head>
-<body>
-  <main>
-    <div class="capture-bg" id="bg"></div>
-
-    <div class="capture-sheet capture-sheet--document" role="dialog" aria-label="丢一条">
-      <div class="sheet__handle"></div>
-      <div class="topbar" style="padding-top:0;min-height:44px">
-        <div class="grow">
-          <div class="h-sec" style="font-size:20px">丢进来</div>
-          <div class="t3 s13">文字、Markdown 或一份文档都可以</div>
-        </div>
-        <button class="icon-btn" id="close" aria-label="关闭" data-ic="x"></button>
+<body class="capture-body" data-pet-mode="focus">
+  <main class="page focus-page">
+    <header class="capture-head">
+      <button class="icon-btn" id="close" aria-label="关闭" data-ic="x"></button>
+      <div>
+        <p class="page-kicker">NEW SEED</p>
+        <h1>丢一条进树里</h1>
       </div>
+    </header>
 
-      <label class="t3 s12" for="title">标题</label>
-      <input class="textarea mt8" id="title" type="text" maxlength="200"
-        placeholder="可留空，我会根据内容自动起标题" autocomplete="off" />
+    <section class="capture-panel" aria-label="新增知识">
+      <label for="title">标题</label>
+      <input class="field" id="title" type="text" maxlength="200"
+        placeholder="可留空，系统会根据内容整理" autocomplete="off" />
 
-      <div class="capture-mode mt16" role="group" aria-label="录入方式">
-        <button class="capture-mode__tab is-active" id="textMode" type="button">直接写</button>
-        <button class="capture-mode__tab" id="fileMode" type="button">导入文档</button>
+      <div class="capture-modes" role="group" aria-label="录入方式">
+        <button id="textMode" type="button" aria-pressed="true">直接写</button>
+        <button id="fileMode" type="button" aria-pressed="false">导入文档</button>
       </div>
 
       <div id="textPane">
         <label class="sr-only" for="text">正文</label>
-        <textarea class="textarea mt12" id="text"
-          placeholder="把想法、笔记或 Markdown 直接丢进来…"></textarea>
+        <textarea class="field field--body" id="text"
+          placeholder="把想法、笔记或 Markdown 丢进来…"></textarea>
       </div>
 
       <div id="filePane" hidden>
         <input id="fileInput" class="sr-only" type="file"
           accept=".md,.txt,.html,.docx,.pdf" />
-        <div id="dropZone" class="drop-zone mt12">
-          <span class="drop-zone__icon" data-ic="download"></span>
-          <div class="drop-zone__title">拖一份文档到这里</div>
-          <div class="t3 s12">MD、TXT、HTML、DOCX、文本型 PDF，最大 10 MB</div>
-          <button class="btn btn-ghost mt12" id="pickFile" type="button">选择文件</button>
+        <div id="dropZone" class="capture-dropzone">
+          <span class="capture-dropzone__icon" data-ic="download"></span>
+          <div class="capture-dropzone__title">拖一份文档到这里</div>
+          <div class="capture-dropzone__hint">MD、TXT、HTML、DOCX、文本型 PDF，最大 10 MB</div>
+          <button class="btn btn-ghost" id="pickFile" type="button">选择文件</button>
         </div>
-        <div class="file-chip mt12" id="fileChip" hidden>
+        <div class="file-chip" id="fileChip" hidden>
           <span data-ic="document"></span>
           <div class="grow">
             <div class="file-chip__name" id="fileName"></div>
-            <div class="t3 s12" id="fileMeta"></div>
+            <div class="capture-dropzone__hint" id="fileMeta"></div>
           </div>
           <button class="icon-btn" id="removeFile" type="button" aria-label="移除文件" data-ic="x"></button>
         </div>
       </div>
 
-      <div class="capture-status t3 s12 mt12" id="status" aria-live="polite"></div>
-      <button class="btn btn-primary btn-block mt12" id="submit" type="button">丢进去</button>
-    </div>
+      <div class="capture-status" id="status" aria-live="polite"></div>
+      <button class="btn btn-primary btn-block" id="submit" type="button">种下这条知识</button>
+    </section>
   </main>
 
   <script src="assets/api.js"></script>
@@ -118,6 +115,15 @@
           text.focus();
         }
       }
+
+      [titleInput, text].forEach(function (field) {
+        field.addEventListener('focus', function () {
+          document.dispatchEvent(new CustomEvent('knowtree:input-focus'));
+        });
+        field.addEventListener('blur', function () {
+          document.dispatchEvent(new CustomEvent('knowtree:input-blur'));
+        });
+      });
 
       function extension(name) {
         var match = String(name || '').toLowerCase().match(/(\.[^.]+)$/);
@@ -214,6 +220,11 @@
           UI.flash('疑似与已有知识重复，请到收件箱确认');
         } else {
           UI.flash('已收录，正在打开整理结果');
+        }
+        try {
+          sessionStorage.setItem('knowtree.pet.celebrate.v1', 'capture');
+        } catch (error) {
+          /* 本地存储不可用时不阻断提交 */
         }
         location.replace(detailUrl(card.id));
       }

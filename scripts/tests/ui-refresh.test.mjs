@@ -97,3 +97,14 @@ test('knowledge controls meet the 44px target', async () => {
   assert.match(css, /\.filter-chip\s*\{[^}]*min-height:\s*44px/s);
   assert.match(css, /\.status-switch button\s*\{[^}]*min-height:\s*44px/s);
 });
+
+test('capture uses focus mode and preserves file and history semantics', async () => {
+  const html = await readFile(path.join(web, 'capture.html'), 'utf8');
+  assert.match(html, /class="page focus-page"/);
+  assert.match(html, /data-pet-mode="focus"/);
+  assert.equal(html.includes('assets/shell.js'), false);
+  assert.match(html, /id="dropZone"/);
+  assert.match(html, /location\.replace\(detailUrl\(card\.id\)\)/);
+  assert.match(html, /knowtree:input-focus/);
+  assert.match(html, /knowtree:input-blur/);
+});
