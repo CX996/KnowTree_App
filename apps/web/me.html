@@ -12,12 +12,38 @@
   <link rel="stylesheet" href="assets/styles/shell.css" />
 </head>
 <body data-tab="me">
-  <main class="page page--tab">
-    <div class="topbar">
-      <div class="grow"><h1 class="h-big">我的</h1></div>
-    </div>
+  <main class="page page--tab app-page me-page">
+    <header class="page-head">
+      <div>
+        <p class="page-kicker">ACCOUNT & SETTINGS</p>
+        <h1>我的</h1>
+      </div>
+    </header>
 
     <div class="stats mt16" id="stats"></div>
+
+    <section class="settings-card" aria-labelledby="petSettingsTitle">
+      <div class="section-row">
+        <h2 id="petSettingsTitle">小黑狐</h2>
+        <span>只在当前设备保存</span>
+      </div>
+      <div class="switch-row">
+        <span>
+          <b id="petEnabledLabel">显示宠物</b>
+          <small>在安全区显示陪伴角色</small>
+        </span>
+        <button class="switch" id="petEnabled" type="button" role="switch"
+          aria-labelledby="petEnabledLabel" aria-checked="true"></button>
+      </div>
+      <div class="switch-row">
+        <span>
+          <b id="petMotionLabel">减少宠物动作</b>
+          <small>保留静态状态，不播放走动和跳跃</small>
+        </span>
+        <button class="switch" id="petMotion" type="button" role="switch"
+          aria-labelledby="petMotionLabel" aria-checked="false"></button>
+      </div>
+    </section>
 
     <div class="rows mt20">
       <button class="row" id="export">
@@ -50,8 +76,6 @@
     </div>
   </main>
 
-  <div data-tabbar></div>
-
   <script src="assets/api.js"></script>
   <script src="assets/ui.js"></script>
   <script src="assets/shell.js"></script>
@@ -59,6 +83,56 @@
     (async function () {
       var remind = document.getElementById('remind');
       var statsEl = document.getElementById('stats');
+      var petEnabled = document.getElementById('petEnabled');
+      var petMotion = document.getElementById('petMotion');
+
+      function readPreference(key, fallback) {
+        try {
+          var value = localStorage.getItem(key);
+          return value === null ? fallback : value;
+        } catch (e) {
+          return fallback;
+        }
+      }
+
+      function writePreference(key, value) {
+        try {
+          localStorage.setItem(key, value);
+        } catch (e) {
+          UI.toast('当前浏览器无法保存这项设置');
+        }
+      }
+
+      function syncPetPreferences() {
+        var visible = readPreference('knowtree.pet.collapsed.v1', '0') !== '1';
+        var reduced = readPreference('knowtree.pet.motion.v1', '0') === '1';
+        petEnabled.classList.toggle('on', visible);
+        petEnabled.setAttribute('aria-checked', String(visible));
+        petMotion.classList.toggle('on', reduced);
+        petMotion.setAttribute('aria-checked', String(reduced));
+      }
+
+      petEnabled.addEventListener('click', function () {
+        var next = petEnabled.getAttribute('aria-checked') !== 'true';
+        writePreference('knowtree.pet.collapsed.v1', next ? '0' : '1');
+        petEnabled.classList.toggle('on', next);
+        petEnabled.setAttribute('aria-checked', String(next));
+        document.dispatchEvent(new CustomEvent('knowtree:pet-visibility', {
+          detail: { visible: next }
+        }));
+      });
+
+      petMotion.addEventListener('click', function () {
+        var next = petMotion.getAttribute('aria-checked') !== 'true';
+        writePreference('knowtree.pet.motion.v1', next ? '1' : '0');
+        petMotion.classList.toggle('on', next);
+        petMotion.setAttribute('aria-checked', String(next));
+        document.dispatchEvent(new CustomEvent('knowtree:pet-motion', {
+          detail: { reduced: next }
+        }));
+      });
+
+      syncPetPreferences();
 
       try {
         await KT.load();
@@ -230,8 +304,6 @@
             return;
           }
           var page = document.querySelector('.page');
-          var tabHost = document.querySelector('[data-tabbar]');
-          if (tabHost) tabHost.innerHTML = '';
           page.innerHTML =
             '<div style="min-height:80dvh;display:flex;flex-direction:column;align-items:center;justify-content:center">' +
             '<div class="h-big">账号已注销</div>' +

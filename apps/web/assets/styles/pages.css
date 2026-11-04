@@ -450,3 +450,100 @@
   color: var(--text-muted);
   font-size: 12px;
 }
+
+/* ---------- 账户与认证 ---------- */
+.me-page {
+  width: 100%;
+  max-width: 760px;
+}
+.settings-card {
+  margin: 18px 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+.settings-card .section-row {
+  margin: 0 0 8px;
+}
+.settings-card .section-row h2 {
+  margin: 0;
+  font: 600 16px var(--font-display);
+}
+.settings-card .section-row span {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+.switch-row {
+  display: flex;
+  min-height: 58px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-top: 1px solid var(--line);
+}
+.switch-row b {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+}
+.switch-row small {
+  display: block;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.auth-layout {
+  display: grid;
+  min-height: 100dvh;
+  align-content: center;
+  gap: 28px;
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: calc(28px + var(--sat)) 20px calc(28px + var(--sab));
+}
+.auth-story {
+  position: relative;
+  z-index: 1;
+  align-self: end;
+}
+.auth-story .auth-kicker {
+  margin-top: 34px;
+}
+.auth-story h1 {
+  margin: 14px 0 0;
+  font: 600 clamp(38px, 8vw, 68px)/1.16 var(--font-display);
+  letter-spacing: -.05em;
+}
+.auth-story > p {
+  max-width: 470px;
+  margin: 18px 0 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.8;
+}
+.auth-panel {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 500px;
+  margin-inline: auto;
+}
+.auth-card {
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-float);
+}
+@media (min-width: 900px) {
+  .auth-layout {
+    grid-template-columns: 1.1fr .9fr;
+    align-items: center;
+    gap: 60px;
+  }
+  .auth-story {
+    align-self: center;
+  }
+}

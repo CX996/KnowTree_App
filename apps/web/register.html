@@ -11,35 +11,35 @@
   <link rel="stylesheet" href="assets/styles/pages.css" />
 </head>
 <body>
-  <main class="page page--auth">
-    <a class="auth-brand" href="login.html" aria-label="返回登录">
-      <span class="auth-brand__mark" aria-hidden="true"></span>
-      <span>知树 KnowTree</span>
-    </a>
-
-    <div class="auth-hero mt32">
+  <main class="page page--auth auth-layout">
+    <section class="auth-story">
+      <a class="auth-brand" href="login.html" aria-label="返回登录">
+        <span class="auth-brand__mark" aria-hidden="true"></span>
+        <span>知树 KnowTree</span>
+      </a>
       <div class="auth-kicker">建立你的私人知识库</div>
-      <h1 class="h-big mt12">从一个账号，<br />种下一棵树。</h1>
-      <p class="t3 s13 mt12">注册后，把文章、笔记和文档交给知树整理。</p>
-    </div>
+      <h1 id="authTitle">从一个账号，<br />种下一棵树。</h1>
+      <p>注册后，把文章、笔记和文档交给知树整理。</p>
+    </section>
 
-    <form id="registerForm" class="auth-card mt24" novalidate>
-      <label class="auth-label" for="email">邮箱</label>
-      <input class="auth-input" id="email" type="email" placeholder="name@example.com" autocomplete="email" required />
+    <section class="auth-panel" aria-labelledby="authTitle">
+      <form id="registerForm" class="auth-card" novalidate>
+        <label class="auth-label" for="email">邮箱</label>
+        <input class="auth-input" id="email" type="email" placeholder="name@example.com" autocomplete="email" required />
 
-      <label class="auth-label mt16" for="pwd">密码</label>
-      <input class="auth-input" id="pwd" type="password" minlength="8" placeholder="至少 8 位，包含字母和数字" autocomplete="new-password" required />
+        <label class="auth-label mt16" for="pwd">密码</label>
+        <input class="auth-input" id="pwd" type="password" minlength="8" placeholder="至少 8 位，包含字母和数字" autocomplete="new-password" required />
 
-      <label class="auth-label mt16" for="pwdConfirm">确认密码</label>
-      <input class="auth-input" id="pwdConfirm" type="password" minlength="8" placeholder="再输入一次密码" autocomplete="new-password" required />
+        <label class="auth-label mt16" for="pwdConfirm">确认密码</label>
+        <input class="auth-input" id="pwdConfirm" type="password" minlength="8" placeholder="再输入一次密码" autocomplete="new-password" required />
 
-      <p class="auth-hint t3 s12 mt12">密码至少 8 位，并同时包含字母和数字。</p>
-      <button class="btn btn-primary btn-block mt16" id="register" type="submit">创建账号</button>
-    </form>
-
-    <div class="auth-status t3 s12 mt16" id="msg" aria-live="polite"></div>
-    <div class="auth-links mt16"><span>已有账号？</span><a href="login.html">直接登录</a></div>
-    <div class="auth-note t3 s12 mt20">当前测试阶段注册后可直接登录；恢复自有 SMTP 后会重新开启邮件验证。</div>
+        <p class="auth-hint t3 s12 mt12">密码至少 8 位，并同时包含字母和数字。</p>
+        <button class="btn btn-primary btn-block mt16" id="register" type="submit">创建账号</button>
+      </form>
+      <div class="auth-status t3 s12 mt16" id="msg" aria-live="polite"></div>
+      <div class="auth-links mt16"><span>已有账号？</span><a href="login.html">直接登录</a></div>
+      <div class="auth-note t3 s12 mt20">当前测试阶段注册后可直接登录；恢复自有 SMTP 后会重新开启邮件验证。</div>
+    </section>
   </main>
 
   <script src="assets/api.js"></script>

@@ -126,3 +126,21 @@ test('reading and review keep controls on paper surfaces', async () => {
   assert.match(review, /id="known"/);
   assert.match(review, /查看全文/);
 });
+
+test('account exposes pet preferences and auth pages stay pet-free', async () => {
+  const me = await readFile(path.join(web, 'me.html'), 'utf8');
+  assert.match(me, /id="petEnabled"/);
+  assert.match(me, /id="petMotion"/);
+  assert.match(me, /class="settings-card"/);
+  assert.match(me, /class="switch-row"/);
+  assert.match(me, /id="aiSettings"/);
+
+  for (const page of ['login.html', 'register.html', 'forgot-password.html', 'reset-password.html']) {
+    const html = await readFile(path.join(web, page), 'utf8');
+    assert.match(html, /class="[^"]*auth-layout/);
+    assert.match(html, /class="auth-story"/);
+    assert.match(html, /class="auth-card/);
+    assert.equal(html.includes('assets/shell.js'), false, `${page} must not load shell`);
+    assert.equal(html.includes('assets/pet.js'), false, `${page} must not load pet`);
+  }
+});

@@ -11,34 +11,35 @@
   <link rel="stylesheet" href="assets/styles/pages.css" />
 </head>
 <body>
-  <main class="page page--auth">
-    <a class="auth-brand" href="login.html" aria-label="知树 KnowTree">
-      <span class="auth-brand__mark" aria-hidden="true"></span>
-      <span>知树 KnowTree</span>
-    </a>
-
-    <div class="auth-hero mt32">
+  <main class="page page--auth auth-layout">
+    <section class="auth-story">
+      <a class="auth-brand" href="login.html" aria-label="知树 KnowTree">
+        <span class="auth-brand__mark" aria-hidden="true"></span>
+        <span>知树 KnowTree</span>
+      </a>
       <div class="auth-kicker">回到你的知识树</div>
-      <h1 class="h-big mt12">让读过的，<br />重新长回来。</h1>
-      <p class="t3 s13 mt12">登录后继续收录、整理与回溯。</p>
-    </div>
+      <h1 id="authTitle">让读过的，<br />重新长回来。</h1>
+      <p>登录后继续收录、整理与回溯。</p>
+    </section>
 
-    <form id="loginForm" class="auth-card mt24" novalidate>
-      <label class="auth-label" for="email">邮箱</label>
-      <input class="auth-input" id="email" type="email" placeholder="name@example.com" autocomplete="email" required />
+    <section class="auth-panel" aria-labelledby="authTitle">
+      <form id="loginForm" class="auth-card" novalidate>
+        <label class="auth-label" for="email">邮箱</label>
+        <input class="auth-input" id="email" type="email" placeholder="name@example.com" autocomplete="email" required />
 
-      <label class="auth-label mt16" for="pwd">密码</label>
-      <input class="auth-input" id="pwd" type="password" placeholder="输入密码" autocomplete="current-password" required />
+        <label class="auth-label mt16" for="pwd">密码</label>
+        <input class="auth-input" id="pwd" type="password" placeholder="输入密码" autocomplete="current-password" required />
 
-      <button class="btn btn-primary btn-block mt16" id="login" type="submit">登录</button>
-    </form>
-    <div class="auth-status t3 s12 mt16" id="msg" aria-live="polite"></div>
-    <div class="auth-links mt16">
-      <a href="register.html">创建账号</a>
-      <span aria-hidden="true">·</span>
-      <a href="forgot-password.html">忘记密码</a>
-    </div>
-    <div class="auth-note t3 s12 mt20">登录凭证只保存在当前浏览器；知识内容保存在你的 Supabase 账号中。</div>
+        <button class="btn btn-primary btn-block mt16" id="login" type="submit">登录</button>
+      </form>
+      <div class="auth-status t3 s12 mt16" id="msg" aria-live="polite"></div>
+      <div class="auth-links mt16">
+        <a href="register.html">创建账号</a>
+        <span aria-hidden="true">·</span>
+        <a href="forgot-password.html">忘记密码</a>
+      </div>
+      <div class="auth-note t3 s12 mt20">登录凭证只保存在当前浏览器；知识内容保存在你的 Supabase 账号中。</div>
+    </section>
   </main>
 
   <script src="assets/api.js"></script>
