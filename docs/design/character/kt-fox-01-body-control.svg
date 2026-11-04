@@ -1,0 +1,153 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">KT-FOX-01 灵狐身体比例控制图</title>
+  <desc id="desc">四足国风灵狐的正面与侧面比例结构、身体轴线、尾巴轮廓和三组金色纹样位置。该图是制作控制图，不是最终角色美术。</desc>
+
+  <defs>
+    <pattern id="smallGrid" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#b7ad9a" stroke-width="0.45" opacity="0.28"/>
+    </pattern>
+    <pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse">
+      <rect width="100" height="100" fill="url(#smallGrid)"/>
+      <path d="M 100 0 L 0 0 0 100" fill="none" stroke="#a99e89" stroke-width="0.8" opacity="0.37"/>
+    </pattern>
+    <style>
+      .paper { fill: #f3eee3; }
+      .grid { fill: url(#grid); }
+      .ink { fill: none; stroke: #181816; stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; }
+      .soft { fill: none; stroke: #6b665b; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+      .axis { fill: none; stroke: #9b7741; stroke-width: 1.3; stroke-dasharray: 8 8; }
+      .gold { fill: none; stroke: #bd9854; stroke-width: 3; stroke-linecap: round; }
+      .dimension { fill: none; stroke: #7f7768; stroke-width: 1.1; }
+      .label { fill: #4c473d; font-family: "Microsoft YaHei UI", "Microsoft YaHei", sans-serif; font-size: 15px; letter-spacing: 0.08em; }
+      .micro { fill: #756d5e; font-family: "Microsoft YaHei UI", "Microsoft YaHei", sans-serif; font-size: 11px; letter-spacing: 0.07em; }
+      .display { fill: #1a1916; font-family: "Noto Serif SC", "Songti SC", SimSun, serif; font-size: 31px; letter-spacing: 0.03em; }
+      .folio { fill: #9a8f7d; font-family: "Microsoft YaHei UI", "Microsoft YaHei", sans-serif; font-size: 12px; letter-spacing: 0.14em; }
+    </style>
+  </defs>
+
+  <rect class="paper" width="1600" height="900"/>
+  <rect class="grid" width="1600" height="900"/>
+
+  <path d="M70 70H1530M70 830H1530M70 70V830M1530 70V830" fill="none" stroke="#1a1916" stroke-width="1.1"/>
+  <path d="M70 117H430" stroke="#b69150" stroke-width="2"/>
+
+  <text x="70" y="49" class="folio">KNOWTREE / CHARACTER CONTROL DRAWING</text>
+  <text x="70" y="101" class="display">KT-FOX-01 · 灵狐身体比例控制图</text>
+  <text x="1530" y="49" text-anchor="end" class="folio">REV 01 · 2026.11.04</text>
+  <text x="1530" y="101" text-anchor="end" class="micro">CONTROL LAYER — NOT FINAL ART</text>
+
+  <!-- Front view -->
+  <g transform="translate(70 117)">
+    <text x="28" y="37" class="label">01 / FRONT</text>
+    <text x="28" y="56" class="micro">0° · SAME HEAD UNIT · ALL PAWS ON BASELINE</text>
+
+    <path d="M218 112 C194 112 180 132 178 163 C176 191 193 210 218 214 C245 212 259 194 258 165 C257 134 243 112 218 112Z" class="ink"/>
+    <path d="M188 135 L173 74 L211 111M247 111 L286 74 L270 136" class="ink"/>
+    <path d="M174 78 L193 126M282 78 L265 127" class="soft"/>
+    <path d="M195 169 C202 155 212 151 218 159 C225 151 235 155 241 169 C236 196 200 196 195 169Z" class="soft"/>
+    <ellipse cx="218" cy="163" rx="14" ry="10" fill="none" stroke="#6b665b" stroke-width="1.6"/>
+    <path d="M218 166 L218 178M218 178 C209 181 205 178 201 173M218 178 C227 181 231 178 235 173" class="soft"/>
+    <path d="M218 138 C215 149 216 158 218 164 C220 158 221 149 218 138Z" class="gold"/>
+
+    <path d="M178 226 C162 244 164 288 185 304 L251 304 C273 283 270 242 255 224" class="ink"/>
+    <path d="M189 239 C194 267 194 290 192 313M247 239 C242 267 242 290 244 313" class="soft"/>
+    <path d="M199 307 C181 311 176 323 181 337 C185 348 202 350 211 341 L215 307" class="ink"/>
+    <path d="M237 307 C255 311 260 323 255 337 C251 348 234 350 225 341 L221 307" class="ink"/>
+    <path d="M201 337 L213 337M225 337 L237 337" class="soft"/>
+
+    <path d="M272 264 C306 258 329 280 330 311 C331 344 308 362 284 354 C309 334 303 300 272 292Z" class="ink"/>
+    <path d="M292 347 C302 331 303 314 295 299" class="gold"/>
+
+    <path d="M218 225 L218 303" class="axis"/>
+    <path d="M147 112H118M147 337H118" class="dimension"/>
+    <path d="M119 112V337" class="dimension"/>
+    <path d="M113 112L125 112M113 337L125 337" class="dimension"/>
+    <text x="94" y="229" text-anchor="middle" class="micro" transform="rotate(-90 94 229)">1.55U SHOULDER HEIGHT</text>
+
+    <path d="M259 145H346" class="dimension"/>
+    <path d="M259 138V152M346 138V152" class="dimension"/>
+    <text x="302" y="132" text-anchor="middle" class="micro">1.00U HEAD WIDTH</text>
+
+    <text x="382" y="131" class="micro">TRIANGULAR EAR</text>
+    <path d="M286 132 C318 128 338 133 372 132" class="soft"/>
+    <text x="340" y="184" class="micro">AMBER ALMOND EYE</text>
+    <path d="M276 170 C305 169 316 173 330 184" class="soft"/>
+    <text x="300" y="341" class="micro">ONE TAIL ONLY</text>
+    <path d="M289 332 C320 326 344 333 376 341" class="soft"/>
+  </g>
+
+  <!-- Side view -->
+  <g transform="translate(570 117)">
+    <text x="24" y="37" class="label">02 / SIDE PROFILE</text>
+    <text x="24" y="56" class="micro">FACING LEFT · ORTHOGRAPHIC · TAIL RETURN MARK</text>
+
+    <path d="M274 263 C246 220 191 208 146 225 C103 241 77 278 83 315 C89 351 126 371 171 366 C220 362 258 341 276 308" class="ink"/>
+
+    <path d="M107 249 C70 259 35 240 30 205 C25 170 49 146 82 144 C64 171 79 207 112 221" class="ink"/>
+    <path d="M55 151 C38 166 39 194 55 211" class="gold"/>
+
+    <path d="M132 316 C119 345 111 368 110 398 C122 403 133 397 137 386 C145 363 156 343 168 326" class="ink"/>
+    <path d="M190 328 C184 354 191 379 204 399 C216 396 223 388 222 377 C218 355 217 337 218 318" class="ink"/>
+    <path d="M244 310 C237 339 243 365 254 389 C266 389 275 381 274 370 C270 347 271 329 277 308" class="ink"/>
+    <path d="M166 319 C160 344 158 365 158 389 C170 393 181 386 183 375 C184 352 189 334 197 318" class="ink"/>
+
+    <path d="M258 257 C268 243 277 232 291 220 C307 208 321 192 325 174 C334 151 326 132 311 126 C298 122 283 131 277 146 C287 157 286 173 277 184 C265 200 249 212 237 225Z" class="ink"/>
+    <path d="M285 140 L279 92 L304 124M318 129 L342 94 L332 143" class="ink"/>
+    <path d="M281 99 L292 130M338 101 L324 133" class="soft"/>
+    <path d="M250 199 C260 188 272 179 286 171 C302 163 316 162 326 170" class="soft"/>
+    <path d="M312 127 C316 139 315 153 311 164" class="gold"/>
+    <path d="M276 258 C303 269 322 282 339 299" class="gold"/>
+
+    <path d="M98 283 C161 271 225 281 276 308" class="axis"/>
+    <path d="M82 408H344" class="axis"/>
+
+    <path d="M74 240H44M74 390H44" class="dimension"/>
+    <path d="M45 240V390" class="dimension"/>
+    <path d="M39 240L51 240M39 390L51 390" class="dimension"/>
+    <text x="23" y="319" text-anchor="middle" class="micro" transform="rotate(-90 23 319)">1.55U</text>
+
+    <path d="M120 210H260" class="dimension"/>
+    <path d="M120 204V216M260 204V216" class="dimension"/>
+    <text x="190" y="200" text-anchor="middle" class="micro">3.20U BODY LENGTH</text>
+
+    <text x="348" y="127" class="micro">HEAD WIDTH = 1U</text>
+    <path d="M325 135 C384 135 410 130 450 127" class="soft"/>
+    <text x="348" y="188" class="micro">FOREHEAD SPROUT MARK</text>
+    <path d="M319 174 C354 174 381 180 398 188" class="soft"/>
+    <text x="327" y="269" class="micro">CHEST BRANCH MARK</text>
+    <path d="M322 260 C357 258 385 263 403 269" class="soft"/>
+    <text x="26" y="414" class="micro">TAIL LENGTH 2.35U · SINGLE TAIL</text>
+  </g>
+
+  <!-- Tail detail -->
+  <g transform="translate(1182 117)">
+    <text x="20" y="37" class="label">03 / TAIL CURVE</text>
+    <text x="20" y="56" class="micro">MAX CONTROL CURVE · INWARD TIP</text>
+
+    <path d="M62 387 C25 353 20 307 41 271 C57 244 86 225 120 220 C158 214 194 232 216 260 C235 284 239 312 227 338 C218 358 197 370 174 369 C137 366 111 342 101 313 C89 280 101 247 128 228 C108 264 119 302 149 320 C177 337 207 332 219 311" fill="none" stroke="#181816" stroke-width="3.2" stroke-linejoin="round"/>
+    <path d="M128 228 C101 247 89 280 101 313 C111 342 137 366 174 369" fill="none" stroke="#bd9854" stroke-width="3" stroke-linecap="round"/>
+    <path d="M40 392H264" class="axis"/>
+
+    <path d="M42 281H16M228 281H254" class="dimension"/>
+    <path d="M17 281V388M253 281V388" class="dimension"/>
+    <path d="M11 281L23 281M11 388L23 388M247 281L259 281M247 388L259 388" class="dimension"/>
+    <text x="135" y="409" text-anchor="middle" class="micro">2.35U END-TO-END</text>
+
+    <text x="20" y="606" class="label">MARKING LOCKS</text>
+    <text x="20" y="628" class="micro">3 LOCATIONS · NO ADDITIONAL RUNES</text>
+    <circle cx="44" cy="656" r="16" fill="#1b1b18" stroke="#bd9854" stroke-width="2"/>
+    <text x="74" y="652" class="micro">01 / FOREHEAD SPROUT</text>
+    <text x="74" y="669" class="micro">CENTERED · APPROX. 0.16U HIGH</text>
+    <circle cx="44" cy="702" r="16" fill="#1b1b18" stroke="#bd9854" stroke-width="2"/>
+    <text x="74" y="698" class="micro">02 / CHEST BRANCH</text>
+    <text x="74" y="715" class="micro">ONE SHORT + ONE LONG LINE</text>
+    <circle cx="44" cy="748" r="16" fill="#1b1b18" stroke="#bd9854" stroke-width="2"/>
+    <text x="74" y="744" class="micro">03 / TAIL RETURN ARC</text>
+    <text x="74" y="761" class="micro">END CURLS INWARD · NO RUNES</text>
+  </g>
+
+  <path d="M570 117V830M1182 117V830" stroke="#a99e89" stroke-width="1"/>
+  <path d="M70 830H1530" stroke="#1a1916" stroke-width="1.1"/>
+  <text x="70" y="854" class="micro">THIS DRAWING DEFINES PROPORTION AND MARKING PLACEMENT ONLY. REPLACE THE CONTROL SILHOUETTE WITH FINAL PRODUCTION ART.</text>
+  <text x="1530" y="854" text-anchor="end" class="folio">SHEET 01 / 01</text>
+</svg>

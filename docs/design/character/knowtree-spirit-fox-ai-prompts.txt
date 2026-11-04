@@ -1,0 +1,106 @@
+知树国风灵狐 KT-FOX-01
+外部绘图软件提示词包
+版本：v1.1 / V2 锚点迭代
+日期：2026-11-04
+
+使用顺序
+1. 使用 references/kt-fox-01_proportion-anchor-v1.jpeg 作为 Image 1。
+2. 使用 references/kt-fox-01_rimlight-reference-v1.png 作为 Image 2。
+3. 用 P0 生成 4 个 V2 角色锚点，只选一个。
+4. 将批准的 V2 锚点作为唯一角色参考，先做 P1 四视图，再做 P2 表情、P3 动作、P4 透明底。
+5. 每轮只修改一个变量，不要同时重设计毛色、比例和纹样。
+
+============================================================
+P0 / V2 角色锚点
+============================================================
+
+Use case: stylized-concept
+Asset type: original animated character identity anchor for a mobile knowledge app
+Input images: Image 1: proportion and marking reference only; preserve the general quadruped proportions, stance logic and exactly three gold markings, but redraw rather than copy the flat vector style. Image 2: rim-light reference only; borrow the low warm-gold edge light direction, do not copy its background, framing or crop.
+Primary request: refine and redraw an original semi-realistic 2D East Asian animated spirit fox named only by production code KT-FOX-01
+Subject: an adult quadruped black fox, fox rather than wolf or coyote, with a slender agile torso, wedge-shaped fox muzzle, alert triangular ears, expressive amber almond-shaped eyes, defined elbows and hocks, four natural canine paws, and one full bushy fox tail that widens through the middle and tapers into a gentle inward curl
+Character details: charcoal-black fur with subtle warm-gray chest and lower face; restrained antique-gold markings limited to exactly three places: a small sprout-shaped mark in the center of the forehead, a short branched line on the chest, and one fine arc near the tail tip; soft cheek ruff, throat fur, elbow fur and tail fur break the silhouette
+Expression: calm, intelligent and quietly alive; iris about 10-12 percent larger than Image 1, one soft catchlight, relaxed upper eyelid, subtle neutral mouth line; not severe like a wolf and not cute like a puppy
+Style/medium: polished hand-drawn 2D animated feature character, original design, dark clean ink lines, cel-shaded base with softly painted shadow transitions, visible fur grouping and subtle xuan-paper grain; more authored and expressive than flat vector illustration
+Composition/framing: full body visible, three-quarter view facing screen left, asymmetrical natural stance with slight weight shift and one forepaw advanced, head turned a few degrees toward the viewer, entire ears and tail visible, no cropping
+Lighting/mood: soft upper-left key light and a restrained warm-gold rim light along the right silhouette, atmospheric but still readable as a production character sheet
+Color palette: ink black #1B1B18, charcoal #2A2923, muted antique gold #C6A15B, amber eyes #D99A3D, warm paper background #EDE4D2
+Scene/backdrop: plain warm neutral studio background
+Constraints: original character; clearly fox-like, not wolf-like; stable anatomy; one tail; exactly four legs; three gold markings only; no clothes; no human hands; no text; no logo; no watermark
+Avoid: flat vector illustration, corporate mascot, stock character sheet, wolf face, coyote appearance, stiff symmetrical mannequin pose, tubular legs, ribbon-like tail, chibi, oversized head, 3D plush toy, anthropomorphic fox girl, cyborg, neon cyan, glowing armor, multiple tails, photorealistic fur, huge cute eyes, direct imitation of any existing animation studio, game or artist
+
+============================================================
+P1 / 四视图图纸
+============================================================
+
+Use case: stylized-concept
+Asset type: professional 2D character turnaround model sheet
+Input images: Image 1: approved V2 character identity reference; preserve its proportions, three gold markings and tail shape
+Primary request: create a consistent character turnaround sheet for KT-FOX-01
+Subject: the same adult black four-legged spirit fox shown in four separate orthographic views: front, three-quarter left, left profile, and rear
+Style/medium: production animation model sheet, clean line art with flat cel colors, warm-paper background, precise and readable
+Composition/framing: four full-body views at equal scale on one shared ground line, generous spacing, neutral standing pose, entire ears and tail visible
+Lighting/mood: flat neutral reference lighting with only minimal form shadow
+Color palette: #1B1B18 fur, #2A2923 highlights, #C6A15B markings, #D99A3D amber eyes
+Constraints: exact same character in every view; identical head-to-body ratio; one tail; exactly three gold markings; no perspective distortion; no text; no labels; no watermark
+Avoid: mismatched views, changing hairstyle or fur pattern, extra limbs, extra tails, costume, background scenery, poster lighting, chibi proportions
+
+============================================================
+P2 / 八组表情
+============================================================
+
+Use case: stylized-concept
+Asset type: game-ready character expression sheet
+Input images: Image 1: approved V2 character identity reference; keep the exact same character design
+Primary request: a 4-by-2 expression sheet for KT-FOX-01 with eight clearly different expressions: calm, curious, listening attentively, thinking, quietly delighted, worried apology, sleepy, determined
+Style/medium: modern East Asian 2D animated character, cel shading, clean character sheet presentation
+Composition/framing: eight head-and-shoulder portraits at identical scale and three-quarter angle, evenly spaced, no cropping
+Constraints: express emotion through ears, eyelids, muzzle, head tilt and subtle neck posture; preserve fur shape, forehead sprout mark, chest branch mark and amber eyes; no text; no labels; no watermark
+Avoid: human facial anatomy, exaggerated chibi eyes, changing colors, extra markings, different characters, backgrounds, props
+
+============================================================
+P3 / 六组动作
+============================================================
+
+Use case: stylized-concept
+Asset type: animation pose sheet for a mobile companion character
+Input images: Image 1: approved V2 character identity reference; preserve exact design
+Primary request: create six full-body action key poses for KT-FOX-01: quiet idle stand, seated and listening, four-legged run, low sniffing inspection, carrying one leaf-shaped paper token in the mouth, looking back while inviting the user to follow
+Style/medium: production animation pose sheet, dynamic but readable silhouettes, 2D cel animation
+Composition/framing: six separate full-body poses on a neutral warm-paper layout, equal scale, all paws and tail visible
+Constraints: natural fox gait; one tail; exactly three gold markings; one small leaf-shaped token only in the carrying pose; no text; no labels; no watermark
+Avoid: two-legged walking, human hands, clothes, armor, extra props, extreme perspective, motion blur, inconsistent anatomy, multiple tails
+
+============================================================
+P4 / 透明底待机主图
+============================================================
+
+Use case: stylized-concept
+Asset type: transparent production character cutout
+Input images: Image 1: approved V2 character identity reference
+Primary request: isolated full-body idle pose of KT-FOX-01, facing slightly left, calm and alert
+Style/medium: final polished 2D animation character, clean silhouette, cel-shaded, subtle warm rim light
+Composition/framing: centered full body, entire body including all paws, ears and tail, generous padding
+Background: genuinely transparent background, clean alpha edges
+Constraints: preserve the selected head-to-body ratio, face, three gold markings, four legs and single tail exactly; no ground shadow; no text; no watermark
+Avoid: white halo, black fringe, cropped tail, extra limbs, background scenery, UI elements
+
+============================================================
+P5 / 通用负面提示词
+============================================================
+
+flat vector illustration, corporate mascot, stock character sheet, wolf face, coyote appearance, severe wolf eyes, stiff symmetrical mannequin pose, tubular legs, ribbon-like tail, chibi, oversized head, plush toy, vinyl toy, 3D mascot, sticker icon, humanoid fox, fox girl, clothing, armor, human hands, cyborg, robot, neon glow, cyan lighting, multiple tails, extra legs, missing paw, asymmetrical ears, inconsistent gold markings, white fur, red fox, photorealistic fur, huge glossy eyes, generic anime poster, watermark, signature, logo, text, letters, UI, frame, low resolution, blurry edges, broken anatomy
+
+============================================================
+一致性检查
+============================================================
+
+- 每次生成都使用同一个角色锚点图。
+- V2 锚点批准后只使用 V2 锚点；不要继续叠加最初的图 9 和图 10。
+- 头部宽度始终为 1U，肩高 1.55U，身体长度 3.20U，尾巴长度 2.35U。
+- 永远只有四条腿、一只尾巴、三处金色纹样。
+- 脸必须是狐狸，不能生成黑狼、郊狼或狼犬。
+- 尾巴中段必须蓬松，不能是细长飘带；四肢必须有肘、跗关节和脚掌结构。
+- 额心芽印、胸前短枝、尾尖回弧的位置不能改变。
+- 不得出现衣物、人类手掌、两足行走或机械装备。
+- 生成图只作为概念与姿态参考，最终交付需要分层清理和绑骨。

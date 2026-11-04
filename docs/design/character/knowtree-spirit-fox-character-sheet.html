@@ -1,0 +1,1182 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>知树国风灵狐角色图纸 · KT-FOX-01</title>
+  <style>
+    :root {
+      --ink: #191815;
+      --ink-soft: #37342d;
+      --paper: #f2ede2;
+      --paper-deep: #e7dfcf;
+      --paper-light: #fbf8f0;
+      --gold: #b58c43;
+      --gold-bright: #d3ad64;
+      --moss: #4c5748;
+      --rust: #7e5a38;
+      --line: rgba(25, 24, 21, 0.28);
+      --line-light: rgba(25, 24, 21, 0.12);
+      --serif: "Noto Serif SC", "Source Han Serif SC", "Songti SC", SimSun, serif;
+      --sans: "HarmonyOS Sans SC", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      color-scheme: light;
+      background: #151410;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 50% 8%, rgba(181, 140, 67, 0.12), transparent 28%),
+        #151410;
+      font-family: var(--sans);
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      width: min(1584px, calc(100vw - 40px));
+      margin: 24px auto;
+      color: #e9dfca;
+    }
+
+    .toolbar strong {
+      font-family: var(--serif);
+      font-size: 16px;
+      letter-spacing: 0.04em;
+    }
+
+    .toolbar span {
+      color: rgba(233, 223, 202, 0.55);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+    }
+
+    .print-button {
+      padding: 10px 15px;
+      color: var(--ink);
+      border: 0;
+      border-radius: 3px;
+      background: var(--gold-bright);
+      font: 700 11px var(--sans);
+      letter-spacing: 0.05em;
+      cursor: pointer;
+    }
+
+    .sheet {
+      position: relative;
+      width: min(1584px, calc(100vw - 40px));
+      aspect-ratio: 1.4142 / 1;
+      margin: 0 auto 28px;
+      overflow: hidden;
+      padding: clamp(28px, 3.6vw, 58px);
+      background:
+        linear-gradient(90deg, rgba(41, 37, 29, 0.045) 1px, transparent 1px),
+        linear-gradient(rgba(41, 37, 29, 0.045) 1px, transparent 1px),
+        radial-gradient(circle at 85% 5%, rgba(181, 140, 67, 0.1), transparent 26%),
+        var(--paper);
+      background-size: 28px 28px, 28px 28px, auto, auto;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.34);
+    }
+
+    .sheet::before {
+      content: "";
+      position: absolute;
+      inset: 16px;
+      pointer-events: none;
+      border: 1px solid rgba(35, 31, 24, 0.36);
+    }
+
+    .sheet::after {
+      content: "";
+      position: absolute;
+      top: 16px;
+      bottom: 16px;
+      left: 68px;
+      width: 1px;
+      pointer-events: none;
+      background: rgba(35, 31, 24, 0.18);
+    }
+
+    .sheet-inner {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      padding-left: 40px;
+    }
+
+    .page-rail {
+      position: absolute;
+      z-index: 2;
+      top: 50%;
+      left: 31px;
+      color: rgba(38, 34, 26, 0.48);
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      transform: translate(-50%, -50%) rotate(-90deg);
+      white-space: nowrap;
+    }
+
+    .folio {
+      position: absolute;
+      right: 30px;
+      bottom: 27px;
+      color: rgba(38, 34, 26, 0.45);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+    }
+
+    .page-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 24px;
+      padding-bottom: 17px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .page-kicker {
+      margin-bottom: 7px;
+      color: var(--rust);
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.17em;
+      text-transform: uppercase;
+    }
+
+    .page-head h2 {
+      margin: 0;
+      font-family: var(--serif);
+      font-size: clamp(26px, 2.4vw, 39px);
+      font-weight: 600;
+      letter-spacing: -0.025em;
+      line-height: 1.15;
+    }
+
+    .head-code {
+      min-width: 158px;
+      color: var(--ink-soft);
+      font-size: 9px;
+      line-height: 1.7;
+      letter-spacing: 0.08em;
+      text-align: right;
+    }
+
+    .head-code strong {
+      display: block;
+      color: var(--ink);
+      font-size: 12px;
+    }
+
+    .page-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      padding-top: 24px;
+    }
+
+    .cover-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(400px, 1.1fr);
+      gap: clamp(28px, 4vw, 64px);
+      flex: 1;
+      min-height: 0;
+    }
+
+    .cover-type {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .edition {
+      color: var(--rust);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+
+    .cover-title {
+      margin: 16px 0 12px;
+      font-family: var(--serif);
+      font-size: clamp(54px, 6.3vw, 102px);
+      font-weight: 500;
+      letter-spacing: -0.07em;
+      line-height: 0.95;
+    }
+
+    .cover-title span {
+      display: block;
+      color: var(--gold);
+      font-size: 0.48em;
+      letter-spacing: 0.14em;
+      line-height: 1.35;
+    }
+
+    .character-line {
+      max-width: 510px;
+      margin: 20px 0 0;
+      font-family: var(--serif);
+      font-size: clamp(16px, 1.38vw, 22px);
+      line-height: 1.75;
+    }
+
+    .character-line strong {
+      color: var(--rust);
+      font-weight: 600;
+    }
+
+    .cover-rule {
+      width: 84px;
+      height: 3px;
+      margin: 28px 0 20px;
+      background: var(--gold);
+    }
+
+    .principles {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px 22px;
+      margin-top: auto;
+    }
+
+    .principle {
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+    }
+
+    .principle b {
+      display: block;
+      margin-bottom: 4px;
+      font-family: var(--serif);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .principle span {
+      color: rgba(25, 24, 21, 0.62);
+      font-size: 9px;
+      line-height: 1.55;
+    }
+
+    .control-plate {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      background: rgba(251, 248, 240, 0.64);
+    }
+
+    .plate-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 11px 14px;
+      border-bottom: 1px solid var(--line);
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .plate-head span:last-child {
+      color: var(--rust);
+    }
+
+    .control-plate img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #f3eee3;
+    }
+
+    .plate-foot {
+      padding: 10px 14px;
+      color: rgba(25, 24, 21, 0.56);
+      border-top: 1px solid var(--line);
+      font-size: 8px;
+      line-height: 1.55;
+    }
+
+    .palette-strip {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 7px;
+      margin-top: 13px;
+    }
+
+    .swatch {
+      min-height: 42px;
+      padding: 6px;
+      color: #f6f0e4;
+      font-size: 7px;
+      line-height: 1.4;
+      letter-spacing: 0.04em;
+    }
+
+    .swatch.light {
+      color: var(--ink);
+    }
+
+    .turnaround-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      height: 65%;
+    }
+
+    .view-frame {
+      position: relative;
+      min-width: 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      background:
+        linear-gradient(90deg, transparent 49.85%, rgba(25, 24, 21, 0.08) 50%, transparent 50.15%),
+        linear-gradient(transparent 70%, rgba(25, 24, 21, 0.11) 70.2%, transparent 70.4%),
+        rgba(251, 248, 240, 0.52);
+    }
+
+    .view-frame::before,
+    .view-frame::after {
+      content: "";
+      position: absolute;
+      pointer-events: none;
+    }
+
+    .view-frame::before {
+      top: 43px;
+      right: 11px;
+      bottom: 11px;
+      left: 11px;
+      border: 1px dashed rgba(25, 24, 21, 0.12);
+    }
+
+    .view-frame::after {
+      top: 18px;
+      right: 18px;
+      width: 8px;
+      height: 8px;
+      border-top: 1px solid var(--gold);
+      border-right: 1px solid var(--gold);
+    }
+
+    .view-bar {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 11px 8px;
+      border-bottom: 1px solid var(--line);
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.11em;
+    }
+
+    .view-bar span:last-child {
+      color: rgba(25, 24, 21, 0.42);
+      font-size: 8px;
+    }
+
+    .view-slot {
+      position: absolute;
+      top: 62px;
+      right: 24px;
+      bottom: 51px;
+      left: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(25, 24, 21, 0.22);
+      text-align: center;
+    }
+
+    .view-slot strong {
+      display: block;
+      margin-bottom: 7px;
+      color: rgba(25, 24, 21, 0.34);
+      font-family: var(--serif);
+      font-size: 16px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+    }
+
+    .view-slot span {
+      font-size: 8px;
+      line-height: 1.5;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .view-meta {
+      position: absolute;
+      right: 11px;
+      bottom: 10px;
+      left: 11px;
+      display: flex;
+      justify-content: space-between;
+      color: rgba(25, 24, 21, 0.45);
+      font-size: 7px;
+      letter-spacing: 0.05em;
+    }
+
+    .view-notes {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 16px;
+      height: calc(35% - 14px);
+      margin-top: 14px;
+    }
+
+    .note-panel {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0;
+      border: 1px solid var(--line);
+      background: rgba(251, 248, 240, 0.48);
+    }
+
+    .note-cell {
+      padding: 13px;
+      border-right: 1px solid var(--line);
+    }
+
+    .note-cell:last-child {
+      border-right: 0;
+    }
+
+    .note-cell b {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--rust);
+      font-family: var(--serif);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .note-cell span {
+      color: rgba(25, 24, 21, 0.58);
+      font-size: 8px;
+      line-height: 1.55;
+    }
+
+    .dimension-panel {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 14px;
+      border: 1px solid var(--line);
+      background: var(--ink);
+      color: var(--paper);
+    }
+
+    .dimension-panel b {
+      margin-bottom: 7px;
+      color: var(--gold-bright);
+      font-family: var(--serif);
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .dimension-panel span {
+      color: rgba(242, 237, 226, 0.62);
+      font-size: 8px;
+      line-height: 1.55;
+    }
+
+    .expression-layout {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 18px;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .sheet-section {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .section-head h3 {
+      margin: 0;
+      font-family: var(--serif);
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .section-head span {
+      color: rgba(25, 24, 21, 0.44);
+      font-size: 8px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .expression-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 7px;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .expression-cell {
+      position: relative;
+      min-height: 0;
+      border: 1px solid var(--line);
+      background:
+        linear-gradient(90deg, transparent 49.8%, var(--line-light) 50%, transparent 50.2%),
+        rgba(251, 248, 240, 0.52);
+    }
+
+    .cell-index {
+      position: absolute;
+      top: 7px;
+      left: 8px;
+      color: var(--gold);
+      font-family: var(--serif);
+      font-size: 11px;
+    }
+
+    .cell-name {
+      position: absolute;
+      right: 7px;
+      bottom: 7px;
+      left: 7px;
+      padding-top: 6px;
+      color: rgba(25, 24, 21, 0.56);
+      border-top: 1px solid var(--line-light);
+      font-size: 7px;
+      letter-spacing: 0.05em;
+      text-align: center;
+    }
+
+    .cell-marker {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 15px;
+      height: 15px;
+      border: 1px solid rgba(181, 140, 67, 0.33);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .cell-marker::before,
+    .cell-marker::after {
+      content: "";
+      position: absolute;
+      background: rgba(25, 24, 21, 0.12);
+    }
+
+    .cell-marker::before {
+      top: 6px;
+      left: -18px;
+      width: 49px;
+      height: 1px;
+    }
+
+    .cell-marker::after {
+      top: -18px;
+      left: 6px;
+      width: 1px;
+      height: 49px;
+    }
+
+    .action-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .action-cell {
+      position: relative;
+      overflow: hidden;
+      min-height: 0;
+      border: 1px solid var(--line);
+      background:
+        linear-gradient(180deg, transparent 72%, rgba(25, 24, 21, 0.08) 72.2%, transparent 72.4%),
+        rgba(251, 248, 240, 0.5);
+    }
+
+    .action-cell b {
+      position: absolute;
+      top: 8px;
+      left: 9px;
+      color: rgba(25, 24, 21, 0.5);
+      font-size: 8px;
+      letter-spacing: 0.06em;
+    }
+
+    .action-cell span {
+      position: absolute;
+      right: 9px;
+      bottom: 8px;
+      left: 9px;
+      color: rgba(25, 24, 21, 0.55);
+      font-family: var(--serif);
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .action-cell i {
+      position: absolute;
+      top: 48%;
+      left: 50%;
+      width: 17%;
+      height: 1px;
+      background: rgba(181, 140, 67, 0.28);
+      transform: translate(-50%, -50%);
+    }
+
+    .action-cell i::after {
+      content: "";
+      position: absolute;
+      top: -18px;
+      left: 50%;
+      width: 1px;
+      height: 37px;
+      background: rgba(181, 140, 67, 0.28);
+    }
+
+    .negative-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      flex: 0 0 auto;
+      margin-top: 12px;
+      background: var(--line);
+      border: 1px solid var(--line);
+    }
+
+    .negative-item {
+      min-height: 55px;
+      padding: 9px 10px;
+      background: var(--paper-deep);
+    }
+
+    .negative-item b {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--rust);
+      font-size: 8px;
+      letter-spacing: 0.08em;
+    }
+
+    .negative-item span {
+      color: rgba(25, 24, 21, 0.58);
+      font-size: 7px;
+      line-height: 1.45;
+    }
+
+    .motion-layout {
+      display: grid;
+      grid-template-columns: 1.28fr 0.72fr;
+      gap: 18px;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .state-map {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 10px;
+      min-height: 0;
+    }
+
+    .state-node {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 13px;
+      border: 1px solid var(--line);
+      background: rgba(251, 248, 240, 0.52);
+    }
+
+    .state-node.primary {
+      color: var(--paper);
+      background: var(--ink);
+    }
+
+    .state-node.accent {
+      color: var(--paper);
+      background: var(--moss);
+    }
+
+    .state-node b {
+      margin-bottom: 4px;
+      font-family: var(--serif);
+      font-size: 15px;
+      font-weight: 500;
+    }
+
+    .state-node span {
+      color: currentColor;
+      font-size: 8px;
+      line-height: 1.48;
+      opacity: 0.58;
+    }
+
+    .state-node code {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      color: var(--gold);
+      font: 700 7px var(--sans);
+      letter-spacing: 0.06em;
+    }
+
+    .rig-panel {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      border: 1px solid var(--line);
+      background: var(--ink);
+      color: var(--paper);
+    }
+
+    .rig-head {
+      padding: 12px 13px;
+      color: var(--gold-bright);
+      border-bottom: 1px solid rgba(242, 237, 226, 0.16);
+      font-family: var(--serif);
+      font-size: 14px;
+    }
+
+    .rig-tree {
+      flex: 1;
+      padding: 12px 13px;
+      color: rgba(242, 237, 226, 0.68);
+      font: 9px/1.6 "Cascadia Code", Consolas, monospace;
+      white-space: pre;
+    }
+
+    .budget-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border-top: 1px solid rgba(242, 237, 226, 0.16);
+    }
+
+    .budget {
+      padding: 9px 11px;
+      border-right: 1px solid rgba(242, 237, 226, 0.16);
+    }
+
+    .budget:last-child {
+      border-right: 0;
+    }
+
+    .budget b {
+      display: block;
+      margin-bottom: 3px;
+      color: var(--gold-bright);
+      font-size: 12px;
+    }
+
+    .budget span {
+      color: rgba(242, 237, 226, 0.5);
+      font-size: 7px;
+      line-height: 1.4;
+    }
+
+    .acceptance {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 7px;
+      margin-top: 12px;
+    }
+
+    .acceptance div {
+      padding: 9px 10px;
+      border-top: 2px solid var(--gold);
+      background: rgba(251, 248, 240, 0.46);
+      font-size: 7px;
+      line-height: 1.5;
+    }
+
+    .acceptance b {
+      display: block;
+      margin-bottom: 3px;
+      font-size: 8px;
+    }
+
+    @media screen and (max-width: 900px) {
+      .toolbar {
+        align-items: flex-start;
+      }
+
+      .toolbar span {
+        display: none;
+      }
+
+      .sheet {
+        width: 96vw;
+        height: auto;
+        aspect-ratio: auto;
+        padding: 26px;
+      }
+
+      .sheet-inner {
+        padding-left: 22px;
+      }
+
+      .sheet::after {
+        left: 46px;
+      }
+
+      .page-rail {
+        left: 22px;
+      }
+
+      .cover-layout,
+      .expression-layout,
+      .motion-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .turnaround-grid,
+      .expression-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .view-frame {
+        min-height: 320px;
+      }
+
+      .expression-cell {
+        min-height: 150px;
+      }
+
+      .note-panel {
+        grid-template-columns: 1fr;
+      }
+
+      .palette-strip {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media print {
+      @page {
+        size: A3 landscape;
+        margin: 0;
+      }
+
+      html,
+      body {
+        background: var(--paper);
+      }
+
+      .toolbar {
+        display: none;
+      }
+
+      .sheet {
+        width: 420mm;
+        height: 297mm;
+        margin: 0;
+        break-after: page;
+        box-shadow: none;
+      }
+
+      .sheet:last-of-type {
+        break-after: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <div>
+      <strong>KT-FOX-01 · 国风灵狐角色图纸</strong>
+      <br>
+      <span>4P / A3 landscape / v1.1 / 2026-11-04</span>
+    </div>
+    <button class="print-button" type="button" onclick="window.print()">打印 / 导出 PDF</button>
+  </div>
+
+  <main>
+    <section class="sheet">
+      <div class="page-rail">Character production specification · KnowTree</div>
+      <div class="folio">01 / 04 · IDENTITY AND CONTROL DRAWING</div>
+      <div class="sheet-inner">
+        <header class="page-head">
+          <div>
+            <div class="page-kicker">KnowTree animated companion</div>
+            <h2>角色定义与身体控制图</h2>
+          </div>
+          <div class="head-code">
+            <strong>KT-FOX-01</strong>
+            REV 02 / ANCHOR V2<br>
+            MOBILE FIRST / 2D RIG
+          </div>
+        </header>
+
+        <div class="page-body cover-layout">
+          <div class="cover-type">
+            <div class="edition">Original character bible</div>
+            <h1 class="cover-title">国风<br>灵狐<span>THE SPIRIT FOX</span></h1>
+            <p class="character-line">
+              一只生活在知识树里的<strong>四足灵狐</strong>。安静、敏锐、聪明，
+              不穿衣服，不拟人行走，不靠发光证明自己神秘。
+            </p>
+            <div class="cover-rule"></div>
+            <p class="character-line" style="font-size: 12px; line-height: 1.7; opacity: .66">
+              关键识别：修长狐狸身体 · 单尾回弯 · 琥珀杏仁眼 · 黑毛旧金三纹 · 叼一片知识叶。
+              角色通过耳朵、眼睛、步态和尾巴表达情绪。
+            </p>
+
+            <div class="principles">
+              <div class="principle"><b>狐狸先于吉祥物</b><span>半写实解剖，头部只做 8% 的动画夸张。</span></div>
+              <div class="principle"><b>动画先于特效</b><span>动作来自重心和关节，不依赖光粒与拖影。</span></div>
+              <div class="principle"><b>陪伴先于干预</b><span>只引导、指向和打开流程，不代替用户写入。</span></div>
+              <div class="principle"><b>可读先于细节</b><span>48 px 看轮廓，160 px 看表情，240 px 看质感。</span></div>
+            </div>
+
+            <div class="palette-strip" aria-label="角色色板">
+              <div class="swatch" style="background:#1B1B18">#1B1B18<br>墨黑</div>
+              <div class="swatch" style="background:#2A2923">#2A2923<br>炭灰</div>
+              <div class="swatch" style="background:#3B372F">#3B372F<br>暖灰</div>
+              <div class="swatch" style="background:#C6A15B; color:#1b1b18">#C6A15B<br>旧金</div>
+              <div class="swatch" style="background:#D99A3D; color:#1b1b18">#D99A3D<br>琥珀</div>
+              <div class="swatch light" style="background:#EDE4D2">#EDE4D2<br>纸色</div>
+            </div>
+          </div>
+
+          <figure class="control-plate" style="margin:0">
+            <div class="plate-head"><span>Proportion control / 01</span><span>NOT FINAL ART</span></div>
+            <img src="kt-fox-01-body-control.svg" alt="KT-FOX-01 正面、侧面、尾巴比例和金纹位置控制图">
+            <figcaption class="plate-foot">
+              此图只定义结构与位置。V2 以已选图 9 控制比例和三处金纹，以图 10 控制暖金轮廓光，再重新绘制成完整动漫角色。
+            </figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="sheet">
+      <div class="page-rail">Model sheet · Turnaround and annotation</div>
+      <div class="folio">02 / 04 · TURNAROUND MODEL SHEET</div>
+      <div class="sheet-inner">
+        <header class="page-head">
+          <div>
+            <div class="page-kicker">Standard model sheet / four orthographic views</div>
+            <h2>四视图与结构标注</h2>
+          </div>
+          <div class="head-code">
+            SAME BASELINE<br>
+            SAME HEAD UNIT<br>
+            ONE TAIL / FOUR LEGS
+          </div>
+        </header>
+
+        <div class="page-body">
+          <div class="turnaround-grid">
+            <article class="view-frame">
+              <div class="view-bar"><span>FRONT</span><span>0°</span></div>
+              <div class="view-slot"><div><strong>正面全身</strong><span>Front / symmetric / paws visible</span></div></div>
+              <div class="view-meta"><span>HEAD 1.00U</span><span>SHOULDER 1.55U</span></div>
+            </article>
+            <article class="view-frame">
+              <div class="view-bar"><span>THREE-QUARTER</span><span>35°</span></div>
+              <div class="view-slot"><div><strong>四分之三</strong><span>Face left / identity anchor</span></div></div>
+              <div class="view-meta"><span>AMBER EYE</span><span>FOREHEAD MARK</span></div>
+            </article>
+            <article class="view-frame">
+              <div class="view-bar"><span>LEFT PROFILE</span><span>90°</span></div>
+              <div class="view-slot"><div><strong>左侧全身</strong><span>Long muzzle / body axis / tail curl</span></div></div>
+              <div class="view-meta"><span>BODY 3.20U</span><span>TAIL 2.35U</span></div>
+            </article>
+            <article class="view-frame">
+              <div class="view-bar"><span>REAR</span><span>180°</span></div>
+              <div class="view-slot"><div><strong>背面全身</strong><span>Single tail / shoulder shape</span></div></div>
+              <div class="view-meta"><span>TAIL RETURN ARC</span><span>NO EXTRA MARK</span></div>
+            </article>
+          </div>
+
+          <div class="view-notes">
+            <div class="note-panel">
+              <div class="note-cell">
+                <b>头部</b>
+                <span>长吻清楚，鼻梁略直；杏仁眼外角微扬。不得生成人类眉毛、嘴唇和睫毛。</span>
+              </div>
+              <div class="note-cell">
+                <b>身体</b>
+                <span>胸腔深、腰部收、四肢修长。肩高 1.55U，单眼宽 0.18U。</span>
+              </div>
+              <div class="note-cell">
+                <b>尾巴</b>
+                <span>蓬松但收束，长度 2.35U，尾尖向左上回弯。永远只有一条。</span>
+              </div>
+            </div>
+            <div class="dimension-panel">
+              <b>三处旧金纹样</b>
+              <span>01 额心芽印 / 0.16U<br>02 胸前短枝 / 一长一短<br>03 尾尖回纹 / 单道弧线<br><br>全身纹样面积不超过 2%，不得增加符文。</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="sheet">
+      <div class="page-rail">Expression sheet · Pose sheet · Negative constraints</div>
+      <div class="folio">03 / 04 · EXPRESSION AND ACTION</div>
+      <div class="sheet-inner">
+        <header class="page-head">
+          <div>
+            <div class="page-kicker">Acting through ears, eyes, muzzle and tail</div>
+            <h2>表情与动作图纸</h2>
+          </div>
+          <div class="head-code">
+            8 EXPRESSIONS<br>
+            9 ACTION STATES<br>
+            NO HUMAN HANDS
+          </div>
+        </header>
+
+        <div class="page-body">
+          <div class="expression-layout">
+            <div class="sheet-section">
+              <div class="section-head"><h3>八组表情 / Expression sheet</h3><span>Same angle · same scale</span></div>
+              <div class="expression-grid">
+                <div class="expression-cell"><span class="cell-index">01</span><i class="cell-marker"></i><span class="cell-name">平静 / CALM</span></div>
+                <div class="expression-cell"><span class="cell-index">02</span><i class="cell-marker"></i><span class="cell-name">好奇 / CURIOUS</span></div>
+                <div class="expression-cell"><span class="cell-index">03</span><i class="cell-marker"></i><span class="cell-name">倾听 / LISTEN</span></div>
+                <div class="expression-cell"><span class="cell-index">04</span><i class="cell-marker"></i><span class="cell-name">思考 / THINK</span></div>
+                <div class="expression-cell"><span class="cell-index">05</span><i class="cell-marker"></i><span class="cell-name">克制开心 / DELIGHT</span></div>
+                <div class="expression-cell"><span class="cell-index">06</span><i class="cell-marker"></i><span class="cell-name">歉意 / WORRY</span></div>
+                <div class="expression-cell"><span class="cell-index">07</span><i class="cell-marker"></i><span class="cell-name">困倦 / SLEEPY</span></div>
+                <div class="expression-cell"><span class="cell-index">08</span><i class="cell-marker"></i><span class="cell-name">决心 / DETERMINED</span></div>
+              </div>
+            </div>
+
+            <div class="sheet-section">
+              <div class="section-head"><h3>动作关键姿态 / Key poses</h3><span>Readable silhouette</span></div>
+              <div class="action-grid">
+                <div class="action-cell"><b>01</b><i></i><span>安静站立</span></div>
+                <div class="action-cell"><b>02</b><i></i><span>坐下倾听</span></div>
+                <div class="action-cell"><b>03</b><i></i><span>四足奔跑</span></div>
+                <div class="action-cell"><b>04</b><i></i><span>低身嗅看</span></div>
+                <div class="action-cell"><b>05</b><i></i><span>叼知识叶</span></div>
+                <div class="action-cell"><b>06</b><i></i><span>回头引路</span></div>
+                <div class="action-cell"><b>07</b><i></i><span>起跳</span></div>
+                <div class="action-cell"><b>08</b><i></i><span>落地</span></div>
+                <div class="action-cell"><b>09</b><i></i><span>歉意低伏</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="negative-strip">
+            <div class="negative-item"><b>禁止 / FORM</b><span>Chibi、大头、短腿、3D 玩偶、毛绒公仔、贴纸图标。</span></div>
+            <div class="negative-item"><b>禁止 / BODY</b><span>两足拟人、人类手掌、衣物、盔甲、多条尾巴、多余腿。</span></div>
+            <div class="negative-item"><b>禁止 / STYLE</b><span>机械狐、青色霓虹、全身发光、写实照片毛发、超大眼睛。</span></div>
+            <div class="negative-item"><b>禁止 / OUTPUT</b><span>文字、签名、水印、UI、透视强变形、运动模糊、裁切尾巴。</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="sheet">
+      <div class="page-rail">Rig map · State machine · Delivery acceptance</div>
+      <div class="folio">04 / 04 · MOTION AND PRODUCTION</div>
+      <div class="sheet-inner">
+        <header class="page-head">
+          <div>
+            <div class="page-kicker">Rive-ready state machine and delivery gates</div>
+            <h2>动画状态与制作验收</h2>
+          </div>
+          <div class="head-code">
+            L2 AUTONOMY<br>
+            GUIDE ONLY<br>
+            NO SILENT WRITES
+          </div>
+        </header>
+
+        <div class="page-body">
+          <div class="motion-layout">
+            <div class="sheet-section">
+              <div class="section-head"><h3>核心状态机 / Behavior map</h3><span>One bubble at a time</span></div>
+              <div class="state-map">
+                <div class="state-node"><code>IDLE</code><b>待机</b><span>呼吸、眨眼、耳朵轻动。4–6 秒循环，不以持续跑动占用注意。</span></div>
+                <div class="state-node accent"><code>LISTEN</code><b>倾听</b><span>输入框聚焦时耳朵前倾，身体静止，不弹气泡。</span></div>
+                <div class="state-node"><code>THINK</code><b>思考</b><span>AI 整理时坐下，尾巴收近身体，三次轻微眨眼。</span></div>
+                <div class="state-node primary"><code>LEAD</code><b>引路</b><span>点击宠物后沿安全区跑向目标，600–800 毫秒内停下。</span></div>
+                <div class="state-node accent"><code>CARRY</code><b>叼叶</b><span>最多提示一组待归类内容；点击才打开流程，不执行写入。</span></div>
+                <div class="state-node"><code>CELEBRATE</code><b>完成</b><span>轻跳一次、尾巴回卷，900 毫秒后返回待机。</span></div>
+                <div class="state-node"><code>ERROR</code><b>失败</b><span>耳朵后收、身体降低；错误信息必须文字清楚且可重试。</span></div>
+                <div class="state-node"><code>SLEEP</code><b>休眠</b><span>30 秒无交互后伏下，任意点击 0.4 秒唤醒。</span></div>
+                <div class="state-node primary"><code>HIDDEN</code><b>收起</b><span>只保留固定入口，收起偏好写入本地并跨刷新保持。</span></div>
+              </div>
+
+              <div class="acceptance">
+                <div><b>静态</b>48 px 可辨认；比例、纹样和尾形跨视角一致。</div>
+                <div><b>动作</b>无滑步、无断尾、无挂点漂移；状态切换不跳帧。</div>
+                <div><b>性能</b>角色不超过 1.5 MB；4G 首帧目标 300 ms；静态首帧不超过 40 KB。</div>
+                <div><b>无障碍</b>支持减少动态效果；宠物入口可键盘操作并有明确标签。</div>
+              </div>
+            </div>
+
+            <aside class="rig-panel">
+              <div class="rig-head">Rive hierarchy / 绑骨层级</div>
+              <div class="rig-tree">KT-FOX-01
+├─ fx_shadow
+├─ body_root
+│  ├─ tail_root
+│  │  └─ tail_01…05
+│  ├─ pelvis / torso
+│  ├─ chest_mark
+│  ├─ hind_leg_L / R
+│  ├─ front_leg_L / R
+│  └─ neck_head
+│     ├─ head
+│     ├─ ear_L / R
+│     ├─ forehead_sprout
+│     ├─ eye_L / R
+│     ├─ muzzle / nose
+│     └─ mouth_anchor
+├─ prop_knowledge_leaf
+└─ fx_particles / optional</div>
+              <div class="budget-grid">
+                <div class="budget"><b>60 fps</b><span>动画目标帧率</span></div>
+                <div class="budget"><b>5 bones</b><span>尾巴最大弯曲 180°</span></div>
+                <div class="budget"><b>&lt;150 ms</b><span>减少动态效果时转场</span></div>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
