@@ -47,6 +47,11 @@ test('all animated UI states have an approved transparent frame', () => {
 test('pet WebP frames stay under 250 KB', async () => {
   const files = (await readdir(petDir)).filter((name) => name.endsWith('.webp'));
   assert.equal(files.length, 6);
+  assert.deepEqual(
+    Array.from(new Set(Object.values(PET_FRAMES))).sort(),
+    files.slice().sort(),
+    'every mapped frame must exist in apps/web/assets/pet',
+  );
   let total = 0;
   for (const file of files) total += (await stat(path.join(petDir, file))).size;
   assert.ok(total <= 250 * 1024, `pet assets are ${total} bytes`);
