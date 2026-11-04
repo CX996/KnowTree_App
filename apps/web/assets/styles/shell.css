@@ -1,0 +1,55 @@
+.app-rail {
+  position: fixed;
+  z-index: 60;
+  right: 12px;
+  bottom: calc(10px + var(--sab));
+  left: 12px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  min-height: 58px;
+  padding: 5px;
+  border: 1px solid var(--line);
+  border-radius: 19px;
+  background: rgba(10, 11, 9, .88);
+  background: color-mix(in srgb, var(--bg-deep) 88%, transparent);
+  backdrop-filter: blur(18px);
+}
+.app-rail__brand, .app-rail__capture { display: none; }
+.app-rail__nav { display: contents; }
+.app-rail__item {
+  display: flex;
+  min-height: 46px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  border-radius: 13px;
+  font-size: 10px;
+}
+.app-rail__item svg { width: 20px; height: 20px; }
+.app-rail__item.is-active { color: var(--gold-soft); background: rgba(198, 161, 91, .09); }
+body.has-app-shell { padding-bottom: calc(74px + var(--sab)); }
+
+@media (min-width: 768px) {
+  .app-rail {
+    inset: 0 auto 0 0;
+    width: 80px;
+    padding: 18px 10px;
+    border-width: 0 1px 0 0;
+    border-radius: 0;
+  }
+  .app-rail__nav { display: grid; align-content: start; gap: 7px; }
+  .app-rail__item span { position: absolute; width: 1px; height: 1px; overflow: hidden; }
+  body.has-app-shell { padding-bottom: 0; padding-left: 80px; }
+}
+
+@media (min-width: 1200px) {
+  .app-rail { width: 232px; padding: 24px 18px; }
+  .app-rail__brand { display: flex; min-height: 44px; align-items: center; gap: 9px; padding: 0 9px; color: var(--gold-soft); font: 18px var(--font-display); }
+  .app-rail__mark { width: 18px; height: 18px; border: 1px solid var(--gold); border-radius: 50%; }
+  .app-rail__capture { display: flex; min-height: 46px; align-items: center; gap: 9px; margin: 14px 0 16px; padding: 0 12px; color: var(--ink); border-radius: 12px; background: var(--paper); }
+  .app-rail__item { flex-direction: row; justify-content: flex-start; padding: 0 12px; }
+  .app-rail__item span { position: static; width: auto; height: auto; }
+  .app-rail__pet { position: absolute; right: 18px; bottom: 18px; left: 18px; min-height: 132px; }
+  body.has-app-shell { padding-left: 232px; }
+}

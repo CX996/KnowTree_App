@@ -207,29 +207,6 @@
     });
   }
 
-  /* ---------- Tab 栏 ---------- */
-  function tabbar(active) {
-    var host = document.querySelector('[data-tabbar]');
-    if (!host) return;
-    var tabs = [
-      { id: 'tree', name: '知识树', href: 'index.html', icon: 'tree' },
-      { id: 'lib', name: '知识库', href: 'library.html', icon: 'layers' },
-      { id: 'me', name: '我的', href: 'me.html', icon: 'user' }
-    ];
-    var bar = document.createElement('nav');
-    bar.className = 'tabbar';
-    bar.setAttribute('aria-label', '主导航');
-    tabs.forEach(function (t) {
-      var a = document.createElement('a');
-      a.className = 'tab' + (t.id === active ? ' on' : '');
-      a.href = t.href;
-      a.innerHTML = svg(t.icon) + '<span></span>';
-      a.querySelector('span').textContent = t.name;
-      bar.appendChild(a);
-    });
-    host.appendChild(bar);
-  }
-
   /* ---------- 知识卡片（列表通用） ---------- */
   function cardHTML(c) {
     var meta = '';
@@ -260,7 +237,6 @@
   /* ---------- 页面启动 ---------- */
   document.addEventListener('DOMContentLoaded', function () {
     hydrateIcons();
-    tabbar(document.body.getAttribute('data-tab'));
     consumeFlash();
   });
 

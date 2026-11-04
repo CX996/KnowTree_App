@@ -35,3 +35,17 @@ test('design tokens expose the approved palette', async () => {
     assert.ok(css.includes(value), value);
   }
 });
+
+test('business pages declare active tabs and load the shared shell', async () => {
+  const pages = new Map([
+    ['index.html', 'tree'], ['library.html', 'lib'], ['detail.html', 'lib'],
+    ['inbox.html', 'lib'], ['search.html', 'lib'],
+    ['review.html', 'review'], ['me.html', 'me'],
+  ]);
+  for (const [page, tab] of pages) {
+    const html = await readFile(path.join(web, page), 'utf8');
+    assert.match(html, new RegExp(`<body[^>]+data-tab="${tab}"`));
+    assert.match(html, /assets\/shell\.js/);
+    assert.match(html, /assets\/styles\/shell\.css/);
+  }
+});
