@@ -10,8 +10,9 @@
   <link rel="stylesheet" href="assets/styles/components.css" />
   <link rel="stylesheet" href="assets/styles/pages.css" />
   <link rel="stylesheet" href="assets/styles/shell.css" />
+  <link rel="stylesheet" href="assets/styles/pet.css" />
 </head>
-<body data-tab="lib">
+<body data-tab="lib" data-pet-mode="ambient">
   <main class="page app-page knowledge-page">
     <h1 class="sr-only">搜索知识</h1>
     <header class="search-hero">
@@ -28,6 +29,7 @@
   <script src="assets/api.js"></script>
   <script src="assets/ui.js"></script>
   <script src="assets/shell.js"></script>
+  <script type="module" src="assets/pet.js"></script>
   <script>
     (async function () {
       var input = document.getElementById('q');

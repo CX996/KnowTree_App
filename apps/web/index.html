@@ -10,8 +10,9 @@
   <link rel="stylesheet" href="assets/styles/components.css" />
   <link rel="stylesheet" href="assets/styles/pages.css" />
   <link rel="stylesheet" href="assets/styles/shell.css" />
+  <link rel="stylesheet" href="assets/styles/pet.css" />
 </head>
-<body data-tab="tree">
+<body data-tab="tree" data-pet-mode="ambient">
   <main class="page app-page home-page" data-page="home">
     <header class="page-head">
       <div>
@@ -51,6 +52,7 @@
   <script src="assets/api.js"></script>
   <script src="assets/ui.js"></script>
   <script src="assets/shell.js"></script>
+  <script type="module" src="assets/pet.js"></script>
   <script type="module">
     import { selectHomeCategories, countSince, startOfMonth } from './assets/tree-summary.mjs';
 

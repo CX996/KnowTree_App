@@ -47,6 +47,12 @@
     location.replace('login.html?next=' + encodeURIComponent(next));
   }
 
+  function emit(name, detail) {
+    if (typeof document !== 'undefined' && typeof CustomEvent !== 'undefined') {
+      document.dispatchEvent(new CustomEvent(name, { detail: detail || {} }));
+    }
+  }
+
   /* ---------- 请求 ---------- */
   function req(path, opts) {
     opts = opts || {};
@@ -59,6 +65,7 @@
     var timeoutMs = opts.timeoutMs || 15000;
     var ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
     var timer = ctl ? setTimeout(function () { ctl.abort(); }, timeoutMs) : null;
+    emit('knowtree:request-start', { path: path, method: method });
 
     return fetch(apiBase() + path, {
       method: method,
@@ -88,16 +95,25 @@
         return r.text().then(function (txt) {
           var msg = txt;
           try { var j = JSON.parse(txt); msg = j.error || j.message || txt; } catch (e) { /* 非 JSON */ }
+          if (method !== 'GET') emit('knowtree:request-error', { path: path, message: msg });
           throw new Error(msg || ('HTTP ' + r.status));
         });
       }
       if (method !== 'GET') clearBootstrapCache();
-      if (opts.raw) return r;
-      var ct = r.headers.get('content-type') || '';
-      if (ct.indexOf('json') >= 0) return r.json();
-      return r.text();
+      var result;
+      if (opts.raw) result = Promise.resolve(r);
+      else {
+        var ct = r.headers.get('content-type') || '';
+        result = ct.indexOf('json') >= 0 ? r.json() : r.text();
+      }
+      if (method === 'GET') return result;
+      return result.then(function (value) {
+        emit('knowtree:request-success', { path: path, method: method });
+        return value;
+      });
     }, function (e) {
       if (timer) clearTimeout(timer);
+      if (method !== 'GET') emit('knowtree:request-error', { path: path, message: 'network' });
       if (e && e.name === 'AbortError') {
         throw new Error('请求超时（' + Math.round(timeoutMs / 1000) + 's），后端是否可达？');
       }
@@ -237,6 +253,7 @@
     cache.me = data.me || null;
     cache.recalls = data.recalls || [];
     rebuildNodes();
+    emit('knowtree:data-ready', { count: cache.entries.length });
     return cache;
   }
 

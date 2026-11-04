@@ -156,3 +156,43 @@ test('account uses testable preference helpers and removes app chrome on logout'
   );
 });
 
+test('companion runtime loads only on authenticated application pages', async () => {
+  const business = [
+    'index.html',
+    'library.html',
+    'detail.html',
+    'inbox.html',
+    'search.html',
+    'review.html',
+    'me.html',
+    'capture.html',
+  ];
+  const auth = ['login.html', 'register.html', 'forgot-password.html', 'reset-password.html'];
+
+  for (const page of business) {
+    const html = await readFile(path.join(web, page), 'utf8');
+    assert.match(html, /assets\/pet\.js/, `${page} pet script`);
+    assert.match(html, /assets\/styles\/pet\.css/, `${page} pet styles`);
+    assert.match(html, /data-pet-mode="(ambient|focus)"/, `${page} pet mode`);
+  }
+  for (const page of auth) {
+    const html = await readFile(path.join(web, page), 'utf8');
+    assert.equal(html.includes('assets/pet.js'), false, `${page} must not load pet`);
+    assert.equal(html.includes('assets/styles/pet.css'), false, `${page} must not load pet styles`);
+  }
+});
+
+test('companion runtime is navigation-only and publishes safe data events', async () => {
+  const pet = await readFile(path.join(web, 'assets/pet.js'), 'utf8');
+  const api = await readFile(path.join(web, 'assets/api.js'), 'utf8');
+  assert.match(pet, /location\.href/);
+  assert.equal(/KT\.(ingest|assign|delete|merge|updateEntry|markSeen)\s*\(/.test(pet), false);
+  assert.match(pet, /knowtree:input-focus/);
+  assert.match(pet, /knowtree:input-blur/);
+  assert.match(api, /knowtree:data-ready/);
+  assert.match(api, /knowtree:request-start/);
+  assert.match(api, /knowtree:request-success/);
+  assert.match(api, /knowtree:request-error/);
+  assert.doesNotMatch(api, /emit\('knowtree:[^']+',\s*\{[^}]*token/i);
+});
+
