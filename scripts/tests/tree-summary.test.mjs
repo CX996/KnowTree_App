@@ -20,12 +20,16 @@ test('selects five highest category counts without deleting the rest', () => {
   assert.equal(nodes.length, 9);
 });
 
+test('empty categories produce an empty selection', () => {
+  assert.deepEqual(selectHomeCategories([], 5), []);
+});
+
 test('monthly leaves use createdAt only', () => {
-  const now = new Date('2026-11-04T12:00:00+08:00');
+  const now = new Date(2026, 10, 4, 12, 0, 0);
   const entries = [
-    { createdAt: '2026-11-01T00:00:00+08:00' },
-    { createdAt: '2026-10-31T23:59:59+08:00' },
-    { createdAt: '2026-11-03T00:00:00+08:00' },
+    { createdAt: new Date(2026, 10, 1, 0, 0, 0).toISOString() },
+    { createdAt: new Date(2026, 9, 31, 23, 59, 59).toISOString() },
+    { createdAt: new Date(2026, 10, 3, 0, 0, 0).toISOString() },
   ];
 
   assert.equal(countSince(entries, startOfMonth(now)), 2);

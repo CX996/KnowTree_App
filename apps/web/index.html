@@ -38,8 +38,13 @@
         <h2 id="treeTitle">我的知识树</h2>
         <span id="leafCount">正在统计</span>
       </div>
+      <div class="tree-empty" id="treeEmpty" hidden>
+        <strong>种下第一片叶子</strong>
+        <p>从一条想法开始，知树会帮你找到它的位置。</p>
+        <a class="btn btn-primary" href="capture.html">丢一条进树里</a>
+      </div>
       <svg id="homeTree" viewBox="0 0 360 300" role="group" aria-label="知识分类树"></svg>
-      <a class="text-link" href="library.html">查看全部知识</a>
+      <a class="text-link" id="viewAllKnowledge" href="library.html">查看全部知识</a>
     </section>
   </main>
 
@@ -53,68 +58,80 @@
     const UI = window.UI;
     const statsEl = document.getElementById('stats');
 
-    try {
-      await KT.load();
-    } catch (error) {
-      statsEl.innerHTML = '加载失败 · <a href="login.html" style="color:var(--gold)">去登录</a>';
-      throw error;
+    async function boot() {
+      try {
+        await KT.load();
+      } catch (error) {
+        statsEl.innerHTML = '加载失败 · <a href="login.html" style="color:var(--gold)">去登录</a>';
+        return;
+      }
+
+      const positions = [
+        { x: 180, y: 72 },
+        { x: 72, y: 132 },
+        { x: 288, y: 132 },
+        { x: 104, y: 224 },
+        { x: 256, y: 224 },
+      ];
+
+      const categories = KT.NODES.map((node) => ({
+        id: node.id,
+        name: node.name,
+        count: KT.countInNode(node.id),
+      }));
+
+      const visible = selectHomeCategories(categories, 5);
+      const tree = document.getElementById('homeTree');
+      const empty = document.getElementById('treeEmpty');
+      const viewAll = document.getElementById('viewAllKnowledge');
+
+      if (visible.length === 0) {
+        tree.hidden = true;
+        viewAll.hidden = true;
+        empty.hidden = false;
+      } else {
+        tree.innerHTML =
+          '<path class="tree-branch" d="M180 292V134M180 174L72 132M180 174L288 132M180 206L104 224M180 206L256 224"></path>' +
+          visible.map((node, index) => {
+            const point = positions[index];
+            return (
+              '<g class="tree-node" data-node="' + UI.esc(node.id) +
+              '" tabindex="0" role="link" aria-label="' + UI.esc(node.name) + '">' +
+              '<circle cx="' + point.x + '" cy="' + point.y + '" r="' + (node.count ? 24 : 18) + '"></circle>' +
+              '<text class="tree-node__count" x="' + point.x + '" y="' + (point.y + 5) +
+              '" text-anchor="middle">' + node.count + '</text>' +
+              '<text class="tree-node__label" x="' + point.x + '" y="' + (point.y + 44) +
+              '" text-anchor="middle">' + UI.esc(node.name) + '</text>' +
+              '</g>'
+            );
+          }).join('');
+
+        tree.querySelectorAll('[data-node]').forEach((node) => {
+          const open = () => {
+            location.href = 'library.html?category=' + encodeURIComponent(node.dataset.node);
+          };
+          node.addEventListener('click', open);
+          node.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              open();
+            }
+          });
+        });
+      }
+
+      statsEl.textContent = KT.NODES.length + ' 个分类 · ' + KT.classified().length + ' 条知识';
+      document.getElementById('leafCount').textContent =
+        '本月 +' + countSince(KT.visible(), startOfMonth()) + ' 新叶';
+
+      const inbox = KT.inbox();
+      const pending = inbox.pending.length + inbox.dups.length;
+      const banner = document.getElementById('inboxBanner');
+      banner.hidden = pending === 0;
+      document.getElementById('inboxNum').textContent = pending;
     }
 
-    const positions = [
-      { x: 180, y: 72 },
-      { x: 72, y: 132 },
-      { x: 288, y: 132 },
-      { x: 104, y: 224 },
-      { x: 256, y: 224 },
-    ];
-
-    const categories = KT.NODES.map((node) => ({
-      id: node.id,
-      name: node.name,
-      count: KT.countInNode(node.id),
-    }));
-
-    const visible = selectHomeCategories(categories, 5);
-    const tree = document.getElementById('homeTree');
-
-    tree.innerHTML =
-      '<path class="tree-branch" d="M180 292V134M180 174L72 132M180 174L288 132M180 206L104 224M180 206L256 224"></path>' +
-      visible.map((node, index) => {
-        const point = positions[index];
-        return (
-          '<g class="tree-node" data-node="' + UI.esc(node.id) +
-          '" tabindex="0" role="link" aria-label="' + UI.esc(node.name) + '">' +
-          '<circle cx="' + point.x + '" cy="' + point.y + '" r="' + (node.count ? 24 : 18) + '"></circle>' +
-          '<text class="tree-node__count" x="' + point.x + '" y="' + (point.y + 5) +
-          '" text-anchor="middle">' + node.count + '</text>' +
-          '<text class="tree-node__label" x="' + point.x + '" y="' + (point.y + 44) +
-          '" text-anchor="middle">' + UI.esc(node.name) + '</text>' +
-          '</g>'
-        );
-      }).join('');
-
-    tree.querySelectorAll('[data-node]').forEach((node) => {
-      const open = () => {
-        location.href = 'library.html?category=' + encodeURIComponent(node.dataset.node);
-      };
-      node.addEventListener('click', open);
-      node.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          open();
-        }
-      });
-    });
-
-    statsEl.textContent = KT.NODES.length + ' 个分类 · ' + KT.classified().length + ' 条知识';
-    document.getElementById('leafCount').textContent =
-      '本月 +' + countSince(KT.visible(), startOfMonth()) + ' 新叶';
-
-    const inbox = KT.inbox();
-    const pending = inbox.pending.length + inbox.dups.length;
-    const banner = document.getElementById('inboxBanner');
-    banner.hidden = pending === 0;
-    document.getElementById('inboxNum').textContent = pending;
+    boot();
   </script>
 </body>
 </html>

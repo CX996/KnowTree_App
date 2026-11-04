@@ -20,6 +20,14 @@
 }
 .page-head__meta { color: var(--text-muted); font-size: 12px; }
 
+@media (max-width: 767px) {
+  .page-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+}
+
 .home-page {
   padding-top: 0;
 }
@@ -88,6 +96,23 @@
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   background: var(--surface);
+}
+
+.tree-empty {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+  padding: 22px 6px 14px;
+}
+
+.tree-empty strong {
+  font: 600 20px var(--font-display);
+}
+
+.tree-empty p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
 }
 
 .section-row {
