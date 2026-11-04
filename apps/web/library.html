@@ -32,7 +32,9 @@
   <script src="assets/api.js"></script>
   <script src="assets/ui.js"></script>
   <script src="assets/shell.js"></script>
-  <script>
+  <script type="module">
+    import { resolveCategory, nextFilterOnCategoryChange } from './assets/library-state.mjs';
+
     (async function () {
       var filter = 'all';
       var seg = document.getElementById('seg');
@@ -49,9 +51,7 @@
         return;
       }
 
-      selectedCategory = KT.NODES.some(function (node) {
-        return node.id === requestedCategory;
-      }) ? requestedCategory : '';
+      selectedCategory = resolveCategory(KT.NODES, requestedCategory);
 
       function counts() {
         var box = KT.inbox();
@@ -125,7 +125,7 @@
         var button = e.target.closest('[data-category]');
         if (!button) return;
         selectedCategory = button.getAttribute('data-category');
-        filter = 'all';
+        filter = nextFilterOnCategoryChange();
         syncSegments();
         categoryRail.querySelectorAll('[data-category]').forEach(function (item) {
           var active = item.getAttribute('data-category') === selectedCategory;

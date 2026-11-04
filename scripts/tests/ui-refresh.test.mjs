@@ -75,12 +75,13 @@ test('knowledge pages use the new shared browsing structure', async () => {
 test('library applies URL category only after data load and resets status on category change', async () => {
   const library = await readFile(path.join(web, 'library.html'), 'utf8');
   assert.ok(
-    library.indexOf('await KT.load();') < library.indexOf('selectedCategory = KT.NODES.some'),
+    library.indexOf('await KT.load();') < library.indexOf('resolveCategory(KT.NODES, requestedCategory)'),
     'URL category must be validated after KT.load'
   );
-  assert.match(library, /filter = 'all';\s*syncSegments\(\);/);
+  assert.match(library, /filter = nextFilterOnCategoryChange\(\);\s*syncSegments\(\);/);
   assert.match(library, /item\.classList\.toggle\('is-active', active\)/);
   assert.match(library, /item\.setAttribute\('aria-pressed', String\(active\)\)/);
+  assert.match(library, /library-state\.mjs/);
 });
 
 test('inbox CTA closes its container before main', async () => {
