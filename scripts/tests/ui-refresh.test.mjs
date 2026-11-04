@@ -60,3 +60,14 @@ test('home is action-first and renders a dynamic tree preview', async () => {
   assert.match(html, /id="treeEmpty"/);
   assert.match(html, /async function boot/);
 });
+
+test('knowledge pages use the new shared browsing structure', async () => {
+  const library = await readFile(path.join(web, 'library.html'), 'utf8');
+  const search = await readFile(path.join(web, 'search.html'), 'utf8');
+  const inbox = await readFile(path.join(web, 'inbox.html'), 'utf8');
+  assert.match(library, /class="page-head"/);
+  assert.match(library, /id="categoryRail"/);
+  assert.match(library, /class="filter-scroll"/);
+  assert.match(search, /class="search-hero"/);
+  assert.match(inbox, /class="page app-page knowledge-page"/);
+});

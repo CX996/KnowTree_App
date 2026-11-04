@@ -12,15 +12,16 @@
   <link rel="stylesheet" href="assets/styles/shell.css" />
 </head>
 <body data-tab="lib">
-  <main class="page">
+  <main class="page app-page knowledge-page">
     <h1 class="sr-only">搜索知识</h1>
-    <div class="topbar">
-      <div class="searchbar grow">
+    <header class="search-hero">
+      <button class="icon-btn" id="cancel" aria-label="返回知识库" data-ic="back"></button>
+      <label class="search-field">
+        <span class="sr-only">搜索知识</span>
         <span data-ic="search"></span>
         <input id="q" type="search" placeholder="搜索标题、标签或正文" autocomplete="off" />
-      </div>
-      <button class="icon-btn" id="cancel" style="width:auto;padding:0 6px;font-size:15px;color:var(--text2)">取消</button>
-    </div>
+      </label>
+    </header>
     <div id="out"></div>
   </main>
 

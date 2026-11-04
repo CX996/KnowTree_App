@@ -177,3 +177,55 @@
   font-size: 13px;
   font-weight: 700;
 }
+
+.knowledge-page { width: 100%; max-width: 920px; }
+.filter-scroll {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 1px 10px;
+  scrollbar-width: none;
+}
+.filter-scroll::-webkit-scrollbar { display: none; }
+.filter-chip {
+  min-height: 40px;
+  padding: 0 13px;
+  color: var(--text-muted);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  white-space: nowrap;
+}
+.filter-chip span { margin-left: 7px; color: var(--gold); }
+.filter-chip.is-active { color: var(--ink); background: var(--paper); }
+.status-switch { display: flex; gap: 4px; margin: 8px 0 18px; }
+.status-switch button { min-height: 40px; padding: 0 12px; border-radius: 10px; color: var(--text-muted); }
+.status-switch button[aria-selected="true"] { color: var(--text); background: var(--surface-raised); }
+.knowledge-list { display: grid; gap: 10px; }
+.search-hero {
+  position: sticky;
+  z-index: 10;
+  top: 0;
+  display: flex;
+  gap: 10px;
+  padding: calc(12px + var(--sat)) 0 12px;
+  background: var(--bg);
+}
+.search-field {
+  display: flex;
+  flex: 1;
+  min-height: 46px;
+  align-items: center;
+  gap: 9px;
+  padding: 0 13px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--surface);
+}
+.search-field svg { width: 18px; height: 18px; flex: none; }
+.search-field input { width: 100%; border: 0; outline: 0; background: transparent; }
+.cta-bar p {
+  margin: 0 0 10px;
+  color: var(--text-muted);
+  font-size: 12px;
+}

@@ -12,33 +12,22 @@
   <link rel="stylesheet" href="assets/styles/shell.css" />
 </head>
 <body data-tab="lib">
-  <main class="page page--tab">
-    <div class="topbar">
-      <div class="grow">
-        <h1 class="h-big">知识库</h1>
+  <main class="page app-page knowledge-page">
+    <header class="page-head">
+      <div>
+        <p class="page-kicker">ALL KNOWLEDGE</p>
+        <h1>知识库</h1>
       </div>
+      <a class="icon-btn" href="search.html" aria-label="搜索知识" data-ic="search"></a>
+    </header>
+    <div class="filter-scroll" id="categoryRail" role="group" aria-label="按分类筛选"></div>
+    <div class="status-switch" id="seg" role="tablist" aria-label="知识状态">
+      <button data-f="all" role="tab" aria-selected="true">全部 <span class="n"></span></button>
+      <button data-f="pending" role="tab" aria-selected="false">待确认 <span class="n"></span></button>
+      <button data-f="uncategorized" role="tab" aria-selected="false">未分类 <span class="n"></span></button>
     </div>
-
-    <a class="searchbar mt8" href="search.html">
-      <span data-ic="search"></span>
-      <span style="font-size:15px">搜索标题、标签或正文</span>
-    </a>
-
-    <div class="seg mt16" id="seg">
-      <button data-f="all" class="on">全部 <span class="n"></span></button>
-      <button data-f="pending">待确认 <span class="n"></span></button>
-      <button data-f="uncategorized">未分类 <span class="n"></span></button>
-    </div>
-
-    <label class="t3 s12 mt16" for="categoryFilter">按分类筛选</label>
-    <select class="textarea mt8" id="categoryFilter" style="min-height:48px">
-      <option value="">全部分类</option>
-    </select>
-
-    <div class="mt16" id="list"></div>
+    <section class="knowledge-list" id="list" aria-live="polite"></section>
   </main>
-
-  <div data-tabbar></div>
 
   <script src="assets/api.js"></script>
   <script src="assets/ui.js"></script>
@@ -48,8 +37,11 @@
       var filter = 'all';
       var seg = document.getElementById('seg');
       var list = document.getElementById('list');
-      var categoryFilter = document.getElementById('categoryFilter');
+      var categoryRail = document.getElementById('categoryRail');
       var requestedCategory = UI.q('category') || '';
+      var selectedCategory = KT.NODES.some(function (node) {
+        return node.id === requestedCategory;
+      }) ? requestedCategory : '';
 
       list.innerHTML = UI.emptyHTML('加载中…', '正在从后端取知识库');
       try {
@@ -71,7 +63,21 @@
       function syncSegments() {
         seg.querySelectorAll('button').forEach(function (button) {
           button.classList.toggle('on', button.getAttribute('data-f') === filter);
+          button.setAttribute('aria-selected', String(button.getAttribute('data-f') === filter));
         });
+      }
+
+      function renderCategoryRail() {
+        var items = [{ id: '', name: '全部', count: KT.visible().length }]
+          .concat(KT.NODES.map(function (node) {
+            return { id: node.id, name: node.name, count: KT.countInNode(node.id) };
+          }));
+        categoryRail.innerHTML = items.map(function (item) {
+          var active = item.id === selectedCategory;
+          return '<button class="filter-chip' + (active ? ' is-active' : '') + '" ' +
+            'data-category="' + UI.esc(item.id) + '" aria-pressed="' + active + '">' +
+            UI.esc(item.name) + '<span>' + item.count + '</span></button>';
+        }).join('');
       }
 
       function render() {
@@ -90,9 +96,9 @@
           cards = KT.visible();
         }
 
-        if (categoryFilter.value) {
+        if (selectedCategory) {
           cards = cards.filter(function (card) {
-            return card.nodeId === categoryFilter.value;
+            return card.nodeId === selectedCategory;
           });
         }
 
@@ -113,23 +119,15 @@
         render();
       });
 
-      KT.NODES.forEach(function (node) {
-        var option = document.createElement('option');
-        option.value = node.id;
-        option.textContent = node.name;
-        categoryFilter.appendChild(option);
-      });
-
-      categoryFilter.value = KT.NODES.some(function (node) {
-        return node.id === requestedCategory;
-      }) ? requestedCategory : '';
-
-      categoryFilter.addEventListener('change', function () {
-        filter = 'all';
-        syncSegments();
+      categoryRail.addEventListener('click', function (e) {
+        var button = e.target.closest('[data-category]');
+        if (!button) return;
+        selectedCategory = button.getAttribute('data-category');
+        renderCategoryRail();
         render();
       });
 
+      renderCategoryRail();
       render();
     })();
   </script>
