@@ -30,6 +30,12 @@
     });
     document.body.prepend(rail);
     document.body.classList.add('has-app-shell');
+    updateShellOffset();
+  }
+
+  function updateShellOffset() {
+    var offset = window.innerWidth >= 1200 ? 232 : window.innerWidth >= 768 ? 80 : 0;
+    document.documentElement.style.setProperty('--shell-offset', offset + 'px');
   }
 
   function refreshActive(tab) {
@@ -41,5 +47,6 @@
   }
 
   window.KTShell = { mount: mount, refreshActive: refreshActive };
+  window.addEventListener('resize', updateShellOffset, { passive: true });
   mount();
 })();

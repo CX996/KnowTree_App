@@ -10,11 +10,22 @@
   <link rel="stylesheet" href="../../../apps/web/assets/styles/shell.css">
   <link rel="stylesheet" href="../../../apps/web/assets/styles/pet.css">
   <link rel="stylesheet" href="../../../apps/web/assets/styles/transitions.css">
+  <style>
+    #motionProbe { width: 1px; height: 1px; }
+    @keyframes fixture-spin { to { transform: rotate(1turn); } }
+    @media (prefers-reduced-motion: no-preference) {
+      #motionProbe { animation: fixture-spin 1s linear infinite; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #motionProbe { animation: none; }
+    }
+  </style>
 </head>
 <body data-tab="tree">
   <main class="page app-page home-page">
     <h1>知树</h1>
     <a id="capture" href="capture.html">丢一条</a>
+    <div id="motionProbe" aria-hidden="true"></div>
     <div class="app-rail__pet" data-pet-mount>
       <button class="pet-hit" type="button" aria-label="宠物入口"><img class="pet-frame" alt=""></button>
     </div>
@@ -24,7 +35,8 @@
   <script src="../../../apps/web/assets/shell.js"></script>
   <script src="../../../apps/web/assets/transitions.js"></script>
   <script>
-    requestAnimationFrame(function () {
+    window.addEventListener('load', function () {
+      setTimeout(function () {
       var root = document.documentElement;
       var rail = document.querySelector('.app-rail');
       var navLinks = rail ? rail.querySelectorAll('a') : [];
@@ -32,12 +44,30 @@
       var expectedLeft = innerWidth >= 1200 ? 232 : innerWidth >= 768 ? 80 : 0;
       var left = parseFloat(getComputedStyle(document.body).paddingLeft) || 0;
       var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var desktopMedia = matchMedia('(min-width: 1200px)').matches;
+      var tabletMedia = matchMedia('(min-width: 768px)').matches;
+      var animationName = getComputedStyle(document.getElementById('motionProbe')).animationName;
+      var firstLink = rail ? rail.querySelector('.app-rail__item') : null;
+      if (firstLink) firstLink.focus();
+      var keyboardFocus = !!firstLink && document.activeElement === firstLink;
       root.dataset.motion = reduced ? 'reduce' : 'normal';
+      root.dataset.navCount = String(navLinks.length);
+      root.dataset.overflow = String(overflow);
+      root.dataset.left = String(left);
+      root.dataset.expectedLeft = String(expectedLeft);
+      root.dataset.animationName = animationName;
+      root.dataset.keyboardFocus = String(keyboardFocus);
+      root.dataset.transitions = String(!!window.KTTransitions);
+      root.dataset.desktopMedia = String(desktopMedia);
+      root.dataset.tabletMedia = String(tabletMedia);
+      root.dataset.railWidth = rail ? getComputedStyle(rail).width : 'missing';
       var ok = rail && navLinks.length >= 4 && !overflow && Math.abs(left - expectedLeft) < 2 &&
-        window.KTTransitions && (reduced || !reduced);
+        window.KTTransitions && keyboardFocus &&
+        (reduced ? animationName === 'none' : animationName !== 'none');
       root.dataset.testResult = ok ? 'pass' : 'fail';
       document.getElementById('browserResult').textContent = ok ? 'PASS' : 'FAIL';
-    });
+      }, 80);
+    }, { once: true });
   </script>
 </body>
 </html>

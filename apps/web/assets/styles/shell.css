@@ -28,7 +28,10 @@
 }
 .app-rail__item svg { width: 20px; height: 20px; }
 .app-rail__item.is-active { color: var(--gold-soft); background: rgba(198, 161, 91, .09); }
-body.has-app-shell { padding-bottom: calc(74px + var(--sab)); }
+body.has-app-shell {
+  padding-bottom: calc(74px + var(--sab));
+  padding-left: var(--shell-offset, 0px);
+}
 
 @media (min-width: 768px) {
   .app-rail {
@@ -40,7 +43,7 @@ body.has-app-shell { padding-bottom: calc(74px + var(--sab)); }
   }
   .app-rail__nav { display: grid; align-content: start; gap: 7px; }
   .app-rail__item span { position: absolute; width: 1px; height: 1px; overflow: hidden; }
-  body.has-app-shell { padding-bottom: 0; padding-left: 80px; }
+  body.has-app-shell { padding-bottom: 0; }
 }
 
 @media (min-width: 1200px) {
@@ -51,5 +54,4 @@ body.has-app-shell { padding-bottom: calc(74px + var(--sab)); }
   .app-rail__item { flex-direction: row; justify-content: flex-start; padding: 0 12px; }
   .app-rail__item span { position: static; width: auto; height: auto; }
   .app-rail__pet { position: absolute; right: 18px; bottom: 18px; left: 18px; min-height: 132px; }
-  body.has-app-shell { padding-left: 232px; }
 }

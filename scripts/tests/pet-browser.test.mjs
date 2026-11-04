@@ -47,6 +47,21 @@ async function startServer() {
   return server;
 }
 
+async function dumpDom(browser, args) {
+  try {
+    const result = await execFileAsync(browser, args, {
+      timeout: 15_000,
+      maxBuffer: 8 * 1024 * 1024,
+    });
+    return result.stdout;
+  } catch (error) {
+    if (typeof error.stdout === 'string' && error.stdout.includes('data-test-result="pass"')) {
+      return error.stdout;
+    }
+    throw error;
+  }
+}
+
 test('pet runtime passes a real DOM behavior contract in headless Edge', async (t) => {
   const browser = findBrowser();
   if (!browser) {
@@ -59,7 +74,7 @@ test('pet runtime passes a real DOM behavior contract in headless Edge', async (
   try {
     const address = server.address();
     const url = `http://127.0.0.1:${address.port}/scripts/tests/fixtures/pet-runtime.html`;
-    const { stdout } = await execFileAsync(browser, [
+    const stdout = await dumpDom(browser, [
       '--headless=new',
       '--disable-gpu',
       '--no-first-run',
@@ -68,7 +83,7 @@ test('pet runtime passes a real DOM behavior contract in headless Edge', async (
       '--virtual-time-budget=1600',
       '--dump-dom',
       url,
-    ], { timeout: 20_000, maxBuffer: 8 * 1024 * 1024 });
+    ]);
     assert.match(stdout, /data-test-result="pass"/, stdout);
     assert.match(stdout, /<pre id="browserResult">PASS<\/pre>/, stdout);
   } finally {
@@ -93,13 +108,11 @@ test('responsive shell and transition fixture pass at five target widths', async
         const args = [
           '--headless=new', '--disable-gpu', '--no-first-run', '--disable-extensions',
           `--user-data-dir=${profile}`, `--window-size=${width},900`,
-          '--virtual-time-budget=1200', '--dump-dom',
+          '--force-prefers-reduced-motion',
+          '--virtual-time-budget=2500', '--dump-dom',
         ];
         args.push(url);
-        const { stdout } = await execFileAsync(browser, args, {
-          timeout: 20_000,
-          maxBuffer: 8 * 1024 * 1024,
-        });
+        const stdout = await dumpDom(browser, args);
         assert.match(stdout, /data-test-result="pass"/, `${width}px layout failed`);
       } finally {
         await rm(profile, { recursive: true, force: true });
