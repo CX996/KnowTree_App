@@ -12,142 +12,109 @@
   <link rel="stylesheet" href="assets/styles/shell.css" />
 </head>
 <body data-tab="tree">
-  <main class="page page--tabcta">
-    <div class="topbar">
-      <div class="grow">
-        <h1 class="h-big">知识树</h1>
-        <div class="t3 s13" id="stats">正在加载…</div>
+  <main class="page app-page home-page" data-page="home">
+    <header class="page-head">
+      <div>
+        <p class="page-kicker">KNOWTREE · 晚上好</p>
+        <h1>今晚想留下什么？</h1>
       </div>
-      <a class="icon-btn" href="review.html" aria-label="每日回溯" data-ic="clock"></a>
-    </div>
+      <p class="page-head__meta" id="stats">正在生长…</p>
+    </header>
 
-    <a class="searchbar mt16" href="search.html">
-      <span data-ic="search"></span>
-      <span class="s13" style="font-size:15px">搜索标题、标签或正文</span>
+    <a class="capture-hero" href="capture.html" data-home-capture>
+      <span>新的一条</span>
+      <strong>写下想法，或丢进一份文档</strong>
+      <small>文字 · 链接 · 文件 ↗</small>
     </a>
 
-    <a class="banner mt12" href="inbox.html" id="inboxBanner" hidden>
+    <a class="inbox-strip" href="inbox.html" id="inboxBanner" hidden>
       <span data-ic="bell"></span>
-      <span class="grow"><b id="inboxNum">0</b> 条待确认 · 去看看</span>
-      <span data-ic="chev" style="color:var(--gold)"></span>
+      <span class="grow"><b id="inboxNum">0</b> 片叶子还没归位</span>
+      <span>带我去看</span>
     </a>
 
-    <div class="tree-wrap">
-      <svg class="tree" viewBox="0 0 360 460" role="group" aria-label="知识分类树">
-        <!-- 枝干 -->
-        <path class="branch" d="M180 460 C 180 380, 178 300, 180 172"/>
-        <path class="branch" d="M180 140 C 145 115, 100 95, 62 82"/>
-        <path class="branch" d="M180 140 C 215 115, 260 95, 298 82"/>
-        <path class="branch" d="M180 140 C 150 170, 105 200, 76 240"/>
-        <path class="branch" d="M180 140 C 210 170, 255 200, 284 240"/>
-        <path class="branch" d="M76 240 C 79 275, 83 310, 88 348"/>
-        <path class="branch" d="M284 240 C 281 275, 277 310, 272 348"/>
-        <!-- 节点 -->
-        <g class="tnode" data-node="" tabindex="0" role="link" aria-label="知识分类">
-          <circle class="hit" cx="180" cy="140" r="34"/>
-          <circle class="ring" cx="180" cy="140" r="30"/>
-          <text class="cnt cnt--big" x="180" y="141" data-cnt=""></text>
-          <text class="lbl" x="180" y="188"></text>
-        </g>
-        <g class="tnode" data-node="" tabindex="0" role="link" aria-label="知识分类">
-          <circle class="hit" cx="62" cy="82" r="28"/>
-          <circle class="ring" cx="62" cy="82" r="23"/>
-          <text class="cnt" x="62" y="83" data-cnt=""></text>
-          <text class="lbl" x="62" y="123"></text>
-        </g>
-        <g class="tnode" data-node="" tabindex="0" role="link" aria-label="知识分类">
-          <circle class="hit" cx="298" cy="82" r="28"/>
-          <circle class="ring" cx="298" cy="82" r="23"/>
-          <text class="cnt" x="298" y="83" data-cnt=""></text>
-          <text class="lbl" x="298" y="123"></text>
-        </g>
-        <g class="tnode" data-node="" tabindex="0" role="link" aria-label="知识分类">
-          <circle class="hit" cx="76" cy="240" r="30"/>
-          <circle class="ring" cx="76" cy="240" r="25"/>
-          <text class="cnt" x="76" y="241" data-cnt=""></text>
-          <text class="lbl" x="76" y="283"></text>
-        </g>
-        <g class="tnode" data-node="" tabindex="0" role="link" aria-label="知识分类">
-          <circle class="hit" cx="284" cy="240" r="30"/>
-          <circle class="ring" cx="284" cy="240" r="25"/>
-          <text class="cnt" x="284" y="241" data-cnt=""></text>
-          <text class="lbl" x="284" y="283"></text>
-        </g>
-        <g class="tnode" data-node="" tabindex="0" role="link" aria-label="知识分类">
-          <circle class="hit" cx="88" cy="348" r="28"/>
-          <circle class="ring" cx="88" cy="348" r="23"/>
-          <text class="cnt" x="88" y="349" data-cnt=""></text>
-          <text class="lbl" x="88" y="389"></text>
-        </g>
-        <g class="tnode" data-node="" tabindex="0" role="link" aria-label="知识分类">
-          <circle class="hit" cx="272" cy="348" r="28"/>
-          <circle class="ring" cx="272" cy="348" r="23"/>
-          <text class="cnt" x="272" y="349" data-cnt=""></text>
-          <text class="lbl" x="272" y="389"></text>
-        </g>
-      </svg>
-    </div>
-  <div class="cta-bar cta-bar--tab">
-    <a class="btn btn-primary btn-block" href="capture.html">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M12 5.5v13M5.5 12h13"/></svg>
-      丢一条
-    </a>
+    <section class="tree-preview" aria-labelledby="treeTitle">
+      <div class="section-row">
+        <h2 id="treeTitle">我的知识树</h2>
+        <span id="leafCount">正在统计</span>
+      </div>
+      <svg id="homeTree" viewBox="0 0 360 300" role="group" aria-label="知识分类树"></svg>
+      <a class="text-link" href="library.html">查看全部知识</a>
+    </section>
   </main>
-  <div data-tabbar></div>
 
   <script src="assets/api.js"></script>
   <script src="assets/ui.js"></script>
   <script src="assets/shell.js"></script>
-  <script>
-    (async function () {
-      var statsEl = document.getElementById('stats');
-      try {
-        await KT.load();
-      } catch (e) {
-        statsEl.innerHTML = '加载失败 · <a href="login.html" style="color:var(--gold)">去登录</a>';
-        return;
-      }
+  <script type="module">
+    import { selectHomeCategories, countSince, startOfMonth } from './assets/tree-summary.mjs';
 
-      /* 后端分类是动态的（含 parent_id），把分类按条目数从多到少铺到树的 7 个位置上 */
-      var slots = Array.prototype.slice.call(document.querySelectorAll('.tnode'));
-      var cats = KT.NODES.slice().sort(function (a, b) {
-        return KT.countInNode(b.id) - KT.countInNode(a.id);
-      });
+    const KT = window.KT;
+    const UI = window.UI;
+    const statsEl = document.getElementById('stats');
 
-      slots.forEach(function (g, i) {
-        var cat = cats[i];
-        if (!cat) { g.style.display = 'none'; return; }
-        g.setAttribute('data-node', cat.id);
-        g.setAttribute('aria-label', cat.name);
-        var lbl = g.querySelector('.lbl');
-        if (lbl) lbl.textContent = cat.name;
-        var cnt = g.querySelector('.cnt');
-        if (cnt) { cnt.textContent = KT.countInNode(cat.id); cnt.setAttribute('data-cnt', cat.id); }
-        function open() { UI.go('library.html?category=' + encodeURIComponent(cat.id)); }
-        g.addEventListener('click', open);
-        g.addEventListener('keydown', function (e) {
-          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
-        });
-      });
+    try {
+      await KT.load();
+    } catch (error) {
+      statsEl.innerHTML = '加载失败 · <a href="login.html" style="color:var(--gold)">去登录</a>';
+      throw error;
+    }
 
-      function render() {
-        statsEl.textContent = KT.NODES.length + ' 个分类 · ' + KT.classified().length + ' 条知识';
-        var box = KT.inbox();
-        var n = box.pending.length + box.dups.length;
-        var banner = document.getElementById('inboxBanner');
-        if (n > 0) {
-          banner.hidden = false;
-          document.getElementById('inboxNum').textContent = n;
-        } else {
-          banner.hidden = true;
+    const positions = [
+      { x: 180, y: 72 },
+      { x: 72, y: 132 },
+      { x: 288, y: 132 },
+      { x: 104, y: 224 },
+      { x: 256, y: 224 },
+    ];
+
+    const categories = KT.NODES.map((node) => ({
+      id: node.id,
+      name: node.name,
+      count: KT.countInNode(node.id),
+    }));
+
+    const visible = selectHomeCategories(categories, 5);
+    const tree = document.getElementById('homeTree');
+
+    tree.innerHTML =
+      '<path class="tree-branch" d="M180 292V134M180 174L72 132M180 174L288 132M180 206L104 224M180 206L256 224"></path>' +
+      visible.map((node, index) => {
+        const point = positions[index];
+        return (
+          '<g class="tree-node" data-node="' + UI.esc(node.id) +
+          '" tabindex="0" role="link" aria-label="' + UI.esc(node.name) + '">' +
+          '<circle cx="' + point.x + '" cy="' + point.y + '" r="' + (node.count ? 24 : 18) + '"></circle>' +
+          '<text class="tree-node__count" x="' + point.x + '" y="' + (point.y + 5) +
+          '" text-anchor="middle">' + node.count + '</text>' +
+          '<text class="tree-node__label" x="' + point.x + '" y="' + (point.y + 44) +
+          '" text-anchor="middle">' + UI.esc(node.name) + '</text>' +
+          '</g>'
+        );
+      }).join('');
+
+    tree.querySelectorAll('[data-node]').forEach((node) => {
+      const open = () => {
+        location.href = 'library.html?category=' + encodeURIComponent(node.dataset.node);
+      };
+      node.addEventListener('click', open);
+      node.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          open();
         }
-        document.querySelectorAll('[data-cnt]').forEach(function (t) {
-          t.textContent = KT.countInNode(t.getAttribute('data-cnt'));
-        });
-      }
+      });
+    });
 
-      render();
-    })();
+    statsEl.textContent = KT.NODES.length + ' 个分类 · ' + KT.classified().length + ' 条知识';
+    document.getElementById('leafCount').textContent =
+      '本月 +' + countSince(KT.visible(), startOfMonth()) + ' 新叶';
+
+    const inbox = KT.inbox();
+    const pending = inbox.pending.length + inbox.dups.length;
+    const banner = document.getElementById('inboxBanner');
+    banner.hidden = pending === 0;
+    document.getElementById('inboxNum').textContent = pending;
   </script>
 </body>
 </html>

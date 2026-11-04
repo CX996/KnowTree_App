@@ -19,3 +19,136 @@
   letter-spacing: -.035em;
 }
 .page-head__meta { color: var(--text-muted); font-size: 12px; }
+
+.home-page {
+  padding-top: 0;
+}
+
+.page-kicker {
+  margin-bottom: 7px;
+  color: var(--gold);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .16em;
+}
+
+.capture-hero {
+  display: grid;
+  gap: 16px;
+  min-height: 132px;
+  padding: 18px;
+  color: var(--ink);
+  border-radius: var(--radius-lg);
+  background: var(--paper-high);
+  box-shadow: var(--shadow-float);
+}
+
+.capture-hero strong {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.capture-hero small {
+  display: flex;
+  justify-content: space-between;
+  color: var(--moss);
+  font-size: 11px;
+}
+
+.inbox-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  margin-top: 12px;
+  padding: 0 14px;
+  color: var(--text-muted);
+  border: 1px solid rgba(198, 161, 91, .3);
+  border-radius: 14px;
+  background: var(--surface);
+  font-size: 13px;
+}
+
+.inbox-strip svg {
+  width: 18px;
+  height: 18px;
+  color: var(--gold);
+}
+
+.inbox-strip b {
+  color: var(--gold-soft);
+  font-weight: 700;
+}
+
+.tree-preview {
+  margin-top: 24px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.section-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.section-row h2 {
+  margin: 0;
+  font: 600 17px var(--font-display);
+}
+
+.section-row span {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.tree-preview svg {
+  width: 100%;
+  height: auto;
+}
+
+.tree-branch {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 1.4;
+  opacity: .55;
+}
+
+.tree-node {
+  cursor: pointer;
+}
+
+.tree-node circle {
+  fill: var(--surface-raised);
+  stroke: var(--gold);
+  stroke-width: 1.4;
+}
+
+.tree-node:focus-visible {
+  outline: 2px solid var(--gold-soft);
+  outline-offset: 3px;
+}
+
+.tree-node__count {
+  fill: var(--text);
+  font: 600 12px var(--font-ui);
+}
+
+.tree-node__label {
+  fill: var(--text-muted);
+  font: 10px var(--font-ui);
+}
+
+.text-link {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  color: var(--gold);
+  font-size: 13px;
+  font-weight: 700;
+}

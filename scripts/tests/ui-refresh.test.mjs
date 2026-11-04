@@ -49,3 +49,12 @@ test('business pages declare active tabs and load the shared shell', async () =>
     assert.match(html, /assets\/styles\/shell\.css/);
   }
 });
+
+test('home is action-first and renders a dynamic tree preview', async () => {
+  const html = await readFile(path.join(web, 'index.html'), 'utf8');
+  assert.match(html, /data-home-capture/);
+  assert.match(html, /id="homeTree"/);
+  assert.match(html, /查看全部知识/);
+  assert.equal((html.match(/class="tnode"/g) ?? []).length, 0);
+  assert.match(html, /tree-summary\.mjs/);
+});
