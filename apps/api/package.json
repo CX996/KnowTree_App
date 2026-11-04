@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "node build.js",
-    "dev": "tsx watch src/local.ts",
+    "dev": "node --use-env-proxy --watch --import tsx src/local.ts",
     "start": "node dist/local.js",
     "worker": "tsx src/worker.ts",
     "test": "tsx --test test/*.test.ts",
