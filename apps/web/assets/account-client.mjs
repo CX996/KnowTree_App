@@ -34,18 +34,18 @@ export async function logoutCurrent() {
 }
 
 export async function logoutAll(currentPassword) {
-  try {
-    return await request('/me/logout-all', {
-      method: 'POST',
-      body: { currentPassword },
-    });
-  } finally {
-    window.KT.clearToken();
-  }
+  const result = await request('/me/logout-all', {
+    method: 'POST',
+    body: { currentPassword },
+  });
+  window.KT.clearToken();
+  return result;
 }
 
-export function requestDeletion(input) {
-  return request('/me/deletion', { method: 'POST', body: input });
+export async function requestDeletion(input) {
+  const result = await request('/me/deletion', { method: 'POST', body: input });
+  window.KT.clearToken();
+  return result;
 }
 
 export function cancelDeletion(currentPassword) {

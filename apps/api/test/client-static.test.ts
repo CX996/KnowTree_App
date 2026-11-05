@@ -66,8 +66,10 @@ test('production UI exposes only supported core flows', async () => {
 
   for (const page of ['index.html', 'library.html', 'detail.html', 'capture.html', 'me.html']) {
     const html = await readFile(path.join(clientDir, page), 'utf8');
-    for (const forbidden of ['收藏', '回收站', '重置演示数据', '配置后端', 'node.html?id=']) {
-      assert.equal(html.includes(forbidden), false, `${page} still contains ${forbidden}`);
+    const forbidden = ['收藏', '重置演示数据', '配置后端', 'node.html?id='];
+    if (page !== 'me.html') forbidden.push('回收站');
+    for (const label of forbidden) {
+      assert.equal(html.includes(label), false, `${page} still contains ${label}`);
     }
   }
 

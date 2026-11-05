@@ -151,7 +151,7 @@ test('account uses testable preference helpers and removes app chrome on logout'
   assert.match(me, /assets\/me-state\.mjs/);
   assert.match(me, /petPreferenceUpdate\('motion'/);
   assert.ok(
-    me.indexOf('removeAuthenticatedChrome(document)') < me.indexOf('page.innerHTML'),
+    me.indexOf('removeAuthenticatedChrome(document)') < me.indexOf("UI.flash('已退出当前设备')"),
     'logout must clean app chrome before rendering the logged-out state',
   );
 });

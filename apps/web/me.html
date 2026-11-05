@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#10110E" />
-  <title>我的 · 知树 KnowTree</title>
+  <title>账户 · 知树 KnowTree</title>
   <link rel="stylesheet" href="assets/styles/tokens.css" />
   <link rel="stylesheet" href="assets/styles/base.css" />
   <link rel="stylesheet" href="assets/styles/components.css" />
@@ -15,59 +15,168 @@
 </head>
 <body data-tab="me" data-pet-mode="ambient">
   <main class="page page--tab app-page me-page">
-    <header class="page-head">
+    <header class="page-head account-head">
       <div>
-        <p class="page-kicker">ACCOUNT & SETTINGS</p>
-        <h1>我的</h1>
+        <p class="page-kicker">ACCOUNT &amp; SECURITY</p>
+        <h1>账户</h1>
       </div>
+      <p class="page-head__meta">身份、会话与知识偏好</p>
     </header>
 
-    <div class="stats mt16" id="stats"></div>
+    <section class="account-hero" id="accountIdentity" aria-labelledby="accountDisplayName">
+      <div class="account-avatar" id="accountAvatar" aria-hidden="true">知</div>
+      <div class="account-identity">
+        <p class="account-eyebrow">当前账号</p>
+        <h2 id="accountDisplayName">正在读取…</h2>
+        <p id="accountEmail" class="account-email"></p>
+        <div class="account-chips">
+          <span class="account-chip" id="accountRole">普通用户</span>
+          <span class="account-chip" id="emailVerification">邮箱待验证</span>
+        </div>
+      </div>
+      <dl class="account-facts">
+        <div>
+          <dt>加入知树</dt>
+          <dd id="accountJoined">—</dd>
+        </div>
+        <div>
+          <dt>当前会话</dt>
+          <dd id="sessionCurrent">—</dd>
+        </div>
+      </dl>
+    </section>
+
+    <div id="accountLoadError" class="error-slot" aria-live="polite"></div>
+    <div class="stats account-stats" id="stats" aria-label="知识统计"></div>
+
+    <section class="account-section" aria-labelledby="accountSecurityTitle">
+      <div class="section-heading">
+        <div>
+          <p class="page-kicker">ACCOUNT</p>
+          <h2 id="accountSecurityTitle">账户与安全</h2>
+        </div>
+      </div>
+      <div class="rows">
+        <button class="row" id="nickname" type="button">
+          <span data-ic="user"></span><span class="grow">修改昵称</span>
+          <span class="val">1–30 字</span><span data-ic="chev" class="chev"></span>
+        </button>
+        <button class="row" id="changePassword" type="button">
+          <span data-ic="shield"></span><span class="grow">修改密码</span>
+          <span data-ic="chev" class="chev"></span>
+        </button>
+        <button class="row" id="logoutCurrent" type="button">
+          <span data-ic="logout"></span><span class="grow">退出当前设备</span>
+          <span class="val">仅本机</span><span data-ic="chev" class="chev"></span>
+        </button>
+        <button class="row" id="logoutAll" type="button">
+          <span data-ic="logout"></span><span class="grow">退出所有设备</span>
+          <span class="val">需密码</span><span data-ic="chev" class="chev"></span>
+        </button>
+      </div>
+    </section>
+
+    <section class="account-section" aria-labelledby="knowledgeToolsTitle">
+      <div class="section-heading">
+        <div>
+          <p class="page-kicker">LIBRARY</p>
+          <h2 id="knowledgeToolsTitle">知识管理</h2>
+        </div>
+      </div>
+      <div class="rows">
+        <a class="row" id="categoriesLink" href="categories.html">
+          <span data-ic="tree"></span><span class="grow">分类管理</span>
+          <span class="val">两级目录</span><span data-ic="chev" class="chev"></span>
+        </a>
+        <a class="row" id="trashLink" href="trash.html">
+          <span data-ic="trash"></span><span class="grow">回收站</span>
+          <span class="val">保留 30 天</span><span data-ic="chev" class="chev"></span>
+        </a>
+        <button class="row" id="exportJson" type="button">
+          <span data-ic="download"></span><span class="grow">导出知识</span>
+          <span class="val">JSON</span><span data-ic="chev" class="chev"></span>
+        </button>
+        <button class="row" id="exportMarkdown" type="button">
+          <span data-ic="download"></span><span class="grow">导出知识</span>
+          <span class="val">Markdown</span><span data-ic="chev" class="chev"></span>
+        </button>
+      </div>
+    </section>
+
+    <section class="settings-card" aria-labelledby="preferencesTitle">
+      <div class="section-row">
+        <h2 id="preferencesTitle">AI 与回顾</h2>
+        <span>只影响当前账号</span>
+      </div>
+      <div class="rows">
+        <button class="row" id="aiSettings" type="button">
+          <span data-ic="spark"></span><span class="grow">AI 整理</span>
+          <span class="val" id="aiModeLabel">查看</span><span data-ic="chev" class="chev"></span>
+        </button>
+        <div class="row">
+          <span data-ic="bell"></span><span class="grow">每日回顾提醒</span>
+          <button class="switch" id="remind" type="button" role="switch" aria-label="每日回顾提醒" aria-checked="false"></button>
+        </div>
+        <button class="row" id="privacy" type="button">
+          <span data-ic="shield"></span><span class="grow">隐私与 AI 说明</span>
+          <span data-ic="chev" class="chev"></span>
+        </button>
+      </div>
+    </section>
 
     <section class="settings-card" aria-labelledby="petSettingsTitle">
       <div class="section-row">
         <h2 id="petSettingsTitle">小黑狐</h2>
         <span>只在当前设备保存</span>
       </div>
+      <div class="pet-size-control" role="group" aria-label="宠物大小">
+        <button type="button" data-pet-size="small">小</button>
+        <button type="button" data-pet-size="medium">中</button>
+        <button type="button" data-pet-size="large">大</button>
+      </div>
       <div class="switch-row">
         <span>
           <b id="petMotionLabel">减少宠物动作</b>
-          <small>保留静态状态，不播放走动和跳跃</small>
+          <small>保留静态陪伴，不播放走动和跳跃</small>
         </span>
         <button class="switch" id="petMotion" type="button" role="switch"
           aria-labelledby="petMotionLabel" aria-checked="false"></button>
       </div>
+      <button class="row pet-reset-row" id="petReset" type="button">
+        <span data-ic="move"></span><span class="grow">回到默认位置</span>
+        <span data-ic="chev" class="chev"></span>
+      </button>
     </section>
 
-    <div class="rows mt20">
-      <button class="row" id="export">
-        <span data-ic="download"></span><span class="grow">数据导出</span>
-        <span class="val">JSON</span><span data-ic="chev" class="chev"></span>
-      </button>
-      <button class="row" id="privacy">
-        <span data-ic="shield"></span><span class="grow">隐私与训练声明</span>
-        <span data-ic="chev" class="chev"></span>
-      </button>
-      <button class="row" id="aiSettings">
-        <span data-ic="spark"></span><span class="grow">AI 整理</span>
-        <span class="val" id="aiModeLabel">查看</span><span data-ic="chev" class="chev"></span>
-      </button>
-      <div class="row">
-        <span data-ic="bell"></span><span class="grow">回溯提醒</span>
-        <button class="switch" id="remind" role="switch" aria-label="回溯提醒" aria-checked="false"></button>
+    <section class="account-section owner-panel" id="ownerPanel" hidden aria-labelledby="ownerTitle">
+      <div class="section-heading">
+        <div>
+          <p class="page-kicker">OWNER</p>
+          <h2 id="ownerTitle">邀请与诊断</h2>
+        </div>
       </div>
-    </div>
+      <div class="rows">
+        <a class="row" id="ownerInvites" href="admin-invites.html">
+          <span data-ic="user"></span><span class="grow">邀请管理</span>
+          <span data-ic="chev" class="chev"></span>
+        </a>
+        <a class="row" id="ownerErrors" href="admin-errors.html">
+          <span data-ic="shield"></span><span class="grow">最近错误诊断</span>
+          <span class="val">脱敏</span><span data-ic="chev" class="chev"></span>
+        </a>
+      </div>
+    </section>
 
-    <div class="rows mt16">
-      <button class="row" id="logout">
-        <span data-ic="logout"></span><span class="grow">注销账号</span>
-        <span data-ic="chev" class="chev"></span>
-      </button>
-    </div>
+    <section class="danger-card" id="deletionRequest" aria-labelledby="dangerTitle">
+      <p class="page-kicker">DANGER ZONE</p>
+      <h2 id="dangerTitle">永久注销账号</h2>
+      <p>提交后立即退出所有设备，进入 7 天冷静期。到期后会永久删除账号、知识、分类、任务和会话。</p>
+      <button class="btn btn-danger" id="deleteAccount" type="button">申请永久注销</button>
+    </section>
 
-    <div class="t3 s12 mt24" style="text-align:center;line-height:2">
-      知树 KnowTree<br />数据存储在你的 Supabase 账号中
-    </div>
+    <footer class="account-footer">
+      知树 KnowTree · 数据保存在你的私人账号中
+    </footer>
   </main>
 
   <script src="assets/transitions.js"></script>
@@ -81,229 +190,514 @@
       petPreferenceUpdate,
       removeAuthenticatedChrome,
     } from './assets/me-state.mjs';
+    import {
+      changePassword,
+      getAccount,
+      logoutAll,
+      logoutCurrent,
+      requestDeletion,
+      updateAccount,
+    } from './assets/account-client.mjs';
+    import {
+      bindErrorCopy,
+      normalizeApiError,
+      renderErrorCard,
+    } from './assets/error-view.mjs';
 
-    (async function () {
-      var remind = document.getElementById('remind');
-      var statsEl = document.getElementById('stats');
-      var petMotion = document.getElementById('petMotion');
+    bindErrorCopy(document);
 
-      function readPreference(key, fallback) {
-        try {
-          var value = localStorage.getItem(key);
-          return value === null ? fallback : value;
-        } catch (e) {
-          return fallback;
-        }
-      }
+    var account = null;
+    var remind = document.getElementById('remind');
+    var statsEl = document.getElementById('stats');
+    var petMotion = document.getElementById('petMotion');
+    var loadError = document.getElementById('accountLoadError');
 
-      function writePreference(key, value) {
-        try {
-          localStorage.setItem(key, value);
-        } catch (e) {
-          UI.toast('当前浏览器无法保存这项设置');
-        }
-      }
+    function esc(value) {
+      return UI.esc(String(value == null ? '' : value));
+    }
 
-      function syncPetPreferences() {
-        var reduced = readPreference('knowtree.pet.motion.v1', '0') === '1';
-        petMotion.classList.toggle('on', reduced);
-        petMotion.setAttribute('aria-checked', String(reduced));
-      }
-
-      petMotion.addEventListener('click', function () {
-        var next = nextSwitchState(petMotion.getAttribute('aria-checked'));
-        var preference = petPreferenceUpdate('motion', next.on);
-        writePreference(preference.key, preference.value);
-        petMotion.classList.toggle('on', next.on);
-        petMotion.setAttribute('aria-checked', next.ariaChecked);
-        document.dispatchEvent(new CustomEvent('knowtree:pet-motion', {
-          detail: { reduced: next.on }
-        }));
-      });
-
-      syncPetPreferences();
-
+    function readPreference(key, fallback) {
       try {
-        await KT.load();
+        var value = localStorage.getItem(key);
+        return value === null ? fallback : value;
       } catch (e) {
-        statsEl.innerHTML = '<div class="t3 s13">加载失败 · <a href="login.html" style="color:var(--gold)">去登录</a></div>';
-        return;
+        return fallback;
       }
+    }
 
-      function render() {
-        var s = KT.stats();
-        statsEl.innerHTML =
-          '<div class="stat"><div class="v">' + s.total + '</div><div class="k">收录</div></div>' +
-          '<div class="stat"><div class="v">' + KT.NODES.length + '</div><div class="k">分类</div></div>' +
-          '<div class="stat"><div class="v">' + s.week + '</div><div class="k">本周沉淀</div></div>';
-        var reminderOn = KT.getSetting('reviewReminder') !== false;
-        remind.classList.toggle('on', reminderOn);
-        remind.setAttribute('aria-checked', String(reminderOn));
+    function writePreference(key, value) {
+      try {
+        localStorage.setItem(key, value);
+      } catch (e) {
+        UI.toast('当前浏览器无法保存这项设置');
       }
+    }
 
-      /* 数据导出：走后端 /export */
-      document.getElementById('export').addEventListener('click', async function () {
-        var btn = this;
-        btn.disabled = true;
-        try {
-          await KT.exportFile('json');
-          UI.toast('已导出全部知识（JSON）');
-        } catch (e) {
-          UI.toast('导出失败：' + e.message);
-        }
-        btn.disabled = false;
+    function formatDate(value) {
+      if (!value) return '—';
+      var date = new Date(value);
+      if (Number.isNaN(date.getTime())) return '—';
+      return new Intl.DateTimeFormat('zh-CN', {
+        year: 'numeric', month: 'short', day: 'numeric',
+        hour: '2-digit', minute: '2-digit',
+      }).format(date);
+    }
+
+    function showLoadError(error) {
+      loadError.innerHTML = renderErrorCard(error, { title: '账户加载失败' });
+      bindErrorCopy(loadError);
+    }
+
+    function clearFormErrors(form) {
+      form.querySelectorAll('[data-field-error]').forEach(function (node) {
+        node.textContent = '';
       });
+      var summary = form.querySelector('[data-form-error]');
+      if (summary) summary.innerHTML = '';
+    }
 
-      /* 隐私与训练声明 */
-      document.getElementById('privacy').addEventListener('click', function () {
-        UI.openSheet('隐私与训练声明', function (body) {
-          body.innerHTML =
-            '<div class="prose" style="font-size:14px">' +
-            '<p>知识正文、分类与回溯记录都存在你自己的账号下（后端按 user_id 隔离，全表 RLS），前端只在本地保存登录凭证。</p>' +
-            '<p>「AI 解析」「语义检索」「相似度」由后端模型服务完成，你的内容不会被用于训练。</p>' +
-            '<p>在下方「注销账号」会调用后端 DELETE /me/account，彻底删除你的条目与账号，操作不可撤销。</p>' +
-            '</div>';
+    function showFormError(form, error) {
+      var safe = normalizeApiError(error);
+      clearFormErrors(form);
+      if (safe.fields) {
+        Object.keys(safe.fields).forEach(function (name) {
+          var node = form.querySelector('[data-field-error="' + name + '"]');
+          if (node) node.textContent = safe.fields[name];
         });
-      });
+      }
+      var summary = form.querySelector('[data-form-error]');
+      if (summary) summary.innerHTML = renderErrorCard(safe);
+      var firstInvalid = form.querySelector('.auth-input:invalid, [aria-invalid="true"]');
+      if (firstInvalid) firstInvalid.focus();
+    }
 
-      /* AI 能力管理：只展示配置状态和用户开关，不返回任何密钥 */
-      document.getElementById('aiSettings').addEventListener('click', function () {
-        UI.openSheet('AI 整理', function (body) {
-          body.innerHTML =
-            '<div id="aiStatus" class="t3 s13">正在读取 AI 状态…</div>' +
-            '<div class="ai-models mt12" id="aiModels"></div>' +
-            '<div class="rows mt16">' +
-              '<div class="row"><span data-ic="spark"></span><span class="grow">自动生成标题</span>' +
-                '<button class="switch" id="aiAutoTitle" role="switch" aria-label="自动生成标题" aria-checked="false"></button></div>' +
-              '<div class="row"><span data-ic="spark"></span><span class="grow">自动生成摘要</span>' +
-                '<button class="switch" id="aiAutoSummary" role="switch" aria-label="自动生成摘要" aria-checked="false"></button></div>' +
-              '<div class="row"><span data-ic="spark"></span><span class="grow">自动分类</span>' +
-                '<button class="switch" id="aiAutoClassify" role="switch" aria-label="自动分类" aria-checked="false"></button></div>' +
-              '<div class="row"><span data-ic="spark"></span><span class="grow">语义检索</span>' +
-                '<button class="switch" id="aiEmbeddings" role="switch" aria-label="语义检索" aria-checked="false"></button></div>' +
+    function renderAccount() {
+      if (!account) return;
+      var profile = account.profile || {};
+      var name = profile.display_name || '知树用户';
+      document.getElementById('accountAvatar').textContent = name.slice(0, 1).toUpperCase();
+      document.getElementById('accountDisplayName').textContent = name;
+      document.getElementById('accountEmail').textContent = account.user.email || '未绑定邮箱';
+      document.getElementById('accountRole').textContent = account.user.role === 'owner' ? 'Owner' : '普通用户';
+      document.getElementById('emailVerification').textContent =
+        account.user.emailStatus === 'verified' ? '邮箱已验证' : '邮箱待验证';
+      document.getElementById('accountJoined').textContent = formatDate(account.user.createdAt);
+      document.getElementById('sessionCurrent').textContent =
+        formatDate(account.session.issuedAt) + ' 签发';
+      document.getElementById('ownerPanel').hidden = account.user.role !== 'owner';
+    }
+
+    function renderStats() {
+      var s = KT.stats();
+      statsEl.innerHTML =
+        '<div class="stat"><div class="v">' + s.total + '</div><div class="k">收录</div></div>' +
+        '<div class="stat"><div class="v">' + KT.NODES.length + '</div><div class="k">分类</div></div>' +
+        '<div class="stat"><div class="v">' + s.week + '</div><div class="k">本周沉淀</div></div>';
+      var reminderOn = KT.getSetting('reviewReminder') !== false;
+      remind.classList.toggle('on', reminderOn);
+      remind.setAttribute('aria-checked', String(reminderOn));
+    }
+
+    function syncPetPreferences() {
+      var reduced = readPreference('knowtree.pet.motion.v1', '0') === '1';
+      petMotion.classList.toggle('on', reduced);
+      petMotion.setAttribute('aria-checked', String(reduced));
+      var size = readPreference('knowtree.pet.size.v1', 'medium');
+      document.querySelectorAll('[data-pet-size]').forEach(function (button) {
+        var active = button.getAttribute('data-pet-size') === size;
+        button.classList.toggle('is-active', active);
+        button.setAttribute('aria-pressed', String(active));
+      });
+    }
+
+    function openPasswordForm(options) {
+      UI.openSheet(options.title, function (body) {
+        body.innerHTML =
+          '<form class="account-form" novalidate>' +
+            '<label class="auth-label" for="currentPassword">当前密码</label>' +
+            '<input class="auth-input" id="currentPassword" name="currentPassword" type="password" autocomplete="current-password" required />' +
+            '<div class="field-error" data-field-error="currentPassword"></div>' +
+            (options.confirmEmail
+              ? '<label class="auth-label mt16" for="confirmEmail">输入完整邮箱确认</label>' +
+                '<input class="auth-input" id="confirmEmail" name="confirmEmail" type="email" autocomplete="email" required />' +
+                '<div class="field-error" data-field-error="confirmEmail"></div>'
+              : '') +
+            '<div data-form-error class="mt12"></div>' +
+            '<div class="edit-actions mt16">' +
+              '<button class="btn btn-ghost" type="button" data-cancel>取消</button>' +
+              '<button class="btn ' + (options.danger ? 'btn-danger' : 'btn-primary') + '" type="submit">' +
+                esc(options.submitLabel) +
+              '</button>' +
             '</div>' +
-            '<div class="ai-error t3 s12 mt16" id="aiError" aria-live="polite"></div>' +
-            '<button class="btn btn-ghost btn-block mt16" id="aiTest" type="button">测试 AI 连接</button>';
-          UI.hydrateIcons(body);
-
-          var switches = [
-            ['aiAutoTitle', 'autoTitle'],
-            ['aiAutoSummary', 'autoSummary'],
-            ['aiAutoClassify', 'autoClassify'],
-            ['aiEmbeddings', 'embeddings']
-          ];
-
-          function renderStatus(status) {
-            var configured = !!status.configured;
-            var embeddingAvailable = Boolean(status.embeddingModel);
-            var state = body.querySelector('#aiStatus');
-            var models = body.querySelector('#aiModels');
-            var error = body.querySelector('#aiError');
-            state.textContent = configured
-              ? (embeddingAvailable ? 'AI 已配置' : 'AI 已配置 · 语义检索未配置')
-              : 'AI 未配置 · 当前使用规则降级';
-            models.innerHTML =
-              '<div>聊天模型：' + UI.esc(status.chatModel || '未设置') + '</div>' +
-              '<div>Embedding：' + UI.esc(status.embeddingModel || '未设置') +
-                (embeddingAvailable ? ' · ' + Number(status.embeddingDimension || 1024) + ' 维' : '（语义检索不可用）') +
-              '</div>';
-            error.textContent = status.lastError ? '最近错误：' + status.lastError : '';
-            switches.forEach(function (item) {
-              var button = body.querySelector('#' + item[0]);
-              var featureAvailable = item[1] !== 'embeddings' || embeddingAvailable;
-              var on = featureAvailable && !!status.features[item[1]];
-              button.classList.toggle('on', on);
-              button.setAttribute('aria-checked', String(on));
-              button.disabled = !configured || !featureAvailable;
-            });
-            document.getElementById('aiModeLabel').textContent = configured ? 'AI' : '规则';
-          }
-
-          switches.forEach(function (item) {
-            body.querySelector('#' + item[0]).addEventListener('click', async function () {
-              if (!this || this.disabled) return;
-              var button = this;
-              var previous = button.getAttribute('aria-checked') === 'true';
-              var next = !previous;
-              button.disabled = true;
-              button.classList.toggle('on', next);
-              button.setAttribute('aria-checked', String(next));
-              var patch = {};
-              patch[item[1]] = next;
-              try {
-                await KT.updateAiPreferences(patch);
-              } catch (error) {
-                button.classList.toggle('on', previous);
-                button.setAttribute('aria-checked', String(previous));
-                UI.toast(error.message);
-              } finally {
-                button.disabled = false;
-              }
-            });
-          });
-
-          body.querySelector('#aiTest').addEventListener('click', async function () {
-            var button = this;
-            var error = body.querySelector('#aiError');
-            button.disabled = true;
-            button.textContent = '测试中…';
-            try {
-              var result = await KT.testAi();
-              error.textContent = result.ok
-                ? '连接正常 · ' + result.latencyMs + ' ms'
-                : result.message;
-            } catch (e) {
-              error.textContent = e.message;
-            } finally {
-              button.disabled = false;
-              button.textContent = '测试 AI 连接';
-            }
-          });
-
-          KT.aiStatus().then(renderStatus, function (error) {
-            body.querySelector('#aiStatus').textContent = 'AI 状态读取失败：' + error.message;
-          });
-        });
-      });
-
-      /* 回溯提醒：写回 profile.daily_recall_enabled */
-      remind.addEventListener('click', async function () {
-        var on = !(KT.getSetting('reviewReminder') !== false);
-        try {
-          await KT.setSetting('reviewReminder', on);
-          render();
-          UI.toast(on ? '已开启每日回溯' : '已关闭每日回溯');
-        } catch (e) {
-          UI.toast('保存失败：' + e.message);
-        }
-      });
-
-      /* 注销账号：DELETE /me/account */
-      document.getElementById('logout').addEventListener('click', function () {
-        UI.confirm({
-          title: '注销账号？',
-          desc: '会调用后端彻底删除你的全部知识、分类与账号，操作不可撤销。',
-          ok: '注销'
-        }).then(async function (ok) {
-          if (!ok) return;
+          '</form>';
+        var form = body.querySelector('form');
+        form.querySelector('[data-cancel]').addEventListener('click', function () { close(); });
+        form.addEventListener('submit', async function (event) {
+          event.preventDefault();
+          clearFormErrors(form);
+          var button = form.querySelector('[type="submit"]');
+          button.disabled = true;
           try {
-            await KT.wipe();
-          } catch (e) {
-            UI.toast('注销失败：' + e.message);
+            await options.onSubmit(form);
+            close();
+          } catch (error) {
+            showFormError(form, error);
+            button.disabled = false;
+          }
+        });
+      }, { closeOnBackdrop: false });
+    }
+
+    document.getElementById('nickname').addEventListener('click', function () {
+      UI.openSheet('修改昵称', function (body) {
+        body.innerHTML =
+          '<form class="account-form" novalidate>' +
+            '<label class="auth-label" for="displayName">昵称</label>' +
+            '<input class="auth-input" id="displayName" name="displayName" maxlength="30" value="' +
+              esc(account.profile.display_name || '') + '" required />' +
+            '<div class="field-error" data-field-error="displayName"></div>' +
+            '<div data-form-error class="mt12"></div>' +
+            '<button class="btn btn-primary btn-block mt16" type="submit">保存昵称</button>' +
+          '</form>';
+        var form = body.querySelector('form');
+        form.addEventListener('submit', async function (event) {
+          event.preventDefault();
+          clearFormErrors(form);
+          var input = form.querySelector('#displayName');
+          var value = input.value.trim();
+          if (!value || value.length > 30) {
+            var localError = normalizeApiError({
+              error: {
+                code: 'VALIDATION_FAILED',
+                message: '昵称需要 1 到 30 个字符',
+                requestId: '',
+                retryable: false,
+                fields: { displayName: '昵称需要 1 到 30 个字符' },
+              },
+            });
+            showFormError(form, localError);
+            input.focus();
             return;
           }
+          var button = form.querySelector('[type="submit"]');
+          button.disabled = true;
+          try {
+            account.profile = await updateAccount({ display_name: value });
+            renderAccount();
+            UI.toast('昵称已更新');
+          } catch (error) {
+            showFormError(form, error);
+            button.disabled = false;
+          }
+        });
+      }, { closeOnBackdrop: false });
+    });
+
+    document.getElementById('changePassword').addEventListener('click', function () {
+      UI.openSheet('修改密码', function (body) {
+        body.innerHTML =
+          '<form class="account-form" novalidate>' +
+            '<label class="auth-label" for="currentPassword">当前密码</label>' +
+            '<input class="auth-input" id="currentPassword" name="currentPassword" type="password" autocomplete="current-password" required />' +
+            '<div class="field-error" data-field-error="currentPassword"></div>' +
+            '<label class="auth-label mt16" for="newPassword">新密码</label>' +
+            '<input class="auth-input" id="newPassword" name="newPassword" type="password" minlength="8" autocomplete="new-password" required />' +
+            '<div class="field-error" data-field-error="newPassword"></div>' +
+            '<label class="auth-label mt16" for="confirmPassword">确认新密码</label>' +
+            '<input class="auth-input" id="confirmPassword" name="confirmPassword" type="password" minlength="8" autocomplete="new-password" required />' +
+            '<div class="field-error" data-field-error="confirmPassword"></div>' +
+            '<div data-form-error class="mt12"></div>' +
+            '<button class="btn btn-primary btn-block mt16" type="submit">更新密码并退出登录</button>' +
+          '</form>';
+        var form = body.querySelector('form');
+        form.addEventListener('submit', async function (event) {
+          event.preventDefault();
+          var current = form.elements.currentPassword.value;
+          var next = form.elements.newPassword.value;
+          var confirm = form.elements.confirmPassword.value;
+          if (next !== confirm) {
+            showFormError(form, normalizeApiError({
+              error: {
+                code: 'VALIDATION_FAILED',
+                message: '两次输入的密码不一致',
+                requestId: '',
+                retryable: false,
+                fields: { confirmPassword: '两次输入的密码不一致' },
+              },
+            }));
+            form.elements.confirmPassword.focus();
+            return;
+          }
+          var button = form.querySelector('[type="submit"]');
+          button.disabled = true;
+          try {
+            await changePassword(current, next);
+            UI.flash('密码已更新，请重新登录');
+            location.replace('login.html');
+          } catch (error) {
+            showFormError(form, error);
+            button.disabled = false;
+          }
+        });
+      }, { closeOnBackdrop: false });
+    });
+
+    document.getElementById('logoutCurrent').addEventListener('click', async function () {
+      UI.confirm({
+        title: '退出当前设备？',
+        desc: '知识不会删除，只清除这台设备上的登录凭证。',
+        ok: '退出',
+      }).then(async function (ok) {
+        if (!ok) return;
+        try {
+          await logoutCurrent();
+        } catch (error) {
+          UI.toast('本机已退出；其他会话会在短时间内失效');
+        }
+        removeAuthenticatedChrome(document);
+        UI.flash('已退出当前设备');
+        location.replace('login.html');
+      });
+    });
+
+    document.getElementById('logoutAll').addEventListener('click', function () {
+      openPasswordForm({
+        title: '退出所有设备',
+        submitLabel: '验证并退出全部设备',
+        onSubmit: async function (form) {
+          await logoutAll(form.elements.currentPassword.value);
           removeAuthenticatedChrome(document);
-          var page = document.querySelector('.page');
-          page.innerHTML =
-            '<div style="min-height:80dvh;display:flex;flex-direction:column;align-items:center;justify-content:center">' +
-            '<div class="h-big">账号已注销</div>' +
-            '<div class="t3 s13 mt8">服务端数据与登录凭证都已清除</div>' +
-            '<a class="btn btn-primary mt24" style="min-width:180px" href="login.html">重新登录</a>' +
-            '</div>';
+          UI.flash('已退出所有设备');
+          location.replace('login.html');
+        },
+      });
+    });
+
+    document.getElementById('deleteAccount').addEventListener('click', function () {
+      UI.openSheet('申请永久注销', function (body) {
+        body.innerHTML =
+          '<form class="account-form danger-form" novalidate>' +
+            '<p class="account-warning">提交后立即退出所有设备，7 天后永久删除账号和全部数据。冷静期内重新登录可以取消。</p>' +
+            '<label class="auth-label" for="deletePassword">当前密码</label>' +
+            '<input class="auth-input" id="deletePassword" name="currentPassword" type="password" autocomplete="current-password" required />' +
+            '<div class="field-error" data-field-error="currentPassword"></div>' +
+            '<label class="auth-label mt16" for="deleteEmail">再次输入完整邮箱</label>' +
+            '<input class="auth-input" id="deleteEmail" name="confirmEmail" type="email" autocomplete="off" required />' +
+            '<div class="field-error" data-field-error="confirmEmail"></div>' +
+            '<label class="consent-row mt16"><input id="acknowledged" name="acknowledged" type="checkbox" />' +
+              '<span>我知道到期后会永久删除，且无法恢复。</span></label>' +
+            '<div class="field-error" data-field-error="acknowledged"></div>' +
+            '<div data-form-error class="mt12"></div>' +
+            '<div class="edit-actions mt16">' +
+              '<button class="btn btn-ghost" type="button" data-cancel>取消</button>' +
+              '<button class="btn btn-danger" type="submit">进入 7 天冷静期</button>' +
+            '</div>' +
+          '</form>';
+        var form = body.querySelector('form');
+        form.querySelector('[data-cancel]').addEventListener('click', function () { close(); });
+        form.addEventListener('submit', async function (event) {
+          event.preventDefault();
+          clearFormErrors(form);
+          if (!form.elements.acknowledged.checked) {
+            showFormError(form, normalizeApiError({
+              error: {
+                code: 'VALIDATION_FAILED',
+                message: '请确认你了解永久删除的后果',
+                requestId: '',
+                retryable: false,
+                fields: { acknowledged: '需要勾选确认' },
+              },
+            }));
+            return;
+          }
+          var button = form.querySelector('[type="submit"]');
+          button.disabled = true;
+          try {
+            await requestDeletion({
+              currentPassword: form.elements.currentPassword.value,
+              confirmEmail: form.elements.confirmEmail.value,
+              acknowledged: true,
+            });
+            removeAuthenticatedChrome(document);
+            UI.flash('账号已进入 7 天注销冷静期');
+            location.replace('login.html');
+          } catch (error) {
+            showFormError(form, error);
+            button.disabled = false;
+          }
+        });
+      }, { closeOnBackdrop: false });
+    });
+
+    document.getElementById('exportJson').addEventListener('click', function () {
+      KT.exportFile('json').then(function () {
+        UI.toast('已导出 JSON');
+      }, function (error) {
+        UI.toast(UI.safeError(error));
+      });
+    });
+    document.getElementById('exportMarkdown').addEventListener('click', function () {
+      KT.exportFile('md').then(function () {
+        UI.toast('已导出 Markdown');
+      }, function (error) {
+        UI.toast(UI.safeError(error));
+      });
+    });
+
+    document.getElementById('privacy').addEventListener('click', function () {
+      UI.openSheet('隐私与 AI 说明', function (body) {
+        body.innerHTML =
+          '<div class="prose account-prose">' +
+            '<p>知识、分类与回顾记录按账号隔离，普通用户无法读取其他账号的数据。</p>' +
+            '<p>AI 标题、摘要、分类和语义检索由后端模型服务完成；你的知识正文不会用于训练模型。</p>' +
+            '<p>删除知识后进入 30 天回收站。永久注销有 7 天冷静期，到期才删除账号和知识。</p>' +
+            '<p>登录凭证只保存在当前浏览器；退出全部设备会撤销服务端会话。</p>' +
+          '</div>';
+      });
+    });
+
+    document.getElementById('aiSettings').addEventListener('click', function () {
+      UI.openSheet('AI 整理', function (body) {
+        body.innerHTML =
+          '<div id="aiStatus" class="t3 s13">正在读取 AI 状态…</div>' +
+          '<div class="ai-models mt12" id="aiModels"></div>' +
+          '<div class="rows mt16">' +
+            '<div class="row"><span data-ic="spark"></span><span class="grow">自动生成标题</span><button class="switch" id="aiAutoTitle" role="switch" aria-label="自动生成标题" aria-checked="false"></button></div>' +
+            '<div class="row"><span data-ic="spark"></span><span class="grow">自动生成摘要</span><button class="switch" id="aiAutoSummary" role="switch" aria-label="自动生成摘要" aria-checked="false"></button></div>' +
+            '<div class="row"><span data-ic="spark"></span><span class="grow">自动分类</span><button class="switch" id="aiAutoClassify" role="switch" aria-label="自动分类" aria-checked="false"></button></div>' +
+            '<div class="row"><span data-ic="spark"></span><span class="grow">语义检索</span><button class="switch" id="aiEmbeddings" role="switch" aria-label="语义检索" aria-checked="false"></button></div>' +
+          '</div>' +
+          '<div class="ai-error t3 s12 mt16" id="aiError" aria-live="polite"></div>' +
+          '<button class="btn btn-ghost btn-block mt16" id="aiTest" type="button">测试 AI 连接</button>';
+        UI.hydrateIcons(body);
+        var switches = [
+          ['aiAutoTitle', 'autoTitle'],
+          ['aiAutoSummary', 'autoSummary'],
+          ['aiAutoClassify', 'autoClassify'],
+          ['aiEmbeddings', 'embeddings'],
+        ];
+        function renderStatus(status) {
+          var configured = Boolean(status.configured);
+          var embeddingAvailable = Boolean(status.embeddingModel);
+          body.querySelector('#aiStatus').textContent = configured
+            ? (embeddingAvailable ? 'AI 已配置' : 'AI 已配置 · 语义检索未配置')
+            : 'AI 未配置 · 当前使用规则降级';
+          body.querySelector('#aiModels').innerHTML =
+            '<div>聊天模型：' + esc(status.chatModel || '未设置') + '</div>' +
+            '<div>Embedding：' + esc(status.embeddingModel || '未设置') + '</div>';
+          body.querySelector('#aiError').textContent = status.lastError
+            ? '最近一次 AI 处理使用了降级方案'
+            : '';
+          switches.forEach(function (item) {
+            var button = body.querySelector('#' + item[0]);
+            var featureAvailable = item[1] !== 'embeddings' || embeddingAvailable;
+            var enabled = featureAvailable && Boolean(status.features && status.features[item[1]]);
+            button.disabled = !configured || !featureAvailable;
+            button.classList.toggle('on', enabled);
+            button.setAttribute('aria-checked', String(enabled));
+          });
+          document.getElementById('aiModeLabel').textContent = configured ? 'AI' : '规则';
+        }
+        switches.forEach(function (item) {
+          body.querySelector('#' + item[0]).addEventListener('click', async function () {
+            var button = this;
+            var previous = button.getAttribute('aria-checked') === 'true';
+            var next = !previous;
+            button.disabled = true;
+            try {
+              var patch = {};
+              patch[item[1]] = next;
+              await KT.updateAiPreferences(patch);
+              button.classList.toggle('on', next);
+              button.setAttribute('aria-checked', String(next));
+            } catch (error) {
+              UI.toast(UI.safeError(error));
+            } finally {
+              button.disabled = false;
+            }
+          });
+        });
+        body.querySelector('#aiTest').addEventListener('click', async function () {
+          var button = this;
+          var target = body.querySelector('#aiError');
+          button.disabled = true;
+          button.textContent = '测试中…';
+          try {
+            var result = await KT.testAi();
+            target.textContent = result.ok
+              ? '连接正常 · ' + result.latencyMs + ' ms'
+              : '连接不可用，已保留规则降级';
+          } catch (error) {
+            target.textContent = UI.safeError(error).message;
+          } finally {
+            button.disabled = false;
+            button.textContent = '测试 AI 连接';
+          }
+        });
+        KT.aiStatus().then(renderStatus, function (error) {
+          body.querySelector('#aiStatus').textContent = UI.safeError(error).message;
         });
       });
+    });
 
-      render();
+    remind.addEventListener('click', async function () {
+      var next = !(KT.getSetting('reviewReminder') !== false);
+      try {
+        await KT.setSetting('reviewReminder', next);
+        renderStats();
+        UI.toast(next ? '已开启每日回顾' : '已关闭每日回顾');
+      } catch (error) {
+        UI.toast(UI.safeError(error));
+      }
+    });
+
+    petMotion.addEventListener('click', function () {
+      var next = nextSwitchState(petMotion.getAttribute('aria-checked'));
+      var preference = petPreferenceUpdate('motion', next.on);
+      writePreference(preference.key, preference.value);
+      petMotion.classList.toggle('on', next.on);
+      petMotion.setAttribute('aria-checked', next.ariaChecked);
+      document.dispatchEvent(new CustomEvent('knowtree:pet-motion', {
+        detail: { reduced: next.on },
+      }));
+    });
+
+    document.querySelectorAll('[data-pet-size]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        var size = button.getAttribute('data-pet-size');
+        writePreference('knowtree.pet.size.v1', size);
+        syncPetPreferences();
+        document.dispatchEvent(new CustomEvent('knowtree:pet-size', {
+          detail: { size: size },
+        }));
+      });
+    });
+
+    document.getElementById('petReset').addEventListener('click', function () {
+      try {
+        localStorage.removeItem('knowtree.pet.position.v1');
+      } catch (e) {
+        // The in-memory reset still runs.
+      }
+      document.dispatchEvent(new CustomEvent('knowtree:pet-reset'));
+      UI.toast('小黑狐已回到默认位置');
+    });
+
+    syncPetPreferences();
+
+    (async function boot() {
+      try {
+        account = await getAccount();
+        if (account.deletion && account.deletion.pending) {
+          location.replace('recover-account.html');
+          return;
+        }
+        renderAccount();
+        await KT.load();
+        renderStats();
+      } catch (error) {
+        showLoadError(error);
+      }
     })();
   </script>
 </body>

@@ -177,7 +177,9 @@
   }
 
   /* ---------- 底部弹层 ---------- */
-  function openSheet(title, buildBody) {
+  function openSheet(title, buildBody, opts) {
+    opts = opts || {};
+    var previousFocus = document.activeElement;
     var bd = document.createElement('div');
     bd.className = 'backdrop';
     var sheet = document.createElement('div');
@@ -197,12 +199,28 @@
     document.body.appendChild(bd);
     document.body.appendChild(sheet);
     function close() {
+      document.removeEventListener('keydown', onKey);
       bd.classList.add('out');
       sheet.classList.add('out');
-      setTimeout(function () { bd.remove(); sheet.remove(); }, 180);
+      setTimeout(function () {
+        bd.remove();
+        sheet.remove();
+        if (previousFocus && previousFocus.focus) previousFocus.focus();
+      }, 180);
     }
-    bd.addEventListener('click', close);
+    function onKey(event) {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        close();
+      }
+    }
+    if (opts.closeOnBackdrop !== false) bd.addEventListener('click', close);
+    document.addEventListener('keydown', onKey);
     buildBody(region.querySelector('.sheet__body'), close);
+    setTimeout(function () {
+      var focusable = sheet.querySelector('input, button, textarea, select, [href]');
+      if (focusable) focusable.focus();
+    }, 0);
     return close;
   }
 
