@@ -105,7 +105,7 @@ mount.dataset.petMount = '';
 if (!existingMount) document.body.appendChild(mount);
 
 mount.innerHTML =
-  '<button class="pet-hit" type="button" aria-label="打开小黑狐快捷入口" aria-haspopup="true" aria-expanded="false" aria-controls="petMenu">' +
+  '<button class="pet-hit" type="button" aria-label="打开小黑狐快捷入口" aria-expanded="false" aria-controls="petMenu">' +
     '<img class="pet-frame" alt="" width="768" height="676" />' +
   '</button>' +
   '<div class="pet-menu" id="petMenu" role="dialog" aria-label="小黑狐快捷入口" hidden>' +
