@@ -93,10 +93,28 @@
       }
       if (!r.ok) {
         return r.text().then(function (txt) {
-          var msg = txt;
-          try { var j = JSON.parse(txt); msg = j.error || j.message || txt; } catch (e) { /* 非 JSON */ }
-          if (method !== 'GET') emit('knowtree:request-error', { path: path, message: msg });
-          throw new Error(msg || ('HTTP ' + r.status));
+          var payload = null;
+          try { payload = JSON.parse(txt); } catch (e) { /* 非 JSON 一律不展示 */ }
+          var body = payload && payload.error && typeof payload.error === 'object' ? payload.error : null;
+          var requestId = (body && body.requestId) || r.headers.get('x-request-id') || '';
+          var error = new Error(body && body.message ? body.message : '操作失败，请稍后重试');
+          error.code = body && body.code ? body.code : 'UNKNOWN_ERROR';
+          error.requestId = requestId;
+          error.retryable = !!(body && body.retryable);
+          error.fields = body && body.fields && typeof body.fields === 'object' ? body.fields : null;
+          error.status = r.status;
+          if (method !== 'GET') {
+            emit('knowtree:request-error', {
+              path: path,
+              code: error.code,
+              requestId: requestId,
+              retryable: error.retryable
+            });
+          }
+          if (error.code === 'ACCOUNT_DELETION_PENDING' && !/recover-account\.html$/.test(location.pathname)) {
+            location.replace('recover-account.html');
+          }
+          throw error;
         });
       }
       if (method !== 'GET') clearBootstrapCache();
@@ -115,7 +133,7 @@
       if (timer) clearTimeout(timer);
       if (method !== 'GET') emit('knowtree:request-error', { path: path, message: 'network' });
       if (e && e.name === 'AbortError') {
-        throw new Error('请求超时（' + Math.round(timeoutMs / 1000) + 's），后端是否可达？');
+        throw new Error('请求超时，请检查网络后重试');
       }
       throw new Error('连不上后端，请稍后重试');
     });
@@ -637,9 +655,14 @@
   }
 
   function errorHTML(e) {
-    var msg = (e && e.message) || String(e || '未知错误');
+    var msg = (e && e.code && e.message) ? e.message : '操作失败，请稍后重试';
+    var requestId = e && e.requestId ? String(e.requestId) : '';
     return '<div class="empty"><div class="t">加载失败</div><div>' +
-      String(msg).replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</div></div>' +
+      String(msg).replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</div>' +
+      (requestId ? '<button class="error-id-copy" type="button" data-copy-error="' +
+        requestId.replace(/&/g, '&amp;').replace(/"/g, '&quot;') + '">错误编号 ' +
+        requestId.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</button>' : '') +
+      '</div>' +
       '<button class="btn btn-block mt16" onclick="location.reload()">重试</button>';
   }
 
@@ -661,6 +684,7 @@
     loginWithPassword: loginWithPassword, health: health,
     token: token, setToken: setToken, clearToken: clearToken,
     getConfig: getConfig,
+    request: req,
     errorHTML: errorHTML
   };
 })();

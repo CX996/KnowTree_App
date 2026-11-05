@@ -3,8 +3,8 @@
   z-index: 55;
   right: 18px;
   bottom: calc(82px + var(--sab));
-  width: 84px;
-  height: 94px;
+  width: 104px;
+  height: 118px;
 }
 .app-rail__pet {
   display: contents;
@@ -28,6 +28,26 @@
   object-fit: contain;
   object-position: center bottom;
   filter: drop-shadow(0 10px 12px rgba(0, 0, 0, .28));
+  transition: opacity var(--motion-fast) ease;
+}
+.pet-mount[data-size="small"] { width: 72px; height: 82px; }
+.pet-mount[data-size="medium"] { width: 104px; height: 118px; }
+.pet-mount[data-size="large"] { width: 132px; height: 148px; }
+.pet-mount[data-asset="placeholder"]::before {
+  content: "🦊";
+  position: absolute;
+  inset: 8px 4px 4px;
+  display: grid;
+  place-items: center;
+  color: var(--gold);
+  border: 1px dashed rgba(198, 161, 91, .45);
+  border-radius: 50%;
+  background: rgba(198, 161, 91, .08);
+  font-size: clamp(28px, 8vw, 58px);
+  filter: drop-shadow(0 8px 12px rgba(0, 0, 0, .24));
+}
+.pet-mount[data-asset="placeholder"] .pet-frame {
+  visibility: hidden;
 }
 .pet-menu {
   position: absolute;
@@ -55,7 +75,8 @@
 .pet-menu[hidden] {
   display: none;
 }
-.pet-menu a {
+.pet-menu a,
+.pet-menu__button {
   display: flex;
   min-height: 44px;
   align-items: center;
@@ -64,8 +85,17 @@
   border-radius: 9px;
   font-size: 12px;
 }
+.pet-menu__button {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
 .pet-menu a:hover,
-.pet-menu a:focus-visible {
+.pet-menu a:focus-visible,
+.pet-menu__button:hover,
+.pet-menu__button:focus-visible {
   background: var(--surface-raised);
 }
 .pet-bubble {
@@ -108,8 +138,8 @@ body[data-pet-mode="focus"] .pet-mount {
   top: calc(68px + var(--sat));
   right: 16px;
   bottom: auto;
-  width: 54px;
-  height: 62px;
+  width: 72px;
+  height: 82px;
 }
 body[data-pet-mode="focus"] .pet-bubble,
 body[data-pet-mode="focus"] .pet-menu {
@@ -133,15 +163,21 @@ body[data-pet-mode="focus"] .pet-menu {
   .pet-mount {
     right: 20px;
     bottom: 20px;
-    height: 74px;
-    width: 74px;
+    height: 112px;
+    width: 100px;
   }
+  .pet-mount[data-size="small"] { width: 84px; height: 96px; }
+  .pet-mount[data-size="medium"] { width: 120px; height: 136px; }
+  .pet-mount[data-size="large"] { width: 156px; height: 176px; }
 }
 @media (min-width: 1200px) {
   .pet-mount {
-    height: 142px;
-    width: 132px;
+    height: 144px;
+    width: 128px;
   }
+  .pet-mount[data-size="small"] { width: 96px; height: 108px; }
+  .pet-mount[data-size="medium"] { width: 128px; height: 144px; }
+  .pet-mount[data-size="large"] { width: 164px; height: 184px; }
 }
 .pet-mount[data-horizontal="left"] .pet-bubble {
   right: auto;
@@ -155,6 +191,7 @@ body[data-pet-mode="focus"] .pet-menu {
   .pet-mount {
     bottom: calc(82px + var(--sab));
   }
+  body[data-pet-mode="focus"] .pet-mount { bottom: auto; }
 }
 @media (prefers-reduced-motion: reduce) {
   .pet-frame {

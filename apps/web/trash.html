@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#10110E" />
+  <title>回收站 · 知树 KnowTree</title>
+  <link rel="stylesheet" href="assets/styles/tokens.css" />
+  <link rel="stylesheet" href="assets/styles/base.css" />
+  <link rel="stylesheet" href="assets/styles/components.css" />
+  <link rel="stylesheet" href="assets/styles/pages.css" />
+  <link rel="stylesheet" href="assets/styles/shell.css" />
+  <link rel="stylesheet" href="assets/styles/pet.css?v=20261105" />
+  <link rel="stylesheet" href="assets/styles/transitions.css" />
+</head>
+<body data-tab="lib" data-pet-mode="ambient">
+  <main class="page page--tab app-page manage-page">
+    <header class="page-head">
+      <div>
+        <p class="page-kicker">RECYCLE BIN · 30 DAYS</p>
+        <h1>回收站</h1>
+      </div>
+    </header>
+
+    <label class="search-field trash-search-wrap" for="trashSearch">
+      <span data-ic="search"></span>
+      <input id="trashSearch" type="search" placeholder="搜索已删除的知识" autocomplete="off" />
+    </label>
+    <p class="manage-intro">删除的知识保留 30 天，不进入普通搜索、知识树或回顾。恢复时会重新检查重复内容。</p>
+    <div id="trashError" class="error-slot" aria-live="polite"></div>
+    <section class="trash-list" id="trashList" aria-live="polite"></section>
+    <div class="empty" id="trashEmpty" hidden>回收站是空的，已删除的知识会在这里保留 30 天。</div>
+  </main>
+
+  <script src="assets/transitions.js"></script>
+  <script src="assets/api.js"></script>
+  <script src="assets/ui.js"></script>
+  <script src="assets/shell.js"></script>
+  <script type="module" src="assets/pet.js?v=20261105"></script>
+  <script type="module">
+    import {
+      listTrash,
+      permanentlyDeleteTrash,
+      restoreTrash,
+    } from './assets/account-client.mjs';
+    import {
+      bindErrorCopy,
+      renderErrorCard,
+    } from './assets/error-view.mjs';
+
+    UI.hydrateIcons(document);
+    bindErrorCopy(document);
+
+    var list = document.getElementById('trashList');
+    var empty = document.getElementById('trashEmpty');
+    var errorSlot = document.getElementById('trashError');
+    var search = document.getElementById('trashSearch');
+    var debounce = null;
+
+    function esc(value) {
+      return UI.esc(String(value == null ? '' : value));
+    }
+
+    function formatDeleted(value) {
+      if (!value) return '—';
+      return new Intl.DateTimeFormat('zh-CN', {
+        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+      }).format(new Date(value));
+    }
+
+    function render(items) {
+      list.innerHTML = items.map(function (item) {
+        return (
+          '<article class="trash-card" data-id="' + esc(item.id) + '">' +
+            '<div class="trash-card__main">' +
+              '<h2>' + esc(item.title || '未命名知识') + '</h2>' +
+              '<p>' + esc(item.summary || item.content || '没有摘要').slice(0, 180) + '</p>' +
+              '<div class="trash-meta">删除于 ' + esc(formatDeleted(item.deleted_at)) + '</div>' +
+            '</div>' +
+            '<div class="trash-actions">' +
+              '<button class="mini-btn mini-btn--gold" type="button" data-trash-action="restore" data-id="' + esc(item.id) + '">恢复</button>' +
+              '<button class="mini-btn category-delete" type="button" data-trash-action="delete" data-id="' + esc(item.id) + '">永久删除</button>' +
+            '</div>' +
+          '</article>'
+        );
+      }).join('');
+      empty.hidden = items.length > 0;
+    }
+
+    async function reload() {
+      errorSlot.innerHTML = '';
+      try {
+        render(await listTrash(search.value.trim()));
+      } catch (error) {
+        list.innerHTML = '';
+        empty.hidden = true;
+        errorSlot.innerHTML = renderErrorCard(error, { title: '回收站加载失败' });
+        bindErrorCopy(errorSlot);
+      }
+    }
+
+    list.addEventListener('click', function (event) {
+      var button = event.target.closest('[data-trash-action]');
+      if (!button) return;
+      var id = button.getAttribute('data-id');
+      var action = button.getAttribute('data-trash-action');
+      if (action === 'restore') {
+        button.disabled = true;
+        restoreTrash(id).then(async function () {
+          await reload();
+          UI.toast('知识已恢复');
+        }, function (error) {
+          button.disabled = false;
+          UI.toast(UI.safeError(error));
+        });
+        return;
+      }
+      UI.confirm({
+        title: '永久删除这条知识？',
+        desc: '版本、互链和回顾记录也会一起删除，操作不可撤销。',
+        ok: '永久删除',
+      }).then(async function (ok) {
+        if (!ok) return;
+        try {
+          await permanentlyDeleteTrash(id);
+          await reload();
+          UI.toast('已永久删除');
+        } catch (error) {
+          UI.toast(UI.safeError(error));
+        }
+      });
+    });
+
+    search.addEventListener('input', function () {
+      clearTimeout(debounce);
+      debounce = setTimeout(reload, 240);
+    });
+
+    reload();
+  </script>
+</body>
+</html>

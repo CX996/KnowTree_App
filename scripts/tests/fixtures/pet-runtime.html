@@ -53,13 +53,16 @@
       const initialLeft = mount().style.left;
       const initialTop = mount().style.top;
       petButton.dispatchEvent(new PointerEvent('pointerdown', {
-        bubbles: true, pointerId: 1, clientX: 100, clientY: 100,
+        bubbles: true, pointerId: 1, pointerType: 'touch', isPrimary: true,
+        button: 0, clientX: 100, clientY: 100,
       }));
       document.dispatchEvent(new PointerEvent('pointermove', {
-        bubbles: true, pointerId: 1, clientX: 150, clientY: 140,
+        bubbles: true, pointerId: 1, pointerType: 'touch', isPrimary: true,
+        button: 0, clientX: 150, clientY: 140,
       }));
       document.dispatchEvent(new PointerEvent('pointerup', {
-        bubbles: true, pointerId: 1, clientX: 150, clientY: 140,
+        bubbles: true, pointerId: 1, pointerType: 'touch', isPrimary: true,
+        button: 0, clientX: 150, clientY: 140,
       }));
       await wait(20);
       check(mount().style.left !== initialLeft || mount().style.top !== initialTop,
@@ -69,11 +72,55 @@
         'dragging must persist pet position',
       );
 
+      emit('knowtree:pet-size', { size: 'large' });
+      await wait(40);
+      check(mount().dataset.size === 'large', 'size event must apply large companion');
+      const largeRect = mount().getBoundingClientRect();
+      check(
+        largeRect.right <= window.innerWidth - 6,
+        'large companion must stay inside width: right=' + largeRect.right +
+          ', width=' + largeRect.width + ', viewport=' + window.innerWidth +
+          ', styleLeft=' + mount().style.left,
+      );
+      check(
+        largeRect.bottom <= window.innerHeight - 6,
+        'large companion must stay inside height: bottom=' + largeRect.bottom +
+          ', height=' + largeRect.height + ', viewport=' + window.innerHeight +
+          ', styleTop=' + mount().style.top,
+      );
+
+      petButton.dispatchEvent(new PointerEvent('pointerdown', {
+        bubbles: true, pointerId: 2, pointerType: 'touch', isPrimary: true,
+        button: 0, clientX: 160, clientY: 180,
+      }));
+      document.dispatchEvent(new PointerEvent('pointermove', {
+        bubbles: true, pointerId: 2, pointerType: 'touch', isPrimary: true,
+        button: 0, clientX: 220, clientY: 220,
+      }));
+      document.dispatchEvent(new PointerEvent('pointercancel', {
+        bubbles: true, pointerId: 2, pointerType: 'touch', isPrimary: true,
+        button: 0, clientX: 220, clientY: 220,
+      }));
+      await wait(20);
+      check(mount().hidden === false, 'pointercancel must keep the companion visible');
+      check(!mount().classList.contains('is-dragging'), 'pointercancel must end dragging');
+
+      emit('knowtree:pet-reset');
+      await wait(20);
+      check(!mount().style.left && !mount().style.top, 'reset must return to CSS default position');
+      check(localStorage.getItem('knowtree.pet.position.v1') === null, 'reset must clear saved position');
+
+      document.querySelector('.pet-frame').dispatchEvent(new Event('error'));
+      await wait(20);
+      check(mount().dataset.asset === 'placeholder', 'asset failure must show placeholder state');
+      check(mount().hidden === false, 'asset failure must keep companion mount visible');
+
       petButton.click();
       await wait(20);
       const menu = document.querySelector('.pet-menu');
       const menuLinks = Array.from(menu.querySelectorAll('a')).filter((link) => !link.hidden);
       check(menu.hidden === false, 'pet click must open quick menu');
+      check(mount().hidden === false, 'pet tap must keep the companion visible');
       check(menuLinks.length === 3, 'pending inbox menu must expose three actions');
       check(menuLinks[0].getAttribute('href') === 'capture.html', 'capture action');
       check(menuLinks[1].getAttribute('href') === 'inbox.html', 'inbox action');

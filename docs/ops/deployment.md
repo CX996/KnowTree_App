@@ -20,18 +20,21 @@ pnpm dlx supabase@2.122.0 link --project-ref <PROJECT_REF>
 pnpm dlx supabase@2.122.0 db push
 ```
 
-迁移会创建 8 张业务表、RLS、pgvector 与任务函数。执行后检查：
+迁移会创建业务表、邀请/审计/错误事件、RLS、pgvector、会话校验和任务函数。执行后检查：
 
 - Supabase Table Editor 中能看到业务表。
 - 所有业务表已启用 RLS。
 - `vector` 扩展已安装。
-- migration 列表只有本次基线。
+- migration 列表包含 `init_knowtree`、`capture_document_ai`、`foundation_security` 和 `invited_email_status`。
 
-## 3. 配置邮箱注册
+## 3. 配置邀请制 Auth
 
 在 Supabase Auth 设置中：
 
-- 开启 Email signup。当前无自有 SMTP 的测试阶段临时关闭 Email confirmation；配置 SMTP 后必须重新开启。
+- 关闭全局 User Signup。
+- 保持 Email Password Provider 开启，让现有用户仍可登录。
+- 当前无自有 SMTP 阶段关闭 Email confirmation；配置 SMTP 后必须重新开启。
+- JWT expiry 设为 `900` 秒。
 - 关闭 Anonymous sign-in。
 - 密码最小长度设为 8，并要求同时包含字母和数字。
 - Site URL 设为 `https://knowtree-app.vercel.app`。
@@ -39,9 +42,21 @@ pnpm dlx supabase@2.122.0 db push
 
 公开推广前配置自有 SMTP。Supabase 默认邮件服务只适合小规模测试，且每小时通常最多发送 2 封邮件。
 
-## 4. 创建首个账号
+## 4. 创建首个 Owner
 
-打开 `/register.html`，使用真实邮箱完成注册和邮件确认。首次登录后，应用会自动创建 profile 和 4 个默认分类。
+公开注册已关闭，首个 Owner 需要由受控部署者创建：
+
+1. 在 Supabase Dashboard → Authentication → Users 创建或邀请 Owner 邮箱。
+2. 在服务端设置该用户 `app_metadata.role = "owner"`，不要写入用户可编辑元数据。
+3. 确保 `public.profiles` 存在对应 `user_id`；可运行：
+
+```sql
+insert into public.profiles (user_id, display_name)
+values ('<OWNER_USER_ID>', '<DISPLAY_NAME>')
+on conflict (user_id) do nothing;
+```
+
+后续普通用户由 Owner 在 `admin-invites.html` 创建邀请。
 
 ## 5. 配置 Vercel 环境变量
 
@@ -74,18 +89,18 @@ GitHub 授权完成后，Vercel 会跟踪 `master`：推送到 `master` 自动�
 
 1. `GET /api/v1/health` 返回 `{"status":"ok"}`。
 2. `GET /api/v1/config` 返回 Supabase URL 和 publishable key，不包含 secret key。
-3. 注册新账号，确认收到验证邮件，并通过邮件链接回到登录页。
-4. 首页知识树和统计正常加载。
-5. 收录一条文字，任务完成并出现在知识库。
-6. 分别导入 Markdown、DOCX 和文本型 PDF，确认标题、摘要和来源信息生成。
-7. 上传扫描版 PDF，确认提示没有文字层而不是静默失败。
-8. 详情页 Markdown 标题、列表、引用、代码和表格正常渲染。
-9. 编辑标题、摘要和正文，保存后刷新仍保留。
-10. 从首页进入采集，详情返回首页而不是采集页。
-11. “我的 → AI 整理”显示配置状态、模型和四个能力开关。
-12. 分类筛选、搜索、收件箱和每日回溯可用。
-13. 测试忘记密码，确认重置链接可打开并设置新密码。
-14. 浏览器控制台无错误，刷新页面后登录状态可恢复。
+3. 直接访问 Supabase `/auth/v1/signup` 被拒绝。
+4. Owner 创建绑定邮箱邀请，链接 7 天内可用且只能注册一次。
+5. 受邀账号注册后进入账户中心，邮箱显示“待验证”。
+6. 首页、知识树、统计和分类正常加载。
+7. 收录一条文字，删除后立即撤销，并能在回收站恢复。
+8. 分类最多两级，有知识或子分类时删除返回冲突。
+9. 详情页 Markdown 和编辑预览正常，失败不丢失输入。
+10. 修改密码或退出所有设备后旧会话失效。
+11. 普通用户看不到 Owner 页面；错误只显示中文摘要与 requestId。
+12. 注销进入 7 天冷静期，恢复页可以取消和导出。
+13. 宠物三档尺寸、拖动、重置和指针中断后仍保持可见。
+14. 手机和桌面浏览器控制台无错误。
 
 ## 8. 发布 Production
 

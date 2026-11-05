@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#10110E" />
+  <title>恢复账号 · 知树 KnowTree</title>
+  <link rel="stylesheet" href="assets/styles/tokens.css" />
+  <link rel="stylesheet" href="assets/styles/base.css" />
+  <link rel="stylesheet" href="assets/styles/components.css" />
+  <link rel="stylesheet" href="assets/styles/pages.css" />
+  <link rel="stylesheet" href="assets/styles/transitions.css" />
+</head>
+<body>
+  <main class="page page--auth auth-layout recovery-layout">
+    <section class="auth-story">
+      <a class="auth-brand" href="login.html" aria-label="返回登录">
+        <span class="auth-brand__mark" aria-hidden="true"></span>
+        <span>知树 KnowTree</span>
+      </a>
+      <div class="auth-kicker">ACCOUNT RECOVERY</div>
+      <h1 id="recoveryTitle">账号正在等待<br />最后的决定。</h1>
+      <p>冷静期内只能导出知识或取消注销。采集、编辑、分类和其他业务访问已经暂停。</p>
+    </section>
+
+    <section class="auth-panel" aria-labelledby="recoveryTitle">
+      <div class="auth-card recovery-card">
+        <p class="page-kicker">PERMANENT DELETION</p>
+        <h2>计划永久删除</h2>
+        <p class="deletion-date" id="deletionDate">正在读取…</p>
+        <p class="t3 s13 recovery-copy">到期后会删除账号、知识、分类、任务和会话。取消注销后恢复正常访问。</p>
+        <button class="btn btn-ghost btn-block mt16" id="recoveryExport" type="button">先导出全部知识</button>
+
+        <form id="cancelDeletionForm" class="account-form mt20" novalidate>
+          <label class="auth-label" for="currentPassword">当前密码</label>
+          <input class="auth-input" id="currentPassword" name="currentPassword" type="password" autocomplete="current-password" required />
+          <div class="field-error" data-field-error="currentPassword"></div>
+          <div class="error-slot" data-form-error aria-live="polite"></div>
+          <button class="btn btn-primary btn-block mt16" id="cancelDeletion" type="submit">取消注销并恢复账号</button>
+        </form>
+
+        <button class="text-link recovery-logout" id="recoveryLogout" type="button">退出当前设备</button>
+      </div>
+      <div class="auth-status t3 s12 mt16" id="msg" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <script src="assets/transitions.js"></script>
+  <script src="assets/api.js"></script>
+  <script src="assets/ui.js"></script>
+  <script type="module">
+    import {
+      cancelDeletion,
+      getAccount,
+      logoutCurrent,
+    } from './assets/account-client.mjs';
+    import {
+      bindErrorCopy,
+      normalizeApiError,
+      renderErrorCard,
+    } from './assets/error-view.mjs';
+
+    bindErrorCopy(document);
+
+    var form = document.getElementById('cancelDeletionForm');
+    var message = document.getElementById('msg');
+
+    function safeMessage(error) {
+      return normalizeApiError(error).message;
+    }
+
+    function clearErrors() {
+      form.querySelectorAll('[data-field-error]').forEach(function (node) {
+        node.textContent = '';
+      });
+      form.querySelector('[data-form-error]').innerHTML = '';
+    }
+
+    function showError(error) {
+      var safe = normalizeApiError(error);
+      clearErrors();
+      if (safe.fields && safe.fields.currentPassword) {
+        form.querySelector('[data-field-error="currentPassword"]').textContent = safe.fields.currentPassword;
+      }
+      form.querySelector('[data-form-error]').innerHTML = renderErrorCard(safe);
+      bindErrorCopy(form);
+      form.elements.currentPassword.focus();
+    }
+
+    (async function boot() {
+      if (!KT.token()) {
+        location.replace('login.html?next=recover-account.html');
+        return;
+      }
+      try {
+        var account = await getAccount();
+        if (!account.deletion || !account.deletion.pending) {
+          location.replace('me.html');
+          return;
+        }
+        var date = new Date(account.deletion.scheduledFor);
+        document.getElementById('deletionDate').textContent = new Intl.DateTimeFormat('zh-CN', {
+          year: 'numeric', month: 'long', day: 'numeric',
+          hour: '2-digit', minute: '2-digit',
+        }).format(date);
+      } catch (error) {
+        message.textContent = safeMessage(error);
+        document.getElementById('cancelDeletion').disabled = true;
+      }
+    })();
+
+    form.addEventListener('submit', async function (event) {
+      event.preventDefault();
+      clearErrors();
+      var button = document.getElementById('cancelDeletion');
+      button.disabled = true;
+      try {
+        await cancelDeletion(form.elements.currentPassword.value);
+        UI.flash('账号已恢复');
+        location.replace('me.html');
+      } catch (error) {
+        showError(error);
+        button.disabled = false;
+      }
+    });
+
+    document.getElementById('recoveryExport').addEventListener('click', function () {
+      var button = this;
+      button.disabled = true;
+      KT.exportFile('json').then(function () {
+        UI.toast('知识已导出');
+      }, function (error) {
+        UI.toast(safeMessage(error));
+      }).finally(function () {
+        button.disabled = false;
+      });
+    });
+
+    document.getElementById('recoveryLogout').addEventListener('click', async function () {
+      try {
+        await logoutCurrent();
+      } finally {
+        location.replace('login.html');
+      }
+    });
+  </script>
+</body>
+</html>

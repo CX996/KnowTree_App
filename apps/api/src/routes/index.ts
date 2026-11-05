@@ -1,31 +1,45 @@
 import { Router } from 'express';
 import multer from 'multer';
-import { requireAuth, ensureProfile } from '../middleware/auth.js';
+import {
+  requireAuth,
+  requireActiveAccount,
+  requireOwner,
+  ensureProfile,
+} from '../middleware/auth.js';
 import * as categorySvc from '../services/categories.js';
 import * as entrySvc from '../services/entries.js';
 import * as recallSvc from '../services/recalls.js';
 import * as jobSvc from '../services/jobs.js';
+import * as accountSvc from '../services/account.js';
+import * as invitationSvc from '../services/invitations.js';
+import * as trashSvc from '../services/trash.js';
+import * as errorEventSvc from '../services/error-events.js';
 import { getJob, listJobs } from '../lib/task.js';
 import { getSupabaseClient } from '../storage/database/supabase-client.js';
 import { scheduleBackgroundTask } from '../lib/background.js';
 import { DocumentImportError, parseDocument } from '../services/document-import.js';
 import { EMBEDDING_DIM, isAiConfigured, testAiConnection } from '../services/ai.js';
+import { AppError } from '../lib/errors.js';
 import type { NextFunction, Request, Response } from 'express';
 
 // 包装异步 handler，统一错误处理
 const h =
   (fn: (req: Request, res: Response) => Promise<unknown>) =>
-  (req: Request, res: Response) => {
+  (req: Request, res: Response, next: NextFunction) => {
     fn(req, res).catch((e) => {
       const message = e instanceof Error ? e.message : String(e);
       console.error(`[api] ${req.method} ${req.originalUrl} -> ${message}`, '\n', e instanceof Error ? e.stack : '');
-      const status = e instanceof entrySvc.EntryConflictError ? 409 : 500;
-      res.status(status).json({ error: message });
+      if (e instanceof entrySvc.EntryConflictError) {
+        next(new AppError('CONFLICT', 409, '内容与已有知识重复，请修改后再保存'));
+        return;
+      }
+      next(e);
     });
   };
 
 const r = Router();
 r.use(requireAuth);
+r.use(requireActiveAccount);
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -41,7 +55,7 @@ const receiveDocument = (req: Request, res: Response, next: NextFunction) => {
     const message = error instanceof multer.MulterError && error.code === 'LIMIT_FILE_SIZE'
       ? '文件超过 10 MB 限制'
       : '文件上传失败';
-    res.status(400).json({ error: message, code: 'FILE_UPLOAD_FAILED' });
+    next(new AppError('FILE_UPLOAD_FAILED', 400, message));
   });
 };
 
@@ -52,6 +66,21 @@ const pid = (req: Request): string => {
   const v = req.params?.id;
   return typeof v === 'string' ? v : Array.isArray(v) ? v[0] ?? '' : (v ?? '');
 };
+
+function requestOrigin(req: Request): string {
+  const configured = process.env.PUBLIC_APP_ORIGIN?.trim();
+  if (configured) return configured;
+  const forwardedProto = str(req.headers['x-forwarded-proto'])?.split(',')[0]?.trim();
+  const forwardedHost = str(req.headers['x-forwarded-host'])?.split(',')[0]?.trim();
+  const protocol = forwardedProto || req.protocol || 'https';
+  const host = forwardedHost || req.get('host');
+  if (!host) {
+    throw new AppError('SERVER_ERROR', 500, '无法生成邀请链接，请稍后重试', {
+      retryable: true,
+    });
+  }
+  return `${protocol}://${host}`;
+}
 
 // ---------------------------------------------------------------------------
 // 我的账号 / 配置
@@ -73,8 +102,7 @@ r.get('/bootstrap', h(async (req, res) => {
 
 r.get('/me', h(async (_req, res) => {
   const user = _req.user!;
-  const profile = await ensureProfile(user.id);
-  res.json({ user, profile });
+  res.json(await accountSvc.getAccountView(user));
 }));
 
 r.patch('/me', h(async (req, res) => {
@@ -87,6 +115,43 @@ r.patch('/me', h(async (req, res) => {
   const { data, error } = await getSupabaseClient().from('profiles').update(patch).eq('user_id', user.id).select().single();
   if (error) throw new Error(`更新配置失败: ${error.message}`);
   res.json(data);
+}));
+
+r.post('/me/password', h(async (req, res) => {
+  const currentPassword = typeof req.body?.currentPassword === 'string' ? req.body.currentPassword : '';
+  const newPassword = typeof req.body?.newPassword === 'string' ? req.body.newPassword : '';
+  await accountSvc.changePassword(req.user!, req.authToken!, currentPassword, newPassword);
+  res.json({ updated: true, signedOut: true });
+}));
+
+r.post('/me/logout', h(async (req, res) => {
+  await accountSvc.logoutCurrent(req.authToken!);
+  res.json({ loggedOut: true });
+}));
+
+r.post('/me/logout-all', h(async (req, res) => {
+  const currentPassword = typeof req.body?.currentPassword === 'string' ? req.body.currentPassword : '';
+  await accountSvc.logoutAll(req.user!, req.authToken!, currentPassword);
+  res.json({ loggedOut: true, allDevices: true });
+}));
+
+r.get('/me/deletion', h(async (req, res) => {
+  const account = await accountSvc.getAccountView(req.user!);
+  res.json(account.deletion);
+}));
+
+r.post('/me/deletion', h(async (req, res) => {
+  const state = await accountSvc.requestDeletion(req.user!, req.authToken!, {
+    currentPassword: typeof req.body?.currentPassword === 'string' ? req.body.currentPassword : '',
+    confirmEmail: typeof req.body?.confirmEmail === 'string' ? req.body.confirmEmail : '',
+    acknowledged: req.body?.acknowledged === true,
+  });
+  res.status(202).json(state);
+}));
+
+r.delete('/me/deletion', h(async (req, res) => {
+  const currentPassword = typeof req.body?.currentPassword === 'string' ? req.body.currentPassword : '';
+  res.json(await accountSvc.cancelDeletion(req.user!, currentPassword));
 }));
 
 r.get('/ai/status', h(async (req, res) => {
@@ -120,8 +185,7 @@ r.patch('/ai/preferences', h(async (req, res) => {
     if (typeof req.body[key] === 'boolean') patch[column] = req.body[key];
   }
   if (Object.keys(patch).length === 1) {
-    res.status(400).json({ error: '没有可更新的 AI 设置' });
-    return;
+    throw new AppError('VALIDATION_FAILED', 400, '没有可更新的 AI 设置');
   }
   const { data, error } = await getSupabaseClient()
     .from('profiles')
@@ -137,11 +201,39 @@ r.post('/ai/test', h(async (_req, res) => {
   res.json(await testAiConnection());
 }));
 
-// 注销：彻底删除该用户全部数据 + auth 账号
-r.delete('/me/account', h(async (req, res) => {
-  const user = req.user!;
-  const result = await entrySvc.deleteAccount(user.id);
-  res.json(result);
+// 旧入口曾立即删除账号，保留路径但拒绝，避免旧客户端误删数据。
+r.delete('/me/account', h(async (_req, _res) => {
+  throw new AppError(
+    'VALIDATION_FAILED',
+    410,
+    '注销账号已改为 7 天冷静期流程，请在“我的”页面重新提交',
+  );
+}));
+
+// ---------------------------------------------------------------------------
+// Owner invitation management
+// ---------------------------------------------------------------------------
+r.post('/owner/invites', requireOwner, h(async (req, res) => {
+  const email = typeof req.body?.email === 'string' ? req.body.email : '';
+  const invitation = await invitationSvc.createInvitation(req.user!, email, requestOrigin(req));
+  res.status(201).json(invitation);
+}));
+
+r.get('/owner/invites', requireOwner, h(async (req, res) => {
+  res.json(await invitationSvc.listInvitations(req.user!));
+}));
+
+r.delete('/owner/invites/:id', requireOwner, h(async (req, res) => {
+  await invitationSvc.revokeInvitation(req.user!, pid(req));
+  res.json({ revoked: true });
+}));
+
+r.get('/owner/error-events', requireOwner, h(async (req, res) => {
+  res.json(await errorEventSvc.listErrorEvents(req.user!, {
+    code: str(req.query.code),
+    since: str(req.query.since),
+    limit: req.query.limit ? Number(str(req.query.limit)) : undefined,
+  }));
 }));
 
 // ---------------------------------------------------------------------------
@@ -175,6 +267,25 @@ r.delete('/categories/:id', h(async (req, res) => {
 }));
 
 // ---------------------------------------------------------------------------
+// 回收站
+// ---------------------------------------------------------------------------
+r.get('/trash', h(async (req, res) => {
+  const user = req.user!;
+  res.json(await trashSvc.listTrash(user.id, str(req.query.q) ?? ''));
+}));
+
+r.post('/trash/:id/restore', h(async (req, res) => {
+  const user = req.user!;
+  res.json(await trashSvc.restoreEntry(user.id, pid(req)));
+}));
+
+r.delete('/trash/:id', h(async (req, res) => {
+  const user = req.user!;
+  await trashSvc.permanentlyDeleteEntry(user.id, pid(req));
+  res.json({ deleted: true });
+}));
+
+// ---------------------------------------------------------------------------
 // 收录（递归去重、向量相近保守提示、任务编排）
 // ---------------------------------------------------------------------------
 r.post('/entries/ingest', h(async (req, res) => {
@@ -193,8 +304,9 @@ r.post('/entries/ingest', h(async (req, res) => {
 
 r.post('/entries/import', receiveDocument, h(async (req, res) => {
   if (!req.file) {
-    res.status(400).json({ error: '请选择一个文档', code: 'FILE_MISSING' });
-    return;
+    throw new AppError('VALIDATION_FAILED', 400, '请选择一个文档', {
+      fields: { file: '请选择一个文档' },
+    });
   }
 
   try {
@@ -216,8 +328,7 @@ r.post('/entries/import', receiveDocument, h(async (req, res) => {
     res.status(201).json(result);
   } catch (error) {
     if (error instanceof DocumentImportError) {
-      res.status(400).json({ error: error.message, code: error.code });
-      return;
+      throw new AppError('VALIDATION_FAILED', 400, error.message);
     }
     throw error;
   }
@@ -261,7 +372,9 @@ r.post('/recalls/generate', h(async (req, res) => {
 r.patch('/recalls/:id', h(async (req, res) => {
   const user = req.user!;
   const status = req.body.status;
-  if (!['pending', 'done', 'skipped'].includes(status)) throw new Error('无效的回溯状态');
+  if (!['pending', 'done', 'skipped'].includes(status)) {
+    throw new AppError('VALIDATION_FAILED', 400, '无效的回溯状态');
+  }
   res.json(await recallSvc.updateRecall(user.id, pid(req), status));
 }));
 
@@ -283,7 +396,7 @@ r.get('/jobs', h(async (req, res) => {
 r.get('/jobs/:id', h(async (req, res) => {
   const user = req.user!;
   const job = await getJob(user.id, pid(req));
-  if (!job) return res.status(404).json({ error: '任务不存在' });
+  if (!job) throw new AppError('NOT_FOUND', 404, '任务不存在');
   res.json(job);
 }));
 
@@ -293,7 +406,7 @@ r.get('/jobs/:id', h(async (req, res) => {
 r.get('/entries/:id', h(async (req, res) => {
   const user = req.user!;
   const entry = await entrySvc.getEntry(user.id, pid(req));
-  if (!entry) return res.status(404).json({ error: '条目不存在' });
+  if (!entry) throw new AppError('NOT_FOUND', 404, '条目不存在');
   res.json(entry);
 }));
 
@@ -305,7 +418,7 @@ r.patch('/entries/:id', h(async (req, res) => {
     summary: req.body.summary,
     category_id: req.body.category_id,
   });
-  if (!entry) return res.status(404).json({ error: '条目不存在' });
+  if (!entry) throw new AppError('NOT_FOUND', 404, '条目不存在');
   res.json(entry);
 }));
 
@@ -329,6 +442,8 @@ r.post('/entries/:id/versions', h(async (req, res) => {
 // 出链
 r.get('/entries/:id/links', h(async (req, res) => {
   const user = req.user!;
+  const entry = await entrySvc.getEntry(user.id, pid(req));
+  if (!entry) throw new AppError('NOT_FOUND', 404, '条目不存在');
   const client = getSupabaseClient();
   const { data: links, error } = await client
     .from('links')
@@ -341,7 +456,12 @@ r.get('/entries/:id/links', h(async (req, res) => {
   const items = (links ?? []) as Array<{ target_entry_id: string; score: number; reason: string | null }>;
   if (items.length > 0) {
     const ids = Array.from(new Set(items.map((l) => l.target_entry_id)));
-    const { data: entries } = await client.from('entries').select('id,title,summary,source_url').in('id', ids);
+    const { data: entries } = await client
+      .from('entries')
+      .select('id,title,summary,source_url')
+      .eq('user_id', user.id)
+      .is('deleted_at', null)
+      .in('id', ids);
     const map = new Map((entries ?? []).map((e) => [e.id, e]));
     res.json(items.map((l) => ({ ...l, target: map.get(l.target_entry_id) ?? null })));
     return;
@@ -370,7 +490,9 @@ r.post('/entries/:id/link', h(async (req, res) => {
 r.post('/entries/:id/merge', h(async (req, res) => {
   const user = req.user!;
   const targetId = req.body.target_entry_id;
-  if (!targetId) throw new Error('缺少 target_entry_id');
+  if (!targetId) {
+    throw new AppError('VALIDATION_FAILED', 400, '请选择要合并到的知识');
+  }
   res.json(await entrySvc.mergeEntry(user.id, pid(req), targetId));
 }));
 

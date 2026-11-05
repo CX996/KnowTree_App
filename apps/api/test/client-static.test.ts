@@ -66,8 +66,10 @@ test('production UI exposes only supported core flows', async () => {
 
   for (const page of ['index.html', 'library.html', 'detail.html', 'capture.html', 'me.html']) {
     const html = await readFile(path.join(clientDir, page), 'utf8');
-    for (const forbidden of ['收藏', '回收站', '重置演示数据', '配置后端', 'node.html?id=']) {
-      assert.equal(html.includes(forbidden), false, `${page} still contains ${forbidden}`);
+    const forbidden = ['收藏', '重置演示数据', '配置后端', 'node.html?id='];
+    if (page !== 'me.html') forbidden.push('回收站');
+    for (const label of forbidden) {
+      assert.equal(html.includes(label), false, `${page} still contains ${label}`);
     }
   }
 
@@ -95,16 +97,17 @@ test('login restores email confirmation sessions from the callback hash', async 
   assert.match(login, /forgot-password\.html/);
 });
 
-test('registration collects a confirmed email password', async () => {
+test('registration requires a valid invitation and locks the bound email', async () => {
   const register = await readFile(path.join(clientDir, 'register.html'), 'utf8');
-  assert.match(register, /<form[^>]+id="registerForm"/);
+  assert.match(register, /<form[^>]+id="inviteForm"/);
   assert.match(register, /type="email"/);
-  assert.match(register, /id="email"/);
-  assert.match(register, /id="pwd"/);
-  assert.match(register, /id="pwdConfirm"/);
+  assert.match(register, /id="inviteEmail"/);
+  assert.match(register, /readonly/);
+  assert.match(register, /id="password"/);
+  assert.match(register, /id="confirmPassword"/);
   assert.match(register, /autocomplete="new-password"/);
-  assert.match(register, /KT\.loadPublicConfig\(\)/);
-  assert.match(register, /signUpWithPassword/);
+  assert.match(register, /location\.hash/);
+  assert.match(register, /registerWithInvitation/);
   assert.match(register, /login\.html/);
 });
 

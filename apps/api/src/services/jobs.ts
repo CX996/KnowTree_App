@@ -1,11 +1,43 @@
 import { claimDueJobs, completeJob, failJob } from '../lib/task.js';
 import { parseEntry, classifyEntry, linkEntry } from './entries.js';
 import { generateDailyRecall } from './recalls.js';
+import { permanentlyDeleteDueAccount } from './account-maintenance.js';
+import { purgeExpiredTrash } from './trash.js';
+import { recoverExpiredInvitationClaims } from './invitations.js';
+import { purgeOldErrorEvents } from './error-events.js';
 import type { Job } from '../types/index.js';
 
 /** 任务分发：按 job_type 执行对应业务逻辑 */
 export async function processJob(job: Job): Promise<void> {
   const userId = job.user_id;
+
+  switch (job.job_type) {
+    case 'delete_account': {
+      const targetUserId = typeof job.payload?.target_user_id === 'string'
+        ? job.payload.target_user_id
+        : '';
+      if (!targetUserId) throw new Error('注销任务缺少目标账号');
+      const result = await permanentlyDeleteDueAccount(targetUserId);
+      await completeJob(job.id, {
+        deleted: result.deleted,
+        skipped: result.skipped ?? null,
+      }, { clearPayload: true });
+      return;
+    }
+    case 'cleanup_trash': {
+      const deleted = await purgeExpiredTrash();
+      await completeJob(job.id, { deleted });
+      return;
+    }
+    case 'invite_recovery': {
+      const recovered = await recoverExpiredInvitationClaims();
+      await completeJob(job.id, { recovered });
+      return;
+    }
+    default:
+      break;
+  }
+
   if (!userId) throw new Error('任务缺少用户上下文');
 
   switch (job.job_type) {
@@ -61,4 +93,17 @@ export async function runDueJobs(limit = 5): Promise<{ claimed: number; processe
     }
   }
   return { claimed: jobs.length, processed };
+}
+
+export async function runMaintenance(now = new Date()): Promise<{
+  trashDeleted: number;
+  invitationClaimsRecovered: number;
+  errorEventsDeleted: number;
+}> {
+  const [trashDeleted, invitationClaimsRecovered, errorEventsDeleted] = await Promise.all([
+    purgeExpiredTrash(now),
+    recoverExpiredInvitationClaims(now),
+    purgeOldErrorEvents(now),
+  ]);
+  return { trashDeleted, invitationClaimsRecovered, errorEventsDeleted };
 }

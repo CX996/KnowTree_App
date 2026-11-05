@@ -1,9 +1,12 @@
 import type { Request, Response, NextFunction } from 'express';
 import {
   createUserClient,
+  getAdminClient,
   getSupabaseClient,
   runWithUserClient,
 } from '../storage/database/supabase-client.js';
+import { AppError } from '../lib/errors.js';
+import { readJwtTiming } from '../lib/jwt.js';
 import type { AuthUser, Profile } from '../types/index.js';
 
 declare global {
@@ -21,34 +24,141 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
   const raw = req.headers['x-session'];
   const token = Array.isArray(raw) ? raw[0] : raw;
   if (!token) {
-    res.status(401).json({ error: '请先登录' });
+    next(new AppError('AUTH_REQUIRED', 401, '请先登录'));
     return;
   }
   const client = createUserClient(token);
   const { data, error } = await client.auth.getUser(token);
   if (error || !data.user) {
-    res.status(401).json({ error: '认证失败' });
+    next(new AppError('AUTH_EXPIRED', 401, '登录已失效，请重新登录'));
     return;
   }
+
+  let timing;
+  try {
+    timing = readJwtTiming(token);
+  } catch {
+    next(new AppError('AUTH_EXPIRED', 401, '登录已失效，请重新登录'));
+    return;
+  }
+
+  const { data: sessionValid, error: sessionError } = await getAdminClient()
+    .rpc('session_is_valid', {
+      p_session_id: timing.sessionId,
+      p_user_id: data.user.id,
+    });
+  if (sessionError) {
+    next(new AppError('SERVER_ERROR', 503, '登录状态暂时无法校验，请稍后重试', {
+      retryable: true,
+      cause: sessionError,
+    }));
+    return;
+  }
+  if (!sessionValid) {
+    next(new AppError('AUTH_EXPIRED', 401, '登录已失效，请重新登录'));
+    return;
+  }
+
+  const { data: profile, error: profileError } = await client
+    .from('profiles')
+    .select('account_status')
+    .eq('user_id', data.user.id)
+    .maybeSingle();
+  if (profileError) {
+    next(new AppError('SERVER_ERROR', 503, '账户状态暂时无法校验，请稍后重试', {
+      retryable: true,
+      cause: profileError,
+    }));
+    return;
+  }
+  if (!profile) {
+    next(new AppError(
+      'INVITE_REQUIRED',
+      403,
+      '该账号尚未获得知树邀请，请使用有效邀请链接注册',
+    ));
+    return;
+  }
+
+  const role = data.user.app_metadata?.role === 'owner' ? 'owner' : 'user';
   req.user = {
     id: data.user.id,
     email: data.user.email ?? undefined,
     phone: data.user.phone ?? undefined,
+    role,
+    createdAt: data.user.created_at,
+    emailConfirmedAt: data.user.email_confirmed_at ?? null,
+    accountStatus: profile?.account_status === 'deletion_pending' ? 'deletion_pending' : 'active',
+    sessionId: timing.sessionId,
+    issuedAt: new Date(timing.iat * 1000).toISOString(),
+    expiresAt: new Date(timing.exp * 1000).toISOString(),
   };
+  res.locals.userId = data.user.id;
   req.authToken = token;
   runWithUserClient(client, next);
 }
 
+const DELETION_PENDING_ALLOWED: ReadonlyArray<{ method: string; path: RegExp }> = [
+  { method: 'GET', path: /^\/me$/ },
+  { method: 'POST', path: /^\/me\/logout$/ },
+  { method: 'POST', path: /^\/me\/logout-all$/ },
+  { method: 'GET', path: /^\/me\/deletion$/ },
+  { method: 'POST', path: /^\/me\/deletion$/ },
+  { method: 'DELETE', path: /^\/me\/deletion$/ },
+  { method: 'GET', path: /^\/export$/ },
+];
+
+export function requireActiveAccount(req: Request, _res: Response, next: NextFunction): void {
+  if (req.user?.accountStatus !== 'deletion_pending') {
+    next();
+    return;
+  }
+  const allowed = DELETION_PENDING_ALLOWED.some(
+    (route) => route.method === req.method && route.path.test(req.path),
+  );
+  if (allowed) {
+    next();
+    return;
+  }
+  next(new AppError(
+    'ACCOUNT_DELETION_PENDING',
+    403,
+    '账号正在注销冷静期，请先进入账户恢复页',
+  ));
+}
+
+export function requireOwner(req: Request, _res: Response, next: NextFunction): void {
+  if (req.user?.role === 'owner') {
+    next();
+    return;
+  }
+  next(new AppError('PERMISSION_DENIED', 403, '当前账号无权执行此操作'));
+}
+
 /** 从 database 读取用户配置（不存在则创建一条默认配置） */
-export async function ensureProfile(userId: string): Promise<Profile> {
+export async function ensureProfile(userId: string, displayName?: string): Promise<Profile> {
   const client = getSupabaseClient();
   const { data, error } = await client.from('profiles').select('*').eq('user_id', userId).maybeSingle();
   if (error) throw new Error(`读取用户配置失败: ${error.message}`);
-  if (data) return data as unknown as Profile;
+  if (data) {
+    const profile = data as unknown as Profile;
+    const name = displayName?.trim();
+    if (name && !profile.display_name) {
+      const { data: updated, error: updateError } = await client
+        .from('profiles')
+        .update({ display_name: name, updated_at: new Date().toISOString() })
+        .eq('user_id', userId)
+        .select()
+        .single();
+      if (updateError) throw new Error(`更新用户昵称失败: ${updateError.message}`);
+      return updated as unknown as Profile;
+    }
+    return profile;
+  }
 
   const defaults = {
     user_id: userId,
-    display_name: null,
+    display_name: displayName?.trim() || null,
     avatar_url: null,
     daily_recall_enabled: true,
     daily_recall_count: 3,
@@ -61,6 +171,10 @@ export async function ensureProfile(userId: string): Promise<Profile> {
     ai_embeddings_enabled: true,
     ai_last_error: null,
     ai_last_error_at: null,
+    email_verification_status: 'pending',
+    account_status: 'active',
+    deletion_requested_at: null,
+    deletion_scheduled_for: null,
   };
   const { data: created, error: createError } = await client.from('profiles').insert(defaults).select().single();
   if (createError) throw new Error(`初始化用户配置失败: ${createError.message}`);

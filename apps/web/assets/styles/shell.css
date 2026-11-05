@@ -36,12 +36,15 @@ body.has-app-shell {
 @media (min-width: 768px) {
   .app-rail {
     inset: 0 auto 0 0;
+    display: flex;
     width: 80px;
+    flex-direction: column;
+    align-items: stretch;
     padding: 18px 10px;
     border-width: 0 1px 0 0;
     border-radius: 0;
   }
-  .app-rail__nav { display: grid; align-content: start; gap: 7px; }
+  .app-rail__nav { display: grid; flex: 1; align-content: start; gap: 7px; }
   .app-rail__item span { position: absolute; width: 1px; height: 1px; overflow: hidden; }
   body.has-app-shell { padding-bottom: 0; }
 }

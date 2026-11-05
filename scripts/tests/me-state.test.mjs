@@ -16,6 +16,10 @@ test('pet preferences map to the approved local storage keys', () => {
     petPreferenceUpdate('motion', true),
     { key: 'knowtree.pet.motion.v1', value: '1' },
   );
+  assert.deepEqual(
+    petPreferenceUpdate('size', 'large'),
+    { key: 'knowtree.pet.size.v1', value: 'large' },
+  );
   assert.throws(() => petPreferenceUpdate('visibility', false), /Unsupported/);
   assert.throws(() => petPreferenceUpdate('unknown', true), /Unsupported/);
 });

@@ -86,6 +86,24 @@ test('cron endpoint rejects requests without the configured secret', async (t) =
   assert.equal(response.status, 401);
 });
 
+test('legacy public registration returns a stable invitation-only error', async (t) => {
+  const base = await startApp(t);
+  const response = await fetch(`${base}/api/v1/auth/register`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ email: 'reader@example.com', password: 'secret123' }),
+  });
+  const body = await response.json() as {
+    error?: { code?: string; message?: string; requestId?: string };
+  };
+
+  assert.equal(response.status, 403);
+  assert.equal(body.error?.code, 'INVITE_REQUIRED');
+  assert.match(body.error?.requestId || '', /^KT-\d{8}-[A-F0-9]{8}$/);
+  assert.match(response.headers.get('x-request-id') || '', /^KT-\d{8}-[A-F0-9]{8}$/);
+  assert.equal(JSON.stringify(body).includes('secret123'), false);
+});
+
 function restoreEnv(key: string, value: string | undefined) {
   if (value === undefined) delete process.env[key];
   else process.env[key] = value;

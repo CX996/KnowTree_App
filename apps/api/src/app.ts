@@ -3,9 +3,21 @@ import cors from 'cors';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import router from './routes/index.js';
-import { runDueJobs } from './services/jobs.js';
+import { runDueJobs, runMaintenance } from './services/jobs.js';
 import { forwardSupabaseAuth } from './services/auth-proxy.js';
+import {
+  registerWithInvitation,
+  validateInvitation,
+} from './services/invitations.js';
 import { getSupabasePublicConfig } from './storage/database/supabase-client.js';
+import {
+  AppError,
+  mapAuthFailure,
+  requestId,
+  toErrorEnvelope,
+} from './lib/errors.js';
+import { scheduleBackgroundTask } from './lib/background.js';
+import { recordErrorEvent } from './services/error-events.js';
 
 const defaultStaticDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../web');
 
@@ -15,6 +27,14 @@ interface AppOptions {
 
 export function configureApp(app: express.Express, options: AppOptions = {}) {
   app.disable('x-powered-by');
+  app.use((req, res, next) => {
+    const id = requestId();
+    res.locals.requestId = id;
+    res.locals.requestMethod = req.method;
+    res.locals.requestPath = req.originalUrl;
+    res.setHeader('X-Request-Id', id);
+    next();
+  });
 
   if (process.env.ALLOWED_ORIGIN) {
     const allowedOrigins = process.env.ALLOWED_ORIGIN
@@ -37,7 +57,10 @@ export function configureApp(app: express.Express, options: AppOptions = {}) {
     } catch (error) {
       console.error('[api] public config unavailable:', error instanceof Error ? error.message : String(error));
       res.setHeader('Cache-Control', 'no-store');
-      res.status(503).json({ error: '服务配置暂时未加载，请刷新页面重试' });
+      sendApiError(
+        res,
+        new AppError('SERVER_ERROR', 503, '服务配置暂时未加载，请刷新页面重试', { retryable: true }),
+      );
     }
   });
 
@@ -47,11 +70,29 @@ export function configureApp(app: express.Express, options: AppOptions = {}) {
     try {
       const result = await handler(req);
       res.setHeader('Cache-Control', 'no-store');
+      if (result.status >= 400) {
+        const mapped = mapAuthFailure(result.status);
+        sendApiError(
+          res,
+          new AppError(mapped.code, mapped.status, mapped.message, { retryable: mapped.retryable }),
+        );
+        return;
+      }
       res.status(result.status).type(result.contentType).send(result.body);
     } catch (error) {
-      console.error('[api] auth proxy failed:', error instanceof Error ? error.message : String(error));
+      if (!(error instanceof AppError)) {
+        console.error('[api] auth proxy failed:', error instanceof Error ? error.message : String(error));
+      }
       res.setHeader('Cache-Control', 'no-store');
-      res.status(503).json({ error: '登录服务暂时不可用，请稍后重试' });
+      sendApiError(
+        res,
+        error instanceof AppError
+          ? error
+          : new AppError('NETWORK_UNAVAILABLE', 503, '登录服务暂时不可用，请稍后重试', {
+            retryable: true,
+            cause: error,
+          }),
+      );
     }
   };
 
@@ -59,7 +100,12 @@ export function configureApp(app: express.Express, options: AppOptions = {}) {
     const email = typeof req.body?.email === 'string' ? req.body.email.trim() : '';
     const password = typeof req.body?.password === 'string' ? req.body.password : '';
     if (!email || !password) {
-      return { status: 400, contentType: 'application/json; charset=utf-8', body: JSON.stringify({ error: '请输入邮箱和密码' }) };
+      throw new AppError('VALIDATION_FAILED', 400, '请输入邮箱和密码', {
+        fields: {
+          ...(!email ? { email: '请输入邮箱' } : {}),
+          ...(!password ? { password: '请输入密码' } : {}),
+        },
+      });
     }
     return forwardSupabaseAuth({
       path: 'token?grant_type=password',
@@ -68,29 +114,17 @@ export function configureApp(app: express.Express, options: AppOptions = {}) {
   }));
 
   app.post('/api/v1/auth/register', authRoute(async (req) => {
-    const email = typeof req.body?.email === 'string' ? req.body.email.trim() : '';
-    const password = typeof req.body?.password === 'string' ? req.body.password : '';
-    const redirectTo = typeof req.body?.redirectTo === 'string' ? req.body.redirectTo : '';
-    if (!email || !password) {
-      return { status: 400, contentType: 'application/json; charset=utf-8', body: JSON.stringify({ error: '请输入邮箱和密码' }) };
-    }
-    const query = redirectTo ? `?${new URLSearchParams({ redirect_to: redirectTo }).toString()}` : '';
-    return forwardSupabaseAuth({
-      path: `signup${query}`,
-      body: {
-        email,
-        password,
-        data: {},
-        gotrue_meta_security: { captcha_token: null },
-      },
-    });
+    void req;
+    throw new AppError('INVITE_REQUIRED', 403, '知树目前采用邀请制，请使用有效邀请链接注册');
   }));
 
   app.post('/api/v1/auth/recover', authRoute(async (req) => {
     const email = typeof req.body?.email === 'string' ? req.body.email.trim() : '';
     const redirectTo = typeof req.body?.redirectTo === 'string' ? req.body.redirectTo : '';
     if (!email) {
-      return { status: 400, contentType: 'application/json; charset=utf-8', body: JSON.stringify({ error: '请输入注册邮箱' }) };
+      throw new AppError('VALIDATION_FAILED', 400, '请输入注册邮箱', {
+        fields: { email: '请输入注册邮箱' },
+      });
     }
     const query = redirectTo ? `?${new URLSearchParams({ redirect_to: redirectTo }).toString()}` : '';
     return forwardSupabaseAuth({
@@ -102,7 +136,7 @@ export function configureApp(app: express.Express, options: AppOptions = {}) {
   app.post('/api/v1/auth/refresh', authRoute(async (req) => {
     const refreshToken = typeof req.body?.refresh_token === 'string' ? req.body.refresh_token : '';
     if (!refreshToken) {
-      return { status: 400, contentType: 'application/json; charset=utf-8', body: JSON.stringify({ error: '登录状态已失效' }) };
+      throw new AppError('AUTH_EXPIRED', 401, '登录状态已失效，请重新登录');
     }
     return forwardSupabaseAuth({
       path: 'token?grant_type=refresh_token',
@@ -115,7 +149,7 @@ export function configureApp(app: express.Express, options: AppOptions = {}) {
     const raw = req.headers['x-session'];
     const accessToken = Array.isArray(raw) ? raw[0] : raw;
     if (!password || !accessToken) {
-      return { status: 400, contentType: 'application/json; charset=utf-8', body: JSON.stringify({ error: '重置链接无效或已过期' }) };
+      throw new AppError('AUTH_EXPIRED', 401, '重置链接无效或已过期，请重新申请');
     }
     return forwardSupabaseAuth({
       path: 'user',
@@ -125,20 +159,56 @@ export function configureApp(app: express.Express, options: AppOptions = {}) {
     });
   }));
 
+  const publicRoute = (
+    handler: (req: Request, res: Response) => Promise<void>,
+  ) => async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      res.setHeader('Cache-Control', 'no-store');
+      await handler(req, res);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  app.post('/api/v1/auth/invite/validate', publicRoute(async (req, res) => {
+    const token = typeof req.body?.token === 'string' ? req.body.token : '';
+    const invitation = await validateInvitation(token);
+    res.json({ valid: true, ...invitation });
+  }));
+
+  app.post('/api/v1/auth/invite/register', publicRoute(async (req, res) => {
+    const session = await registerWithInvitation({
+      token: typeof req.body?.token === 'string' ? req.body.token : '',
+      nickname: typeof req.body?.nickname === 'string' ? req.body.nickname : '',
+      password: typeof req.body?.password === 'string' ? req.body.password : '',
+      confirmPassword: typeof req.body?.confirmPassword === 'string' ? req.body.confirmPassword : '',
+    });
+    res.status(201).json(session);
+  }));
+
   app.get('/api/v1/cron/jobs', async (req, res) => {
     const secret = process.env.CRON_SECRET?.trim();
     if (!secret) {
-      res.status(503).json({ error: 'CRON_SECRET is not set' });
+      sendApiError(res, new AppError('SERVER_ERROR', 503, '定时任务暂时不可用', { retryable: true }));
       return;
     }
     if (req.headers.authorization !== `Bearer ${secret}`) {
-      res.status(401).json({ error: 'Unauthorized' });
+      sendApiError(res, new AppError('AUTH_REQUIRED', 401, '无权执行定时任务'));
       return;
     }
     try {
-      res.json(await runDueJobs(20));
+      const jobs = await runDueJobs(20);
+      const maintenance = await runMaintenance();
+      res.json({ ...jobs, ...maintenance });
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+      console.error('[api] cron failed:', error instanceof Error ? error.message : String(error));
+      sendApiError(
+        res,
+        new AppError('SERVER_ERROR', 500, '定时任务执行失败，请稍后重试', {
+          retryable: true,
+          cause: error,
+        }),
+      );
     }
   });
 
@@ -151,15 +221,39 @@ export function configureApp(app: express.Express, options: AppOptions = {}) {
     }));
   }
   app.use((_req, res) => {
-    res.status(404).json({ error: 'not found' });
+    sendApiError(res, new AppError('NOT_FOUND', 404, '请求的内容不存在'));
   });
-  app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
+  app.use((error: unknown, req: Request, res: Response, _next: NextFunction) => {
     const message = error instanceof Error ? error.message : String(error);
-    console.error('[api] unhandled error:', error);
-    res.status(500).json({ error: message });
+    console.error(`[api] unhandled error ${String(res.locals.requestId || '')} ${req.method} ${req.originalUrl}:`, message);
+    sendApiError(res, error);
   });
 
   return app;
+}
+
+function sendApiError(res: Response, error: unknown): void {
+  const id = typeof res.locals.requestId === 'string' ? res.locals.requestId : requestId();
+  res.locals.requestId = id;
+  res.setHeader('X-Request-Id', id);
+  res.setHeader('Cache-Control', 'no-store');
+  const envelope = toErrorEnvelope(error, id);
+  const status = error instanceof AppError ? error.status : 500;
+  res.status(status).json(envelope);
+  const method = typeof res.locals.requestMethod === 'string' ? res.locals.requestMethod : 'UNKNOWN';
+  const path = typeof res.locals.requestPath === 'string' ? res.locals.requestPath : '';
+  if (path.startsWith('/api/')) {
+    scheduleBackgroundTask(() => recordErrorEvent({
+      requestId: id,
+      userId: typeof res.locals.userId === 'string' ? res.locals.userId : null,
+      method,
+      path,
+      status,
+      code: envelope.error.code,
+      safeMessage: envelope.error.message,
+      retryable: envelope.error.retryable,
+    }));
+  }
 }
 
 export function createApp(options: AppOptions = {}) {

@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#10110E" />
+  <title>分类管理 · 知树 KnowTree</title>
+  <link rel="stylesheet" href="assets/styles/tokens.css" />
+  <link rel="stylesheet" href="assets/styles/base.css" />
+  <link rel="stylesheet" href="assets/styles/components.css" />
+  <link rel="stylesheet" href="assets/styles/pages.css" />
+  <link rel="stylesheet" href="assets/styles/shell.css" />
+  <link rel="stylesheet" href="assets/styles/pet.css?v=20261105" />
+  <link rel="stylesheet" href="assets/styles/transitions.css" />
+</head>
+<body data-tab="lib" data-pet-mode="ambient">
+  <main class="page page--tab app-page manage-page">
+    <header class="page-head">
+      <div>
+        <p class="page-kicker">CATEGORY SYSTEM</p>
+        <h1>分类</h1>
+      </div>
+      <button class="btn btn-primary" id="addCategory" type="button">新建分类</button>
+    </header>
+
+    <p class="manage-intro">分类最多两级，支持主分类和二级分类。分类下还有知识或子分类时不能删除，也不会连带移动或删除知识。</p>
+    <div id="categoryError" class="error-slot" aria-live="polite"></div>
+    <section class="category-board" id="categoryList" aria-live="polite"></section>
+    <div class="empty" id="categoryEmpty" hidden>还没有分类，先建立一个主分类。</div>
+  </main>
+
+  <script src="assets/transitions.js"></script>
+  <script src="assets/api.js"></script>
+  <script src="assets/ui.js"></script>
+  <script src="assets/shell.js"></script>
+  <script type="module" src="assets/pet.js?v=20261105"></script>
+  <script type="module">
+    import {
+      createCategory,
+      deleteCategory,
+      listCategories,
+      updateCategory,
+    } from './assets/account-client.mjs';
+    import {
+      bindErrorCopy,
+      normalizeApiError,
+      renderErrorCard,
+    } from './assets/error-view.mjs';
+
+    bindErrorCopy(document);
+
+    var categories = [];
+    var board = document.getElementById('categoryList');
+    var empty = document.getElementById('categoryEmpty');
+    var errorSlot = document.getElementById('categoryError');
+
+    function esc(value) {
+      return UI.esc(String(value == null ? '' : value));
+    }
+
+    function topLevel() {
+      return categories.filter(function (category) { return !category.parent_id; });
+    }
+
+    function childrenOf(id) {
+      return categories.filter(function (category) { return category.parent_id === id; });
+    }
+
+    function categoryNode(category, child) {
+      return (
+        '<div class="category-node' + (child ? ' category-node--child' : '') + '" data-category-id="' + esc(category.id) + '">' +
+          '<span class="category-glyph" aria-hidden="true">' + (child ? '└' : '🌿') + '</span>' +
+          '<div class="category-node__copy">' +
+            '<h3>' + esc(category.name) + '</h3>' +
+            '<p>' + esc(category.description || (child ? '子分类' : '主分类')) + '</p>' +
+          '</div>' +
+          '<div class="category-actions">' +
+            (child ? '' : '<button class="mini-btn" type="button" data-category-action="add-child" data-id="' + esc(category.id) + '">加子类</button>') +
+            '<button class="mini-btn" type="button" data-category-action="edit" data-id="' + esc(category.id) + '">编辑</button>' +
+            '<button class="mini-btn category-delete" type="button" data-category-action="delete" data-id="' + esc(category.id) + '">删除</button>' +
+          '</div>' +
+        '</div>'
+      );
+    }
+
+    function render() {
+      var roots = topLevel();
+      board.innerHTML = roots.map(function (root) {
+        var children = childrenOf(root.id);
+        return (
+          '<article class="category-group">' +
+            categoryNode(root, false) +
+            (children.length
+              ? '<div class="category-children">' + children.map(function (child) {
+                  return categoryNode(child, true);
+                }).join('') + '</div>'
+              : '') +
+          '</article>'
+        );
+      }).join('');
+      empty.hidden = roots.length > 0;
+    }
+
+    async function reload() {
+      errorSlot.innerHTML = '';
+      try {
+        categories = await listCategories();
+        render();
+      } catch (error) {
+        board.innerHTML = '';
+        empty.hidden = true;
+        errorSlot.innerHTML = renderErrorCard(error, { title: '分类加载失败' });
+        bindErrorCopy(errorSlot);
+      }
+    }
+
+    function optionsMarkup(selectedParent, excludedId) {
+      return '<option value="">主分类</option>' + topLevel()
+        .filter(function (item) { return item.id !== excludedId; })
+        .map(function (item) {
+          return '<option value="' + esc(item.id) + '"' +
+            (selectedParent === item.id ? ' selected' : '') + '>' + esc(item.name) + '</option>';
+        }).join('');
+    }
+
+    function openEditor(category, parentId) {
+      var editing = Boolean(category);
+      var hasChildren = category ? childrenOf(category.id).length > 0 : false;
+      UI.openSheet(editing ? '编辑分类' : '新建分类', function (body, close) {
+        body.innerHTML =
+          '<form id="categoryEditor" class="account-form" novalidate>' +
+            '<label class="auth-label" for="categoryName">分类名称</label>' +
+            '<input class="auth-input" id="categoryName" name="name" maxlength="80" value="' +
+              esc(editing ? category.name : '') + '" required />' +
+            '<div class="field-error" data-field-error="name"></div>' +
+            '<label class="auth-label mt16" for="categoryDescription">说明</label>' +
+            '<textarea class="textarea" id="categoryDescription" name="description" maxlength="240">' +
+              esc(editing ? (category.description || '') : '') + '</textarea>' +
+            '<label class="auth-label mt16" for="categoryParent">层级</label>' +
+            '<select class="auth-input" id="categoryParent" name="parent_id"' + (hasChildren ? ' disabled' : '') + '>' +
+              optionsMarkup(editing ? category.parent_id : (parentId || null), editing ? category.id : null) +
+            '</select>' +
+            (hasChildren ? '<p class="auth-hint t3 s12">有子分类的主分类不能移动到其他分类下。</p>' : '') +
+            '<div class="error-slot" data-form-error></div>' +
+            '<div class="edit-actions mt16">' +
+              '<button class="btn btn-ghost" type="button" data-cancel>取消</button>' +
+              '<button class="btn btn-primary" type="submit">保存分类</button>' +
+            '</div>' +
+          '</form>';
+        var form = body.querySelector('form');
+        form.querySelector('[data-cancel]').addEventListener('click', close);
+        form.addEventListener('submit', async function (event) {
+          event.preventDefault();
+          var name = form.elements.name.value.trim();
+          var description = form.elements.description.value.trim();
+          var parent = form.elements.parent_id.disabled ? undefined : (form.elements.parent_id.value || null);
+          if (!name) {
+            form.querySelector('[data-field-error="name"]').textContent = '请输入分类名称';
+            form.elements.name.focus();
+            return;
+          }
+          var button = form.querySelector('[type="submit"]');
+          button.disabled = true;
+          try {
+            if (editing) {
+              await updateCategory(category.id, {
+                name: name,
+                description: description,
+                ...(parent !== undefined ? { parent_id: parent } : {}),
+              });
+            } else {
+              await createCategory({
+                name: name,
+                description: description,
+                parent_id: parent,
+              });
+            }
+            close();
+            await reload();
+            UI.toast(editing ? '分类已更新' : '分类已创建');
+          } catch (error) {
+            var safe = normalizeApiError(error);
+            form.querySelector('[data-form-error]').innerHTML = renderErrorCard(safe);
+            bindErrorCopy(form);
+            if (safe.fields) {
+              Object.keys(safe.fields).forEach(function (key) {
+                var node = form.querySelector('[data-field-error="' + key + '"]');
+                if (node) node.textContent = safe.fields[key];
+              });
+            }
+            button.disabled = false;
+          }
+        });
+      }, { closeOnBackdrop: false });
+    }
+
+    document.getElementById('addCategory').addEventListener('click', function () {
+      openEditor(null, null);
+    });
+
+    board.addEventListener('click', function (event) {
+      var button = event.target.closest('[data-category-action]');
+      if (!button) return;
+      var action = button.getAttribute('data-category-action');
+      var id = button.getAttribute('data-id');
+      var category = categories.filter(function (item) { return item.id === id; })[0];
+      if (!category) return;
+      if (action === 'add-child') openEditor(null, category.id);
+      if (action === 'edit') openEditor(category, category.parent_id);
+      if (action === 'delete') {
+        UI.confirm({
+          title: '删除分类？',
+          desc: '只有空分类可以删除；分类下的知识和子分类不会随分类一起删除。',
+          ok: '删除分类',
+        }).then(async function (ok) {
+          if (!ok) return;
+          try {
+            await deleteCategory(id);
+            await reload();
+            UI.toast('分类已删除');
+          } catch (error) {
+            UI.toast(UI.safeError(error));
+          }
+        });
+      }
+    });
+
+    reload();
+  </script>
+</body>
+</html>
