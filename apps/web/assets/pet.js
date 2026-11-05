@@ -8,7 +8,7 @@ import {
   positionPetForSize,
   snapPetToSide,
   resolveAssetFailure,
-} from './pet/pet-core.mjs';
+} from './pet/pet-core.mjs?v=20261105';
 
 const MOTION = 'knowtree.pet.motion.v1';
 const POSITION = 'knowtree.pet.position.v1';
