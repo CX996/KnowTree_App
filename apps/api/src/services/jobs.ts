@@ -4,6 +4,7 @@ import { generateDailyRecall } from './recalls.js';
 import { permanentlyDeleteDueAccount } from './account-maintenance.js';
 import { purgeExpiredTrash } from './trash.js';
 import { recoverExpiredInvitationClaims } from './invitations.js';
+import { purgeOldErrorEvents } from './error-events.js';
 import type { Job } from '../types/index.js';
 
 /** 任务分发：按 job_type 执行对应业务逻辑 */
@@ -97,10 +98,12 @@ export async function runDueJobs(limit = 5): Promise<{ claimed: number; processe
 export async function runMaintenance(now = new Date()): Promise<{
   trashDeleted: number;
   invitationClaimsRecovered: number;
+  errorEventsDeleted: number;
 }> {
-  const [trashDeleted, invitationClaimsRecovered] = await Promise.all([
+  const [trashDeleted, invitationClaimsRecovered, errorEventsDeleted] = await Promise.all([
     purgeExpiredTrash(now),
     recoverExpiredInvitationClaims(now),
+    purgeOldErrorEvents(now),
   ]);
-  return { trashDeleted, invitationClaimsRecovered };
+  return { trashDeleted, invitationClaimsRecovered, errorEventsDeleted };
 }

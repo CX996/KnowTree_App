@@ -43,6 +43,25 @@
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
+  function safeError(error) {
+    if (error && typeof error === 'object' && error.code && error.message) {
+      return {
+        code: String(error.code),
+        message: String(error.message),
+        requestId: error.requestId ? String(error.requestId) : '',
+        retryable: error.retryable === true,
+        fields: error.fields && typeof error.fields === 'object' ? error.fields : null
+      };
+    }
+    return {
+      code: 'UNKNOWN_ERROR',
+      message: '操作失败，请稍后重试',
+      requestId: '',
+      retryable: true,
+      fields: null
+    };
+  }
+
   function timeAgo(iso) {
     var diff = Date.now() - Date.parse(iso);
     var m = Math.floor(diff / 6e4);
@@ -70,6 +89,10 @@
   var toastTimer = null;
   function toast(msg, opts) {
     opts = opts || {};
+    if (msg && typeof msg === 'object') {
+      var safe = safeError(msg);
+      msg = safe.message + (safe.requestId ? ' · ' + safe.requestId : '');
+    }
     var wrap = document.querySelector('.toast-wrap');
     if (!wrap) {
       wrap = document.createElement('div');
@@ -240,10 +263,25 @@
     consumeFlash();
   });
 
+  document.addEventListener('click', function (event) {
+    var button = event.target.closest && event.target.closest('[data-copy-error]');
+    if (!button) return;
+    var value = button.getAttribute('data-copy-error') || '';
+    if (!value) return;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(value).then(function () {
+        button.textContent = '错误编号已复制';
+      }, function () {
+        button.textContent = '复制失败，请手动记录';
+      });
+    }
+  });
+
   window.UI = {
     svg: svg, hydrateIcons: hydrateIcons,
     esc: esc, timeAgo: timeAgo, q: q, go: go, back: back,
     toast: toast, flash: flash,
+    safeError: safeError,
     confirm: confirmDialog, openSheet: openSheet, nodePicker: nodePicker,
     cardHTML: cardHTML, emptyHTML: emptyHTML
   };

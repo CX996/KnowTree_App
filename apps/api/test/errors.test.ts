@@ -6,6 +6,7 @@ import {
   requestId,
   toErrorEnvelope,
 } from '../src/lib/errors.js';
+import { sanitizeErrorPath } from '../src/services/error-events.js';
 
 test('safe errors preserve code, status, retryability and field messages', () => {
   const error = new AppError('VALIDATION_FAILED', 400, '请检查输入内容', {
@@ -56,4 +57,17 @@ test('request ids are unique, stable-shaped and safe to copy', () => {
 
   assert.match(first, /^KT-\d{8}-[A-F0-9]{8}$/);
   assert.notEqual(first, second);
+});
+
+test('stored error paths remove queries, ids and invite tokens', () => {
+  assert.equal(
+    sanitizeErrorPath(
+      '/api/v1/entries/2ad1a5fb-52ec-4e84-a6b5-c7546f3b6a6e?q=private',
+    ),
+    '/api/v1/entries/:id',
+  );
+  assert.equal(
+    sanitizeErrorPath('/api/v1/auth/invite/register?token=secret'),
+    '/api/v1/auth/invite/register',
+  );
 });

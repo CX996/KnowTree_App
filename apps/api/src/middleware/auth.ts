@@ -20,7 +20,7 @@ declare global {
 }
 
 // 从 x-session header 校验登录态，并把用户信息注入 req.user
-export async function requireAuth(req: Request, _res: Response, next: NextFunction): Promise<void> {
+export async function requireAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
   const raw = req.headers['x-session'];
   const token = Array.isArray(raw) ? raw[0] : raw;
   if (!token) {
@@ -85,6 +85,7 @@ export async function requireAuth(req: Request, _res: Response, next: NextFuncti
     issuedAt: new Date(timing.iat * 1000).toISOString(),
     expiresAt: new Date(timing.exp * 1000).toISOString(),
   };
+  res.locals.userId = data.user.id;
   req.authToken = token;
   runWithUserClient(client, next);
 }

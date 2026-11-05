@@ -16,6 +16,8 @@ import {
   requestId,
   toErrorEnvelope,
 } from './lib/errors.js';
+import { scheduleBackgroundTask } from './lib/background.js';
+import { recordErrorEvent } from './services/error-events.js';
 
 const defaultStaticDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../web');
 
@@ -25,9 +27,11 @@ interface AppOptions {
 
 export function configureApp(app: express.Express, options: AppOptions = {}) {
   app.disable('x-powered-by');
-  app.use((_req, res, next) => {
+  app.use((req, res, next) => {
     const id = requestId();
     res.locals.requestId = id;
+    res.locals.requestMethod = req.method;
+    res.locals.requestPath = req.originalUrl;
     res.setHeader('X-Request-Id', id);
     next();
   });
@@ -76,7 +80,9 @@ export function configureApp(app: express.Express, options: AppOptions = {}) {
       }
       res.status(result.status).type(result.contentType).send(result.body);
     } catch (error) {
-      console.error('[api] auth proxy failed:', error instanceof Error ? error.message : String(error));
+      if (!(error instanceof AppError)) {
+        console.error('[api] auth proxy failed:', error instanceof Error ? error.message : String(error));
+      }
       res.setHeader('Cache-Control', 'no-store');
       sendApiError(
         res,
@@ -234,6 +240,20 @@ function sendApiError(res: Response, error: unknown): void {
   const envelope = toErrorEnvelope(error, id);
   const status = error instanceof AppError ? error.status : 500;
   res.status(status).json(envelope);
+  const method = typeof res.locals.requestMethod === 'string' ? res.locals.requestMethod : 'UNKNOWN';
+  const path = typeof res.locals.requestPath === 'string' ? res.locals.requestPath : '';
+  if (path.startsWith('/api/')) {
+    scheduleBackgroundTask(() => recordErrorEvent({
+      requestId: id,
+      userId: typeof res.locals.userId === 'string' ? res.locals.userId : null,
+      method,
+      path,
+      status,
+      code: envelope.error.code,
+      safeMessage: envelope.error.message,
+      retryable: envelope.error.retryable,
+    }));
+  }
 }
 
 export function createApp(options: AppOptions = {}) {

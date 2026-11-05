@@ -13,6 +13,7 @@ import * as jobSvc from '../services/jobs.js';
 import * as accountSvc from '../services/account.js';
 import * as invitationSvc from '../services/invitations.js';
 import * as trashSvc from '../services/trash.js';
+import * as errorEventSvc from '../services/error-events.js';
 import { getJob, listJobs } from '../lib/task.js';
 import { getSupabaseClient } from '../storage/database/supabase-client.js';
 import { scheduleBackgroundTask } from '../lib/background.js';
@@ -225,6 +226,14 @@ r.get('/owner/invites', requireOwner, h(async (req, res) => {
 r.delete('/owner/invites/:id', requireOwner, h(async (req, res) => {
   await invitationSvc.revokeInvitation(req.user!, pid(req));
   res.json({ revoked: true });
+}));
+
+r.get('/owner/error-events', requireOwner, h(async (req, res) => {
+  res.json(await errorEventSvc.listErrorEvents(req.user!, {
+    code: str(req.query.code),
+    since: str(req.query.since),
+    limit: req.query.limit ? Number(str(req.query.limit)) : undefined,
+  }));
 }));
 
 // ---------------------------------------------------------------------------
