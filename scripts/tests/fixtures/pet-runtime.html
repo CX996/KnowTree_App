@@ -53,13 +53,16 @@
       const initialLeft = mount().style.left;
       const initialTop = mount().style.top;
       petButton.dispatchEvent(new PointerEvent('pointerdown', {
-        bubbles: true, pointerId: 1, clientX: 100, clientY: 100,
+        bubbles: true, pointerId: 1, pointerType: 'touch', isPrimary: true,
+        button: 0, clientX: 100, clientY: 100,
       }));
       document.dispatchEvent(new PointerEvent('pointermove', {
-        bubbles: true, pointerId: 1, clientX: 150, clientY: 140,
+        bubbles: true, pointerId: 1, pointerType: 'touch', isPrimary: true,
+        button: 0, clientX: 150, clientY: 140,
       }));
       document.dispatchEvent(new PointerEvent('pointerup', {
-        bubbles: true, pointerId: 1, clientX: 150, clientY: 140,
+        bubbles: true, pointerId: 1, pointerType: 'touch', isPrimary: true,
+        button: 0, clientX: 150, clientY: 140,
       }));
       await wait(20);
       check(mount().style.left !== initialLeft || mount().style.top !== initialTop,
@@ -87,13 +90,16 @@
       );
 
       petButton.dispatchEvent(new PointerEvent('pointerdown', {
-        bubbles: true, pointerId: 2, clientX: 160, clientY: 180,
+        bubbles: true, pointerId: 2, pointerType: 'touch', isPrimary: true,
+        button: 0, clientX: 160, clientY: 180,
       }));
       document.dispatchEvent(new PointerEvent('pointermove', {
-        bubbles: true, pointerId: 2, clientX: 220, clientY: 220,
+        bubbles: true, pointerId: 2, pointerType: 'touch', isPrimary: true,
+        button: 0, clientX: 220, clientY: 220,
       }));
       document.dispatchEvent(new PointerEvent('pointercancel', {
-        bubbles: true, pointerId: 2, clientX: 220, clientY: 220,
+        bubbles: true, pointerId: 2, pointerType: 'touch', isPrimary: true,
+        button: 0, clientX: 220, clientY: 220,
       }));
       await wait(20);
       check(mount().hidden === false, 'pointercancel must keep the companion visible');
@@ -114,6 +120,7 @@
       const menu = document.querySelector('.pet-menu');
       const menuLinks = Array.from(menu.querySelectorAll('a')).filter((link) => !link.hidden);
       check(menu.hidden === false, 'pet click must open quick menu');
+      check(mount().hidden === false, 'pet tap must keep the companion visible');
       check(menuLinks.length === 3, 'pending inbox menu must expose three actions');
       check(menuLinks[0].getAttribute('href') === 'capture.html', 'capture action');
       check(menuLinks[1].getAttribute('href') === 'inbox.html', 'inbox action');
