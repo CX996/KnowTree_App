@@ -10,17 +10,21 @@ import { getSupabaseClient } from '../storage/database/supabase-client.js';
 import { scheduleBackgroundTask } from '../lib/background.js';
 import { DocumentImportError, parseDocument } from '../services/document-import.js';
 import { EMBEDDING_DIM, isAiConfigured, testAiConnection } from '../services/ai.js';
+import { AppError } from '../lib/errors.js';
 import type { NextFunction, Request, Response } from 'express';
 
 // 包装异步 handler，统一错误处理
 const h =
   (fn: (req: Request, res: Response) => Promise<unknown>) =>
-  (req: Request, res: Response) => {
+  (req: Request, res: Response, next: NextFunction) => {
     fn(req, res).catch((e) => {
       const message = e instanceof Error ? e.message : String(e);
       console.error(`[api] ${req.method} ${req.originalUrl} -> ${message}`, '\n', e instanceof Error ? e.stack : '');
-      const status = e instanceof entrySvc.EntryConflictError ? 409 : 500;
-      res.status(status).json({ error: message });
+      if (e instanceof entrySvc.EntryConflictError) {
+        next(new AppError('CONFLICT', 409, '内容与已有知识重复，请修改后再保存'));
+        return;
+      }
+      next(e);
     });
   };
 
@@ -41,7 +45,7 @@ const receiveDocument = (req: Request, res: Response, next: NextFunction) => {
     const message = error instanceof multer.MulterError && error.code === 'LIMIT_FILE_SIZE'
       ? '文件超过 10 MB 限制'
       : '文件上传失败';
-    res.status(400).json({ error: message, code: 'FILE_UPLOAD_FAILED' });
+    next(new AppError('FILE_UPLOAD_FAILED', 400, message));
   });
 };
 
@@ -120,8 +124,7 @@ r.patch('/ai/preferences', h(async (req, res) => {
     if (typeof req.body[key] === 'boolean') patch[column] = req.body[key];
   }
   if (Object.keys(patch).length === 1) {
-    res.status(400).json({ error: '没有可更新的 AI 设置' });
-    return;
+    throw new AppError('VALIDATION_FAILED', 400, '没有可更新的 AI 设置');
   }
   const { data, error } = await getSupabaseClient()
     .from('profiles')
@@ -193,8 +196,9 @@ r.post('/entries/ingest', h(async (req, res) => {
 
 r.post('/entries/import', receiveDocument, h(async (req, res) => {
   if (!req.file) {
-    res.status(400).json({ error: '请选择一个文档', code: 'FILE_MISSING' });
-    return;
+    throw new AppError('VALIDATION_FAILED', 400, '请选择一个文档', {
+      fields: { file: '请选择一个文档' },
+    });
   }
 
   try {
@@ -216,8 +220,7 @@ r.post('/entries/import', receiveDocument, h(async (req, res) => {
     res.status(201).json(result);
   } catch (error) {
     if (error instanceof DocumentImportError) {
-      res.status(400).json({ error: error.message, code: error.code });
-      return;
+      throw new AppError('VALIDATION_FAILED', 400, error.message);
     }
     throw error;
   }
@@ -261,7 +264,9 @@ r.post('/recalls/generate', h(async (req, res) => {
 r.patch('/recalls/:id', h(async (req, res) => {
   const user = req.user!;
   const status = req.body.status;
-  if (!['pending', 'done', 'skipped'].includes(status)) throw new Error('无效的回溯状态');
+  if (!['pending', 'done', 'skipped'].includes(status)) {
+    throw new AppError('VALIDATION_FAILED', 400, '无效的回溯状态');
+  }
   res.json(await recallSvc.updateRecall(user.id, pid(req), status));
 }));
 
@@ -283,7 +288,7 @@ r.get('/jobs', h(async (req, res) => {
 r.get('/jobs/:id', h(async (req, res) => {
   const user = req.user!;
   const job = await getJob(user.id, pid(req));
-  if (!job) return res.status(404).json({ error: '任务不存在' });
+  if (!job) throw new AppError('NOT_FOUND', 404, '任务不存在');
   res.json(job);
 }));
 
@@ -293,7 +298,7 @@ r.get('/jobs/:id', h(async (req, res) => {
 r.get('/entries/:id', h(async (req, res) => {
   const user = req.user!;
   const entry = await entrySvc.getEntry(user.id, pid(req));
-  if (!entry) return res.status(404).json({ error: '条目不存在' });
+  if (!entry) throw new AppError('NOT_FOUND', 404, '条目不存在');
   res.json(entry);
 }));
 
@@ -305,7 +310,7 @@ r.patch('/entries/:id', h(async (req, res) => {
     summary: req.body.summary,
     category_id: req.body.category_id,
   });
-  if (!entry) return res.status(404).json({ error: '条目不存在' });
+  if (!entry) throw new AppError('NOT_FOUND', 404, '条目不存在');
   res.json(entry);
 }));
 
@@ -370,7 +375,9 @@ r.post('/entries/:id/link', h(async (req, res) => {
 r.post('/entries/:id/merge', h(async (req, res) => {
   const user = req.user!;
   const targetId = req.body.target_entry_id;
-  if (!targetId) throw new Error('缺少 target_entry_id');
+  if (!targetId) {
+    throw new AppError('VALIDATION_FAILED', 400, '请选择要合并到的知识');
+  }
   res.json(await entrySvc.mergeEntry(user.id, pid(req), targetId));
 }));
 

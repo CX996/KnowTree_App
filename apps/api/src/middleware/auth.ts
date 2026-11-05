@@ -4,6 +4,7 @@ import {
   getSupabaseClient,
   runWithUserClient,
 } from '../storage/database/supabase-client.js';
+import { AppError } from '../lib/errors.js';
 import type { AuthUser, Profile } from '../types/index.js';
 
 declare global {
@@ -21,13 +22,13 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
   const raw = req.headers['x-session'];
   const token = Array.isArray(raw) ? raw[0] : raw;
   if (!token) {
-    res.status(401).json({ error: '请先登录' });
+    next(new AppError('AUTH_REQUIRED', 401, '请先登录'));
     return;
   }
   const client = createUserClient(token);
   const { data, error } = await client.auth.getUser(token);
   if (error || !data.user) {
-    res.status(401).json({ error: '认证失败' });
+    next(new AppError('AUTH_EXPIRED', 401, '登录已失效，请重新登录'));
     return;
   }
   req.user = {
