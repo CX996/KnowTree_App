@@ -6,6 +6,7 @@ import {
   getAdminClient,
 } from '../storage/database/supabase-client.js';
 import { forwardSupabaseAuth } from './auth-proxy.js';
+import { recordAuditEvent } from './audit.js';
 import type { AuthUser } from '../types/index.js';
 
 const INVITE_TTL_DAYS = 7;
@@ -141,6 +142,13 @@ export async function createInvitation(
     });
   }
 
+  await recordAuditEvent({
+    actorUserId: owner.id,
+    action: 'invitation.created',
+    targetType: 'invitation',
+    targetId: data.id as string,
+    metadata: { status: 'active' },
+  });
   return {
     id: data.id as string,
     email: data.email_normalized as string,
@@ -239,6 +247,13 @@ export async function registerWithInvitation(input: InviteRegistration): Promise
       .select('id')
       .maybeSingle();
     if (useError || !used) throw useError || new Error('invitation claim was lost');
+    await recordAuditEvent({
+      actorUserId: authUserId,
+      action: 'invitation.used',
+      targetType: 'invitation',
+      targetId: invite.id,
+      metadata: { status: 'used' },
+    });
   } catch (error) {
     await recordInviteFailure(invite);
     if (authUserId) {
@@ -314,6 +329,13 @@ export async function revokeInvitation(owner: AuthUser, id: string): Promise<voi
   if (!data || data.length === 0) {
     throw new AppError('NOT_FOUND', 404, '邀请不存在或已经使用');
   }
+  await recordAuditEvent({
+    actorUserId: owner.id,
+    action: 'invitation.revoked',
+    targetType: 'invitation',
+    targetId: id,
+    metadata: { status: 'revoked' },
+  });
 }
 
 export async function recoverExpiredInvitationClaims(now = new Date()): Promise<number> {

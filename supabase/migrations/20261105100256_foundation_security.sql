@@ -21,6 +21,33 @@ alter table public.profiles
     )
   );
 
+insert into public.profiles (user_id)
+select users.id
+from auth.users users
+on conflict (user_id) do nothing;
+
+with empty_users as (
+  select users.id
+  from auth.users users
+  where not exists (
+    select 1
+    from public.categories categories
+    where categories.user_id = users.id
+      and categories.deleted_at is null
+  )
+),
+defaults(name, description) as (
+  values
+    ('技术', '编程、工程与产品技术'),
+    ('阅读', '书籍、文章与灵感摘录'),
+    ('工作', '工作资料与方法论'),
+    ('生活', '生活记录与兴趣')
+)
+insert into public.categories (user_id, name, description)
+select empty_users.id, defaults.name, defaults.description
+from empty_users
+cross join defaults;
+
 drop index if exists public.categories_user_name_unique;
 
 create unique index categories_user_parent_name_unique

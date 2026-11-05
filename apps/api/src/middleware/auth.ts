@@ -71,6 +71,14 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     }));
     return;
   }
+  if (!profile) {
+    next(new AppError(
+      'INVITE_REQUIRED',
+      403,
+      '该账号尚未获得知树邀请，请使用有效邀请链接注册',
+    ));
+    return;
+  }
 
   const role = data.user.app_metadata?.role === 'owner' ? 'owner' : 'user';
   req.user = {

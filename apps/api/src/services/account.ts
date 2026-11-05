@@ -6,6 +6,7 @@ import {
   getAdminClient,
 } from '../storage/database/supabase-client.js';
 import { forwardSupabaseAuth } from './auth-proxy.js';
+import { recordAuditEvent } from './audit.js';
 import type { AuthUser, Profile } from '../types/index.js';
 
 const DELETION_DAYS = 7;
@@ -108,12 +109,19 @@ export async function changePassword(
     });
   }
 
+  await recordAuditEvent({
+    actorUserId: user.id,
+    action: 'account.password_changed',
+    targetType: 'account',
+    targetId: user.id,
+    metadata: {},
+  });
+
   try {
     await getAdminClient().auth.admin.signOut(accessToken, 'global');
   } catch (error) {
     console.warn('[account] password changed but session revocation was deferred:', error instanceof Error ? error.message : 'unknown');
   }
-  void user;
 }
 
 export async function logoutCurrent(accessToken: string): Promise<void> {
@@ -138,6 +146,13 @@ export async function logoutAll(
       cause: error,
     });
   }
+  await recordAuditEvent({
+    actorUserId: user.id,
+    action: 'account.logout_all',
+    targetType: 'account',
+    targetId: user.id,
+    metadata: {},
+  });
 }
 
 export async function requestDeletion(
@@ -206,6 +221,14 @@ export async function requestDeletion(
     });
   }
 
+  await recordAuditEvent({
+    actorUserId: user.id,
+    action: 'account.deletion_requested',
+    targetType: 'account',
+    targetId: user.id,
+    metadata: { scheduledFor: schedule.scheduledFor },
+  });
+
   try {
     const { error: sessionError } = await getAdminClient().auth.admin.signOut(accessToken, 'global');
     if (sessionError) throw sessionError;
@@ -256,6 +279,13 @@ export async function cancelDeletion(
       .eq('job_type', 'delete_account')
       .eq('status', 'pending')
       .filter('payload->>target_user_id', 'eq', user.id);
+    await recordAuditEvent({
+      actorUserId: user.id,
+      action: 'account.deletion_cancelled',
+      targetType: 'account',
+      targetId: user.id,
+      metadata: {},
+    });
   } finally {
     await revokeTemporarySession(temporaryToken);
   }
