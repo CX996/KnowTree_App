@@ -8,7 +8,7 @@ import {
   positionPetForSize,
   snapPetToSide,
   resolveAssetFailure,
-} from './pet/pet-core.mjs?v=20261105';
+} from './pet/pet-core.mjs?v=20261105b';
 
 const MOTION = 'knowtree.pet.motion.v1';
 const POSITION = 'knowtree.pet.position.v1';
@@ -100,6 +100,11 @@ function consumeCelebration() {
 
 const existingMount = document.querySelector('[data-pet-mount]');
 const mount = existingMount || document.createElement('div');
+if (mount.parentElement !== document.body) {
+  // backdrop-filter / transform on the app rail would otherwise become the
+  // containing block for this fixed element and corrupt viewport coordinates.
+  document.body.appendChild(mount);
+}
 mount.className = 'pet-mount';
 mount.dataset.petMount = '';
 if (!existingMount) document.body.appendChild(mount);

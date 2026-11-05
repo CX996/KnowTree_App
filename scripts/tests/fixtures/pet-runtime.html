@@ -12,6 +12,11 @@
     localStorage.clear();
     sessionStorage.clear();
     localStorage.setItem('knowtree.pet.collapsed.v1', '1');
+    const originalPet = document.querySelector('[data-pet-mount]');
+    const filteredAncestor = document.createElement('div');
+    filteredAncestor.style.backdropFilter = 'blur(12px)';
+    document.body.insertBefore(filteredAncestor, originalPet);
+    filteredAncestor.appendChild(originalPet);
     let pendingInbox = false;
     window.KT = {
       inbox: function () {
@@ -37,6 +42,7 @@
     try {
       await import('../../../apps/web/assets/pet.js?browser-contract=1');
       await wait(80);
+      check(mount().parentElement === document.body, 'pet must be re-parented outside filtered app chrome');
       window.pendingInbox = true;
       pendingInbox = true;
       localStorage.setItem('knowtree.pet.hintShown.v1', String(Date.now() - 60_000));

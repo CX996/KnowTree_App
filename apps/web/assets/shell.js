@@ -16,8 +16,7 @@
     rail.innerHTML =
       '<a class="app-rail__brand" href="index.html"><span class="app-rail__mark"></span>知树</a>' +
       '<a class="app-rail__capture" href="capture.html"><b>＋</b>丢一条进树里</a>' +
-      '<nav class="app-rail__nav" aria-label="主导航"></nav>' +
-      '<div class="app-rail__pet" data-pet-mount></div>';
+      '<nav class="app-rail__nav" aria-label="主导航"></nav>';
     var nav = rail.querySelector('nav');
     ITEMS.forEach(function (item) {
       var link = document.createElement('a');
@@ -29,6 +28,11 @@
       nav.appendChild(link);
     });
     document.body.prepend(rail);
+    if (!document.querySelector('[data-pet-mount]')) {
+      var petMount = document.createElement('div');
+      petMount.dataset.petMount = '';
+      document.body.appendChild(petMount);
+    }
     document.body.classList.add('has-app-shell');
     updateShellOffset();
   }
