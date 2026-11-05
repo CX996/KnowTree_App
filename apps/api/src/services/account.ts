@@ -1,4 +1,5 @@
 import { AppError } from '../lib/errors.js';
+import { createSystemJob } from '../lib/task.js';
 import { ensureProfile } from '../middleware/auth.js';
 import {
   createUserClient,
@@ -183,6 +184,29 @@ export async function requestDeletion(
   }
 
   try {
+    await createSystemJob(
+      'delete_account',
+      { target_user_id: user.id },
+      { runAt: new Date(schedule.scheduledFor), maxAttempts: 10 },
+    );
+  } catch (jobError) {
+    await getAdminClient()
+      .from('profiles')
+      .update({
+        account_status: 'active',
+        deletion_requested_at: null,
+        deletion_scheduled_for: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('user_id', user.id);
+    await revokeTemporarySession(temporaryToken);
+    throw new AppError('SERVER_ERROR', 500, '注销任务暂时无法安排，请稍后重试', {
+      retryable: true,
+      cause: jobError,
+    });
+  }
+
+  try {
     const { error: sessionError } = await getAdminClient().auth.admin.signOut(accessToken, 'global');
     if (sessionError) throw sessionError;
   } catch (error) {
@@ -221,6 +245,17 @@ export async function cancelDeletion(
         cause: error,
       });
     }
+    await getAdminClient()
+      .from('jobs')
+      .update({
+        status: 'succeeded',
+        payload: {},
+        result: { cancelled: true },
+        updated_at: new Date().toISOString(),
+      })
+      .eq('job_type', 'delete_account')
+      .eq('status', 'pending')
+      .filter('payload->>target_user_id', 'eq', user.id);
   } finally {
     await revokeTemporarySession(temporaryToken);
   }

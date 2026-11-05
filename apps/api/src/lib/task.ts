@@ -1,4 +1,4 @@
-import { getSupabaseClient } from '../storage/database/supabase-client.js';
+import { getAdminClient, getSupabaseClient } from '../storage/database/supabase-client.js';
 import type { Job, JobType } from '../types/index.js';
 
 export interface NewJobInput {
@@ -26,6 +26,27 @@ export async function createJob(input: NewJobInput): Promise<Job> {
   return data as unknown as Job;
 }
 
+export async function createSystemJob(
+  jobType: 'delete_account' | 'cleanup_trash' | 'invite_recovery',
+  payload: Record<string, unknown>,
+  options: { runAt?: Date; maxAttempts?: number } = {},
+): Promise<Job> {
+  const row = {
+    user_id: null,
+    job_type: jobType,
+    payload,
+    status: 'pending',
+    attempt_count: 0,
+    max_attempts: options.maxAttempts ?? 10,
+    next_run_at: (options.runAt ?? new Date()).toISOString(),
+  };
+  const { data, error } = await getAdminClient().from('jobs').insert(row).select().single();
+  if (error) {
+    throw new Error(`创建系统任务失败: ${error.message}`);
+  }
+  return data as unknown as Job;
+}
+
 /** 抢占一批到期、尚未超过最大尝试次数的 pending 任务（原子更新为 running） */
 export async function claimDueJobs(limit: number): Promise<Job[]> {
   const client = getSupabaseClient();
@@ -35,11 +56,22 @@ export async function claimDueJobs(limit: number): Promise<Job[]> {
 }
 
 /** 标记任务成功 */
-export async function completeJob(jobId: string, result?: Record<string, unknown>): Promise<void> {
+export async function completeJob(
+  jobId: string,
+  result?: Record<string, unknown>,
+  options: { clearPayload?: boolean } = {},
+): Promise<void> {
   const client = getSupabaseClient();
+  const patch: Record<string, unknown> = {
+    status: 'succeeded',
+    result: result ?? null,
+    last_error: null,
+    updated_at: new Date().toISOString(),
+  };
+  if (options.clearPayload) patch.payload = {};
   const { error } = await client
     .from('jobs')
-    .update({ status: 'succeeded', result: result ?? null, last_error: null, updated_at: new Date().toISOString() })
+    .update(patch)
     .eq('id', jobId);
   if (error) throw new Error(`完成任务失败: ${error.message}`);
 }

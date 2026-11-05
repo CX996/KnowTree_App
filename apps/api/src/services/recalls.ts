@@ -101,7 +101,18 @@ export async function listRecalls(userId: string, date?: string): Promise<DailyR
   const target = todayStr(date);
   const { data, error } = await client.from('daily_recalls').select('*').eq('user_id', userId).eq('recall_date', target).order('created_at', { ascending: true });
   if (error) throw new Error(`查询回溯失败: ${error.message}`);
-  return (data ?? []) as unknown as DailyRecall[];
+  const recalls = (data ?? []) as unknown as DailyRecall[];
+  if (recalls.length === 0) return [];
+  const entryIds = Array.from(new Set(recalls.map((item) => item.entry_id)));
+  const { data: activeEntries, error: entryError } = await client
+    .from('entries')
+    .select('id')
+    .eq('user_id', userId)
+    .is('deleted_at', null)
+    .in('id', entryIds);
+  if (entryError) throw new Error(`查询回溯条目失败: ${entryError.message}`);
+  const activeIds = new Set((activeEntries ?? []).map((entry) => entry.id as string));
+  return recalls.filter((item) => activeIds.has(item.entry_id));
 }
 
 export async function updateRecall(userId: string, id: string, status: 'pending' | 'done' | 'skipped'): Promise<DailyRecall> {

@@ -12,6 +12,7 @@ import * as recallSvc from '../services/recalls.js';
 import * as jobSvc from '../services/jobs.js';
 import * as accountSvc from '../services/account.js';
 import * as invitationSvc from '../services/invitations.js';
+import * as trashSvc from '../services/trash.js';
 import { getJob, listJobs } from '../lib/task.js';
 import { getSupabaseClient } from '../storage/database/supabase-client.js';
 import { scheduleBackgroundTask } from '../lib/background.js';
@@ -257,6 +258,25 @@ r.delete('/categories/:id', h(async (req, res) => {
 }));
 
 // ---------------------------------------------------------------------------
+// 回收站
+// ---------------------------------------------------------------------------
+r.get('/trash', h(async (req, res) => {
+  const user = req.user!;
+  res.json(await trashSvc.listTrash(user.id, str(req.query.q) ?? ''));
+}));
+
+r.post('/trash/:id/restore', h(async (req, res) => {
+  const user = req.user!;
+  res.json(await trashSvc.restoreEntry(user.id, pid(req)));
+}));
+
+r.delete('/trash/:id', h(async (req, res) => {
+  const user = req.user!;
+  await trashSvc.permanentlyDeleteEntry(user.id, pid(req));
+  res.json({ deleted: true });
+}));
+
+// ---------------------------------------------------------------------------
 // 收录（递归去重、向量相近保守提示、任务编排）
 // ---------------------------------------------------------------------------
 r.post('/entries/ingest', h(async (req, res) => {
@@ -413,6 +433,8 @@ r.post('/entries/:id/versions', h(async (req, res) => {
 // 出链
 r.get('/entries/:id/links', h(async (req, res) => {
   const user = req.user!;
+  const entry = await entrySvc.getEntry(user.id, pid(req));
+  if (!entry) throw new AppError('NOT_FOUND', 404, '条目不存在');
   const client = getSupabaseClient();
   const { data: links, error } = await client
     .from('links')
@@ -425,7 +447,12 @@ r.get('/entries/:id/links', h(async (req, res) => {
   const items = (links ?? []) as Array<{ target_entry_id: string; score: number; reason: string | null }>;
   if (items.length > 0) {
     const ids = Array.from(new Set(items.map((l) => l.target_entry_id)));
-    const { data: entries } = await client.from('entries').select('id,title,summary,source_url').in('id', ids);
+    const { data: entries } = await client
+      .from('entries')
+      .select('id,title,summary,source_url')
+      .eq('user_id', user.id)
+      .is('deleted_at', null)
+      .in('id', ids);
     const map = new Map((entries ?? []).map((e) => [e.id, e]));
     res.json(items.map((l) => ({ ...l, target: map.get(l.target_entry_id) ?? null })));
     return;

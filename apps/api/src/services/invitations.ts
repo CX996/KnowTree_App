@@ -316,6 +316,35 @@ export async function revokeInvitation(owner: AuthUser, id: string): Promise<voi
   }
 }
 
+export async function recoverExpiredInvitationClaims(now = new Date()): Promise<number> {
+  const admin = getAdminClient();
+  const { data, error } = await admin
+    .from('invitations')
+    .select('id')
+    .eq('status', 'claimed')
+    .lte('claim_expires_at', now.toISOString())
+    .limit(100);
+  if (error) {
+    throw new AppError('SERVER_ERROR', 500, '邀请恢复任务无法读取待处理记录', {
+      retryable: true,
+      cause: error,
+    });
+  }
+  let recovered = 0;
+  for (const row of data ?? []) {
+    const { error: updateError } = await admin
+      .from('invitations')
+      .update({
+        status: 'needs_attention',
+        claim_expires_at: null,
+      })
+      .eq('id', row.id)
+      .eq('status', 'claimed');
+    if (!updateError) recovered++;
+  }
+  return recovered;
+}
+
 async function resolveInvitation(token: string): Promise<InvitationRow> {
   const normalizedToken = String(token || '').trim();
   if (!/^[A-Za-z0-9_-]{40,}$/.test(normalizedToken)) {

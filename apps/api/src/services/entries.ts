@@ -1,4 +1,5 @@
-import { getAdminClient, getSupabaseClient } from '../storage/database/supabase-client.js';
+import { getSupabaseClient } from '../storage/database/supabase-client.js';
+import { AppError } from '../lib/errors.js';
 import { contentHash, sha256, urlHash } from '../lib/hash.js';
 import {
   canonicalizeUrl,
@@ -114,12 +115,23 @@ export async function listEntries(userId: string, opts: ListEntriesOptions = {})
 
 export async function softDeleteEntry(userId: string, id: string): Promise<void> {
   const client = getSupabaseClient();
-  const { error } = await client
+  const now = nowIso();
+  const { data, error } = await client
     .from('entries')
-    .update({ deleted_at: nowIso(), updated_at: nowIso() })
+    .update({ deleted_at: now, updated_at: now })
     .eq('id', id)
-    .eq('user_id', userId);
-  if (error) throw new Error(`删除条目失败: ${error.message}`);
+    .eq('user_id', userId)
+    .is('deleted_at', null)
+    .select('id');
+  if (error) {
+    throw new AppError('SERVER_ERROR', 500, '删除知识失败，请稍后重试', {
+      retryable: true,
+      cause: error,
+    });
+  }
+  if (!data || data.length === 0) {
+    throw new AppError('NOT_FOUND', 404, '条目不存在');
+  }
 }
 
 export function buildEditedEntryPatch(input: {
@@ -640,6 +652,8 @@ export async function searchEntries(userId: string, query: string, opts: SearchO
 // ---------------------------------------------------------------------------
 export async function listVersions(userId: string, entryId: string): Promise<EntryVersion[]> {
   const client = getSupabaseClient();
+  const activeEntry = await getEntry(userId, entryId);
+  if (!activeEntry) return [];
   const { data, error } = await client
     .from('entry_versions')
     .select('*')
@@ -748,22 +762,6 @@ export async function exportAll(userId: string, format: 'md' | 'json' = 'md'): P
     lines.push('');
   }
   return lines.join('\n');
-}
-
-// ---------------------------------------------------------------------------
-// 注销：彻底删除该用户所有数据 + 删除 auth 账号
-// ---------------------------------------------------------------------------
-export async function deleteAccount(userId: string): Promise<{ deleted: boolean }> {
-  const client = getAdminClient();
-  const tables = ['links', 'daily_recalls', 'entry_versions', 'entries', 'sources', 'categories', 'jobs', 'profiles'];
-  for (const t of tables) {
-    const { error } = await client.from(t).delete().eq('user_id', userId);
-    if (error) throw new Error(`清理 ${t} 失败: ${error.message}`);
-  }
-  // 删除 auth 用户
-  const { error: authErr } = await client.auth.admin.deleteUser(userId);
-  if (authErr) throw new Error(`删除账号失败: ${authErr.message}`);
-  return { deleted: true };
 }
 
 export { sha256 };

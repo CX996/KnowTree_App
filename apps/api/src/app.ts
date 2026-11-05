@@ -3,7 +3,7 @@ import cors from 'cors';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import router from './routes/index.js';
-import { runDueJobs } from './services/jobs.js';
+import { runDueJobs, runMaintenance } from './services/jobs.js';
 import { forwardSupabaseAuth } from './services/auth-proxy.js';
 import {
   registerWithInvitation,
@@ -191,7 +191,9 @@ export function configureApp(app: express.Express, options: AppOptions = {}) {
       return;
     }
     try {
-      res.json(await runDueJobs(20));
+      const jobs = await runDueJobs(20);
+      const maintenance = await runMaintenance();
+      res.json({ ...jobs, ...maintenance });
     } catch (error) {
       console.error('[api] cron failed:', error instanceof Error ? error.message : String(error));
       sendApiError(

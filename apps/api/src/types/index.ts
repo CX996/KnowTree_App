@@ -84,7 +84,16 @@ export interface Link {
 }
 
 export type JobStatus = 'pending' | 'running' | 'succeeded' | 'failed';
-export type JobType = 'parse' | 'classify' | 'link' | 'dedupe' | 'daily_recall' | 'export' | 'delete_account';
+export type JobType =
+  | 'parse'
+  | 'classify'
+  | 'link'
+  | 'dedupe'
+  | 'daily_recall'
+  | 'export'
+  | 'delete_account'
+  | 'cleanup_trash'
+  | 'invite_recovery';
 
 export interface Job {
   id: string;
