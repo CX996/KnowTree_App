@@ -97,16 +97,17 @@ test('login restores email confirmation sessions from the callback hash', async 
   assert.match(login, /forgot-password\.html/);
 });
 
-test('registration collects a confirmed email password', async () => {
+test('registration requires a valid invitation and locks the bound email', async () => {
   const register = await readFile(path.join(clientDir, 'register.html'), 'utf8');
-  assert.match(register, /<form[^>]+id="registerForm"/);
+  assert.match(register, /<form[^>]+id="inviteForm"/);
   assert.match(register, /type="email"/);
-  assert.match(register, /id="email"/);
-  assert.match(register, /id="pwd"/);
-  assert.match(register, /id="pwdConfirm"/);
+  assert.match(register, /id="inviteEmail"/);
+  assert.match(register, /readonly/);
+  assert.match(register, /id="password"/);
+  assert.match(register, /id="confirmPassword"/);
   assert.match(register, /autocomplete="new-password"/);
-  assert.match(register, /KT\.loadPublicConfig\(\)/);
-  assert.match(register, /signUpWithPassword/);
+  assert.match(register, /location\.hash/);
+  assert.match(register, /registerWithInvitation/);
   assert.match(register, /login\.html/);
 });
 

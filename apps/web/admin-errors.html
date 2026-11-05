@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#10110E" />
+  <title>错误诊断 · 知树 KnowTree</title>
+  <link rel="stylesheet" href="assets/styles/tokens.css" />
+  <link rel="stylesheet" href="assets/styles/base.css" />
+  <link rel="stylesheet" href="assets/styles/components.css" />
+  <link rel="stylesheet" href="assets/styles/pages.css" />
+  <link rel="stylesheet" href="assets/styles/shell.css" />
+  <link rel="stylesheet" href="assets/styles/pet.css" />
+  <link rel="stylesheet" href="assets/styles/transitions.css" />
+</head>
+<body data-tab="me" data-pet-mode="ambient">
+  <main class="page page--tab app-page manage-page owner-page">
+    <header class="page-head">
+      <div>
+        <p class="page-kicker">OWNER · REDACTED EVENTS</p>
+        <h1>错误诊断</h1>
+      </div>
+      <span class="account-chip">只保留 30 天</span>
+    </header>
+
+    <p class="manage-intro">这里只显示脱敏接口、错误码和请求编号，不显示正文、密码、令牌、SQL、堆栈或第三方原始响应。</p>
+    <label class="search-field error-search-wrap" for="errorSearch">
+      <span data-ic="search"></span>
+      <input id="errorSearch" type="search" placeholder="按错误码筛选，例如 SERVER_ERROR" autocomplete="off" />
+    </label>
+    <div id="errorPageMessage" class="error-slot" aria-live="polite"></div>
+    <section class="error-event-list" id="errorList" aria-live="polite"></section>
+    <div class="empty" id="errorEmpty" hidden>暂时没有匹配的错误事件。</div>
+  </main>
+
+  <script src="assets/transitions.js"></script>
+  <script src="assets/api.js"></script>
+  <script src="assets/ui.js"></script>
+  <script src="assets/shell.js"></script>
+  <script type="module" src="assets/pet.js"></script>
+  <script type="module">
+    import { listErrorEvents } from './assets/account-client.mjs';
+    import {
+      bindErrorCopy,
+      renderErrorCard,
+    } from './assets/error-view.mjs';
+
+    UI.hydrateIcons(document);
+    bindErrorCopy(document);
+
+    var list = document.getElementById('errorList');
+    var empty = document.getElementById('errorEmpty');
+    var message = document.getElementById('errorPageMessage');
+    var search = document.getElementById('errorSearch');
+    var debounce = null;
+
+    function esc(value) {
+      return UI.esc(String(value == null ? '' : value));
+    }
+
+    function formatDate(value) {
+      return new Intl.DateTimeFormat('zh-CN', {
+        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit',
+      }).format(new Date(value));
+    }
+
+    function render(events) {
+      list.innerHTML = events.map(function (event) {
+        return (
+          '<article class="error-event">' +
+            '<div class="error-event__head">' +
+              '<span class="error-event__code">' + esc(event.code) + '</span>' +
+              '<span class="error-event__status">' + esc(event.status) + '</span>' +
+            '</div>' +
+            '<h2>' + esc(event.safeMessage) + '</h2>' +
+            '<p class="error-event__path">' + esc(event.method) + ' ' + esc(event.path) + '</p>' +
+            '<p class="error-event__meta">' + esc(formatDate(event.createdAt)) + ' · ' +
+              (event.retryable ? '可重试' : '不可重试') + '</p>' +
+            '<button class="error-card__id" type="button" data-copy-error="' +
+              esc(event.requestId) + '">复制请求编号 ' + esc(event.requestId) + '</button>' +
+          '</article>'
+        );
+      }).join('');
+      empty.hidden = events.length > 0;
+    }
+
+    async function reload() {
+      message.innerHTML = '';
+      var code = search.value.trim();
+      try {
+        render(await listErrorEvents(code ? '?code=' + encodeURIComponent(code) : ''));
+      } catch (error) {
+        list.innerHTML = '';
+        empty.hidden = true;
+        message.innerHTML = renderErrorCard(error, { title: '诊断数据加载失败' });
+        bindErrorCopy(message);
+      }
+    }
+
+    search.addEventListener('input', function () {
+      clearTimeout(debounce);
+      debounce = setTimeout(reload, 250);
+    });
+
+    reload();
+  </script>
+</body>
+</html>

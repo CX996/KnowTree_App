@@ -4,7 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#10110E" />
-  <title>创建账号 · 知树 KnowTree</title>
+  <meta name="referrer" content="no-referrer" />
+  <title>邀请注册 · 知树 KnowTree</title>
   <link rel="stylesheet" href="assets/styles/tokens.css" />
   <link rel="stylesheet" href="assets/styles/base.css" />
   <link rel="stylesheet" href="assets/styles/components.css" />
@@ -18,91 +19,195 @@
         <span class="auth-brand__mark" aria-hidden="true"></span>
         <span>知树 KnowTree</span>
       </a>
-      <div class="auth-kicker">建立你的私人知识库</div>
-      <h1 id="authTitle">从一个账号，<br />种下一棵树。</h1>
-      <p>注册后，把文章、笔记和文档交给知树整理。</p>
+      <div class="auth-kicker">PRIVATE INVITATION</div>
+      <h1 id="authTitle">被邀请的人，<br />先种下一棵树。</h1>
+      <p>知树当前采用邀请制。邀请绑定邮箱、7 天内有效，并且只能使用一次。</p>
     </section>
 
     <section class="auth-panel" aria-labelledby="authTitle">
-      <form id="registerForm" class="auth-card" novalidate>
-        <label class="auth-label" for="email">邮箱</label>
-        <input class="auth-input" id="email" type="email" placeholder="name@example.com" autocomplete="email" required />
+      <div class="auth-card invite-gate" id="inviteGate">
+        <p class="page-kicker">INVITATION ONLY</p>
+        <h2>知树目前不开放公开注册</h2>
+        <p class="t3 s13">请向 Owner 获取专属邀请链接。没有邀请时仍可以登录已有账号。</p>
+        <a class="btn btn-primary btn-block mt20" href="login.html">返回登录</a>
+      </div>
 
-        <label class="auth-label mt16" for="pwd">密码</label>
-        <input class="auth-input" id="pwd" type="password" minlength="8" placeholder="至少 8 位，包含字母和数字" autocomplete="new-password" required />
+      <div class="auth-card invite-gate" id="inviteInvalid" hidden>
+        <p class="page-kicker">LINK UNAVAILABLE</p>
+        <h2>邀请链接不可用</h2>
+        <p class="t3 s13" id="inviteInvalidMessage">邀请可能已经过期、撤销或使用过。</p>
+        <div class="error-slot" id="inviteError"></div>
+        <a class="btn btn-ghost btn-block mt20" href="login.html">返回登录</a>
+      </div>
 
-        <label class="auth-label mt16" for="pwdConfirm">确认密码</label>
-        <input class="auth-input" id="pwdConfirm" type="password" minlength="8" placeholder="再输入一次密码" autocomplete="new-password" required />
+      <form id="inviteForm" class="auth-card" novalidate hidden>
+        <p class="page-kicker">YOUR INVITATION</p>
+        <h2>完成账号设置</h2>
 
-        <p class="auth-hint t3 s12 mt12">密码至少 8 位，并同时包含字母和数字。</p>
-        <button class="btn btn-primary btn-block mt16" id="register" type="submit">创建账号</button>
+        <label class="auth-label mt16" for="inviteEmail">邀请邮箱</label>
+        <input class="auth-input" id="inviteEmail" type="email" readonly aria-readonly="true" />
+        <p class="auth-hint t3 s12">邮箱由邀请绑定，当前阶段显示“待验证”。</p>
+
+        <label class="auth-label mt16" for="nickname">昵称</label>
+        <input class="auth-input" id="nickname" name="nickname" maxlength="30" autocomplete="nickname" required />
+        <div class="field-error" data-field-error="nickname"></div>
+
+        <label class="auth-label mt16" for="password">密码</label>
+        <input class="auth-input" id="password" name="password" type="password" minlength="8" placeholder="至少 8 位，包含字母和数字" autocomplete="new-password" required />
+        <div class="field-error" data-field-error="password"></div>
+
+        <label class="auth-label mt16" for="confirmPassword">确认密码</label>
+        <input class="auth-input" id="confirmPassword" name="confirmPassword" type="password" minlength="8" autocomplete="new-password" required />
+        <div class="field-error" data-field-error="confirmPassword"></div>
+        <div class="error-slot" data-form-error aria-live="polite"></div>
+
+        <button class="btn btn-primary btn-block mt16" id="register" type="submit">接受邀请并进入知树</button>
       </form>
-      <div class="auth-status t3 s12 mt16" id="msg" aria-live="polite"></div>
+
       <div class="auth-links mt16"><span>已有账号？</span><a href="login.html">直接登录</a></div>
-      <div class="auth-note t3 s12 mt20">当前测试阶段注册后可直接登录；恢复自有 SMTP 后会重新开启邮件验证。</div>
+      <div class="auth-note t3 s12 mt20">邀请令牌只用于本次注册，不会保留在地址栏或服务端日志中。</div>
     </section>
   </main>
 
   <script src="assets/transitions.js"></script>
   <script src="assets/api.js"></script>
+  <script src="assets/ui.js"></script>
   <script type="module">
-    import { safeNextPage, signUpWithPassword, validateNewPassword } from './assets/auth-client.js';
+    import { safeNextPage, validateNewPassword } from './assets/auth-client.js';
+    import {
+      registerWithInvitation,
+      validateInvitation,
+    } from './assets/account-client.mjs';
+    import {
+      bindErrorCopy,
+      normalizeApiError,
+      renderErrorCard,
+    } from './assets/error-view.mjs';
 
-    const form = document.getElementById('registerForm');
-    const button = document.getElementById('register');
-    const message = (text) => { document.getElementById('msg').textContent = text || ''; };
-    const next = safeNextPage(new URLSearchParams(location.search).get('next') || 'index.html');
-    let config = null;
+    bindErrorCopy(document);
 
-    KT.loadPublicConfig().then((value) => {
-      config = value;
-      message('服务已就绪');
-    }, (error) => {
-      message('服务暂时不可用：' + error.message);
-      button.disabled = true;
-    });
+    var gate = document.getElementById('inviteGate');
+    var invalid = document.getElementById('inviteInvalid');
+    var form = document.getElementById('inviteForm');
+    var button = document.getElementById('register');
+    var next = safeNextPage(new URLSearchParams(location.search).get('next') || 'index.html');
+    var fragment = new URLSearchParams(location.hash.replace(/^#/, ''));
+    var inviteToken = fragment.get('invite') || '';
+    history.replaceState(null, '', location.pathname + location.search);
 
-    form.addEventListener('submit', async (event) => {
+    function clearErrors() {
+      form.querySelectorAll('[data-field-error]').forEach(function (node) {
+        node.textContent = '';
+      });
+      form.querySelector('[data-form-error]').innerHTML = '';
+    }
+
+    function showFormError(error) {
+      var safe = normalizeApiError(error);
+      clearErrors();
+      if (safe.fields) {
+        Object.keys(safe.fields).forEach(function (name) {
+          var target = form.querySelector('[data-field-error="' + name + '"]');
+          if (target) target.textContent = safe.fields[name];
+        });
+      }
+      form.querySelector('[data-form-error]').innerHTML = renderErrorCard(safe);
+      bindErrorCopy(form);
+      var first = form.querySelector('[name="nickname"]');
+      if (first) first.focus();
+    }
+
+    function showInvalid(error) {
+      var safe = normalizeApiError(error);
+      gate.hidden = true;
+      form.hidden = true;
+      invalid.hidden = false;
+      document.getElementById('inviteInvalidMessage').textContent = safe.message;
+      document.getElementById('inviteError').innerHTML = renderErrorCard(safe);
+      bindErrorCopy(invalid);
+    }
+
+    (async function boot() {
+      if (!inviteToken) {
+        gate.hidden = false;
+        form.hidden = true;
+        return;
+      }
+      try {
+        var invitation = await validateInvitation(inviteToken);
+        document.getElementById('inviteEmail').value = invitation.email;
+        gate.hidden = true;
+        invalid.hidden = true;
+        form.hidden = false;
+        form.elements.nickname.focus();
+      } catch (error) {
+        showInvalid(error);
+      }
+    })();
+
+    form.addEventListener('submit', async function (event) {
       event.preventDefault();
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('pwd').value;
-      const confirmPassword = document.getElementById('pwdConfirm').value;
-      const strength = validateNewPassword(password);
-      if (!email) {
-        message('请输入邮箱');
-        document.getElementById('email').focus();
+      clearErrors();
+      var nickname = form.elements.nickname.value.trim();
+      var password = form.elements.password.value;
+      var confirmPassword = form.elements.confirmPassword.value;
+      var strength = validateNewPassword(password);
+      if (!nickname || nickname.length > 30) {
+        showFormError(normalizeApiError({
+          error: {
+            code: 'VALIDATION_FAILED',
+            message: '昵称需要 1 到 30 个字符',
+            requestId: '',
+            retryable: false,
+            fields: { nickname: '昵称需要 1 到 30 个字符' },
+          },
+        }));
         return;
       }
       if (!strength.ok) {
-        message(strength.message);
-        document.getElementById('pwd').focus();
+        showFormError(normalizeApiError({
+          error: {
+            code: 'VALIDATION_FAILED',
+            message: strength.message,
+            requestId: '',
+            retryable: false,
+            fields: { password: strength.message },
+          },
+        }));
         return;
       }
       if (password !== confirmPassword) {
-        message('两次输入的密码不一致');
-        document.getElementById('pwdConfirm').focus();
-        return;
-      }
-      if (!config) {
-        message('服务仍在连接，请稍后重试');
+        showFormError(normalizeApiError({
+          error: {
+            code: 'VALIDATION_FAILED',
+            message: '两次输入的密码不一致',
+            requestId: '',
+            retryable: false,
+            fields: { confirmPassword: '两次输入的密码不一致' },
+          },
+        }));
         return;
       }
 
       button.disabled = true;
-      message('正在创建账号…');
-      const redirectTo = location.origin + '/login.html?confirmed=1&next=' + encodeURIComponent(next);
+      button.textContent = '正在创建账号…';
       try {
-        const result = await signUpWithPassword(config, email, password, redirectTo);
-        if (result.session) {
-          KT.setToken(result.session.accessToken, result.session.refreshToken);
-          location.replace(next);
-          return;
-        }
-        form.hidden = true;
-        message('注册成功，请打开邮箱完成验证，然后回来登录。');
+        await registerWithInvitation({
+          token: inviteToken,
+          nickname: nickname,
+          password: password,
+          confirmPassword: confirmPassword,
+        });
+        location.replace(next);
       } catch (error) {
+        var safe = normalizeApiError(error);
+        if (safe.code === 'INVITE_INVALID' || safe.code === 'INVITE_EXPIRED') {
+          showInvalid(safe);
+        } else {
+          showFormError(safe);
+        }
         button.disabled = false;
-        message('注册失败：' + error.message);
+        button.textContent = '接受邀请并进入知树';
       }
     });
   </script>

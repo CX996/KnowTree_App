@@ -35,11 +35,11 @@
       </form>
       <div class="auth-status t3 s12 mt16" id="msg" aria-live="polite"></div>
       <div class="auth-links mt16">
-        <a href="register.html">创建账号</a>
+        <a href="register.html">使用邀请链接注册</a>
         <span aria-hidden="true">·</span>
         <a href="forgot-password.html">忘记密码</a>
       </div>
-      <div class="auth-note t3 s12 mt20">登录凭证只保存在当前浏览器；知识内容保存在你的 Supabase 账号中。</div>
+      <div class="auth-note t3 s12 mt20">知树目前采用邀请制；登录凭证只保存在当前浏览器。</div>
     </section>
   </main>
 
@@ -47,6 +47,7 @@
   <script src="assets/api.js"></script>
   <script type="module">
     import { parseAuthCallback, safeNextPage } from './assets/auth-client.js';
+    import { getAccount } from './assets/account-client.mjs';
 
     const form = document.getElementById('loginForm');
     const button = document.getElementById('login');
@@ -55,12 +56,26 @@
     const next = safeNextPage(requestedNext || 'index.html');
     const callback = parseAuthCallback(location.hash);
 
+    async function continueAfterLogin(target) {
+      try {
+        const account = await getAccount();
+        if (account.deletion && account.deletion.pending) {
+          location.replace('recover-account.html');
+          return;
+        }
+        location.replace(target);
+      } catch (error) {
+        button.disabled = false;
+        message(UI.safeError(error).message);
+      }
+    }
+
     if (callback.errorDescription) {
-      message('登录链接已失效：' + callback.errorDescription);
+      message('登录链接已失效，请重新登录');
     } else if (callback.accessToken) {
       KT.setToken(callback.accessToken, callback.refreshToken);
       history.replaceState(null, '', location.pathname + location.search);
-      location.replace(next);
+      continueAfterLogin(next);
     } else if (new URLSearchParams(location.search).get('confirmed') === '1') {
       message('邮箱验证成功，请输入密码登录');
     }
@@ -68,7 +83,7 @@
     KT.loadPublicConfig().then(() => {
       if (!callback.accessToken && !callback.errorDescription) message('服务已就绪');
     }, (error) => {
-      message('服务暂时不可用：' + error.message);
+      message(UI.safeError(error).message);
       button.disabled = true;
     });
 
@@ -84,10 +99,10 @@
       button.disabled = true;
       message('登录中…');
       KT.loginWithPassword(email, password).then(() => {
-        location.replace(next);
+        return continueAfterLogin(next);
       }, (error) => {
         button.disabled = false;
-        message('登录失败：' + error.message);
+        message(UI.safeError(error).message);
       });
     });
   </script>

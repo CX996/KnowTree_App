@@ -57,31 +57,6 @@ async function authRequest(url, init) {
   return body;
 }
 
-export async function signUpWithPassword(config, email, password, emailRedirectTo) {
-  const body = await authRequest(
-    authUrl('register', emailRedirectTo),
-    {
-      method: 'POST',
-      body: JSON.stringify({
-        email,
-        password,
-        data: {},
-        gotrue_meta_security: { captcha_token: null },
-      }),
-    },
-  );
-  return {
-    needsConfirmation: !body.access_token,
-    user: body.user || body,
-    session: body.access_token
-      ? {
-          accessToken: body.access_token,
-          refreshToken: body.refresh_token || '',
-        }
-      : null,
-  };
-}
-
 export async function requestPasswordReset(config, email, redirectTo) {
   return authRequest(
     authUrl('recover', redirectTo),

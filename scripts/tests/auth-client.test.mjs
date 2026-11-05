@@ -3,7 +3,7 @@ import test from 'node:test';
 
 const authClientPath = new URL('../../apps/web/assets/auth-client.js', import.meta.url);
 
-test('password registration requires at least eight letters and digits', async () => {
+test('new passwords require at least eight letters and digits', async () => {
   const { validateNewPassword } = await import(authClientPath);
 
   assert.equal(validateNewPassword('abc12345').ok, true);
@@ -36,41 +36,6 @@ test('post-login redirects stay inside the application', async () => {
   assert.equal(safeNextPage('library.html?view=recent'), 'library.html?view=recent');
   assert.equal(safeNextPage('https://evil.example/login'), 'index.html');
   assert.equal(safeNextPage('//evil.example'), 'index.html');
-});
-
-test('sign up requests email confirmation through Supabase Auth', async (t) => {
-  const { signUpWithPassword } = await import(authClientPath);
-  let requestUrl = '';
-  let requestInit;
-  t.mock.method(globalThis, 'fetch', async (url, init) => {
-    requestUrl = String(url);
-    requestInit = init;
-    return new Response(JSON.stringify({ id: 'user-1', email: 'reader@example.com' }), {
-      status: 200,
-      headers: { 'content-type': 'application/json' },
-    });
-  });
-
-  const result = await signUpWithPassword(
-    { supabaseUrl: 'https://project.supabase.co', supabaseKey: 'public-key' },
-    'reader@example.com',
-    'abc12345',
-    'https://knowtree-app.vercel.app/login.html?confirmed=1',
-  );
-
-  assert.equal(
-    requestUrl,
-    '/api/v1/auth/register?redirect_to=https%3A%2F%2Fknowtree-app.vercel.app%2Flogin.html%3Fconfirmed%3D1',
-  );
-  assert.equal(requestInit.method, 'POST');
-  assert.equal(requestInit.headers.apikey, undefined);
-  assert.deepEqual(JSON.parse(requestInit.body), {
-    email: 'reader@example.com',
-    password: 'abc12345',
-    data: {},
-    gotrue_meta_security: { captcha_token: null },
-  });
-  assert.equal(result.needsConfirmation, true);
 });
 
 test('password recovery uses the reset page as its redirect target', async (t) => {

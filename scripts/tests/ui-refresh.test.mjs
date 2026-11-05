@@ -41,6 +41,8 @@ test('business pages declare active tabs and load the shared shell', async () =>
     ['index.html', 'tree'], ['library.html', 'lib'], ['detail.html', 'lib'],
     ['inbox.html', 'lib'], ['search.html', 'lib'],
     ['review.html', 'review'], ['me.html', 'me'],
+    ['categories.html', 'lib'], ['trash.html', 'lib'],
+    ['admin-invites.html', 'me'], ['admin-errors.html', 'me'],
   ]);
   for (const [page, tab] of pages) {
     const html = await readFile(path.join(web, page), 'utf8');
@@ -136,7 +138,7 @@ test('account exposes pet preferences and auth pages stay pet-free', async () =>
   assert.match(me, /class="switch-row"/);
   assert.match(me, /id="aiSettings"/);
 
-  for (const page of ['login.html', 'register.html', 'forgot-password.html', 'reset-password.html']) {
+  for (const page of ['login.html', 'register.html', 'forgot-password.html', 'reset-password.html', 'recover-account.html']) {
     const html = await readFile(path.join(web, page), 'utf8');
     assert.match(html, /class="[^"]*auth-layout/);
     assert.match(html, /class="auth-story"/);
@@ -173,8 +175,12 @@ test('companion runtime loads only on authenticated application pages', async ()
     'review.html',
     'me.html',
     'capture.html',
+    'categories.html',
+    'trash.html',
+    'admin-invites.html',
+    'admin-errors.html',
   ];
-  const auth = ['login.html', 'register.html', 'forgot-password.html', 'reset-password.html'];
+  const auth = ['login.html', 'register.html', 'forgot-password.html', 'reset-password.html', 'recover-account.html'];
 
   for (const page of business) {
     const html = await readFile(path.join(web, page), 'utf8');
