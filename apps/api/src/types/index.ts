@@ -126,6 +126,9 @@ export interface Profile {
   ai_embeddings_enabled: boolean;
   ai_last_error: string | null;
   ai_last_error_at: string | null;
+  account_status: 'active' | 'deletion_pending';
+  deletion_requested_at: string | null;
+  deletion_scheduled_for: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -140,4 +143,11 @@ export interface AuthUser {
   id: string;
   email?: string;
   phone?: string;
+  role: 'owner' | 'user';
+  createdAt: string;
+  emailConfirmedAt: string | null;
+  accountStatus: 'active' | 'deletion_pending';
+  sessionId: string;
+  issuedAt: string;
+  expiresAt: string;
 }

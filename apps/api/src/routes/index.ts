@@ -1,10 +1,11 @@
 import { Router } from 'express';
 import multer from 'multer';
-import { requireAuth, ensureProfile } from '../middleware/auth.js';
+import { requireAuth, requireActiveAccount, ensureProfile } from '../middleware/auth.js';
 import * as categorySvc from '../services/categories.js';
 import * as entrySvc from '../services/entries.js';
 import * as recallSvc from '../services/recalls.js';
 import * as jobSvc from '../services/jobs.js';
+import * as accountSvc from '../services/account.js';
 import { getJob, listJobs } from '../lib/task.js';
 import { getSupabaseClient } from '../storage/database/supabase-client.js';
 import { scheduleBackgroundTask } from '../lib/background.js';
@@ -30,6 +31,7 @@ const h =
 
 const r = Router();
 r.use(requireAuth);
+r.use(requireActiveAccount);
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -77,8 +79,7 @@ r.get('/bootstrap', h(async (req, res) => {
 
 r.get('/me', h(async (_req, res) => {
   const user = _req.user!;
-  const profile = await ensureProfile(user.id);
-  res.json({ user, profile });
+  res.json(await accountSvc.getAccountView(user));
 }));
 
 r.patch('/me', h(async (req, res) => {
@@ -91,6 +92,43 @@ r.patch('/me', h(async (req, res) => {
   const { data, error } = await getSupabaseClient().from('profiles').update(patch).eq('user_id', user.id).select().single();
   if (error) throw new Error(`更新配置失败: ${error.message}`);
   res.json(data);
+}));
+
+r.post('/me/password', h(async (req, res) => {
+  const currentPassword = typeof req.body?.currentPassword === 'string' ? req.body.currentPassword : '';
+  const newPassword = typeof req.body?.newPassword === 'string' ? req.body.newPassword : '';
+  await accountSvc.changePassword(req.user!, req.authToken!, currentPassword, newPassword);
+  res.json({ updated: true, signedOut: true });
+}));
+
+r.post('/me/logout', h(async (req, res) => {
+  await accountSvc.logoutCurrent(req.authToken!);
+  res.json({ loggedOut: true });
+}));
+
+r.post('/me/logout-all', h(async (req, res) => {
+  const currentPassword = typeof req.body?.currentPassword === 'string' ? req.body.currentPassword : '';
+  await accountSvc.logoutAll(req.user!, req.authToken!, currentPassword);
+  res.json({ loggedOut: true, allDevices: true });
+}));
+
+r.get('/me/deletion', h(async (req, res) => {
+  const account = await accountSvc.getAccountView(req.user!);
+  res.json(account.deletion);
+}));
+
+r.post('/me/deletion', h(async (req, res) => {
+  const state = await accountSvc.requestDeletion(req.user!, req.authToken!, {
+    currentPassword: typeof req.body?.currentPassword === 'string' ? req.body.currentPassword : '',
+    confirmEmail: typeof req.body?.confirmEmail === 'string' ? req.body.confirmEmail : '',
+    acknowledged: req.body?.acknowledged === true,
+  });
+  res.status(202).json(state);
+}));
+
+r.delete('/me/deletion', h(async (req, res) => {
+  const currentPassword = typeof req.body?.currentPassword === 'string' ? req.body.currentPassword : '';
+  res.json(await accountSvc.cancelDeletion(req.user!, currentPassword));
 }));
 
 r.get('/ai/status', h(async (req, res) => {
@@ -140,11 +178,13 @@ r.post('/ai/test', h(async (_req, res) => {
   res.json(await testAiConnection());
 }));
 
-// 注销：彻底删除该用户全部数据 + auth 账号
-r.delete('/me/account', h(async (req, res) => {
-  const user = req.user!;
-  const result = await entrySvc.deleteAccount(user.id);
-  res.json(result);
+// 旧入口曾立即删除账号，保留路径但拒绝，避免旧客户端误删数据。
+r.delete('/me/account', h(async (_req, _res) => {
+  throw new AppError(
+    'VALIDATION_FAILED',
+    410,
+    '注销账号已改为 7 天冷静期流程，请在“我的”页面重新提交',
+  );
 }));
 
 // ---------------------------------------------------------------------------
