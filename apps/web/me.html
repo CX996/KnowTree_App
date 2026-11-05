@@ -47,7 +47,7 @@
     </section>
 
     <div id="accountLoadError" class="error-slot" aria-live="polite"></div>
-    <div class="stats account-stats" id="stats" aria-label="知识统计"></div>
+    <div class="stats account-stats" id="stats" role="group" aria-label="知识统计"></div>
 
     <section class="account-section" aria-labelledby="accountSecurityTitle">
       <div class="section-heading">
@@ -309,6 +309,11 @@
         button.setAttribute('aria-pressed', String(active));
       });
     }
+
+    statsEl.innerHTML =
+      '<div class="stat"><div class="v">—</div><div class="k">收录</div></div>' +
+      '<div class="stat"><div class="v">—</div><div class="k">分类</div></div>' +
+      '<div class="stat"><div class="v">—</div><div class="k">本周沉淀</div></div>';
 
     function openPasswordForm(options) {
       UI.openSheet(options.title, function (body) {
