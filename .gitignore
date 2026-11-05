@@ -11,4 +11,5 @@ node_modules/
 .vercel
 apps/api/dist/
 /apps/web/public-config.json
+/artifacts/
 /docs/design/character/*.zip

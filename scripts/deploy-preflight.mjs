@@ -92,6 +92,12 @@ export function runPreflight({ root = process.cwd(), env = process.env } = {}) {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  for (const name of ['.env.local', '.env']) {
+    const candidate = path.join(process.cwd(), name);
+    if (existsSync(candidate) && typeof process.loadEnvFile === 'function') {
+      process.loadEnvFile(candidate);
+    }
+  }
   const result = runPreflight();
   if (!result.ok) {
     console.error(`Deployment preflight failed:\n- ${result.errors.join('\n- ')}`);

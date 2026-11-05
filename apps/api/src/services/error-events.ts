@@ -35,6 +35,11 @@ export function sanitizeErrorPath(value: string): string {
 }
 
 export async function recordErrorEvent(input: ErrorEventInput): Promise<void> {
+  const configured = Boolean(
+    process.env.SUPABASE_URL?.trim()
+    && (process.env.SUPABASE_SECRET_KEY?.trim() || process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()),
+  );
+  if (!configured) return;
   const { error } = await getAdminClient()
     .from('error_events')
     .insert({
