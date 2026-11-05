@@ -171,6 +171,7 @@ export async function ensureProfile(userId: string, displayName?: string): Promi
     ai_embeddings_enabled: true,
     ai_last_error: null,
     ai_last_error_at: null,
+    email_verification_status: 'pending',
     account_status: 'active',
     deletion_requested_at: null,
     deletion_scheduled_for: null,

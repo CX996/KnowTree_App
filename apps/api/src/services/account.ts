@@ -70,7 +70,7 @@ export async function getAccountView(user: AuthUser): Promise<AccountView> {
       role: user.role,
       createdAt: user.createdAt,
       emailConfirmedAt: user.emailConfirmedAt,
-      emailStatus: user.emailConfirmedAt ? 'verified' : 'pending',
+      emailStatus: profile.email_verification_status === 'verified' ? 'verified' : 'pending',
     },
     profile,
     session: {

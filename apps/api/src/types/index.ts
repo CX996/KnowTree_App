@@ -135,6 +135,7 @@ export interface Profile {
   ai_embeddings_enabled: boolean;
   ai_last_error: string | null;
   ai_last_error_at: string | null;
+  email_verification_status: 'pending' | 'verified';
   account_status: 'active' | 'deletion_pending';
   deletion_requested_at: string | null;
   deletion_scheduled_for: string | null;

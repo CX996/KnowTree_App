@@ -209,7 +209,7 @@ export async function registerWithInvitation(input: InviteRegistration): Promise
     const { data: created, error: authError } = await admin.auth.admin.createUser({
       email: invite.email_normalized,
       password: input.password,
-      email_confirm: false,
+      email_confirm: true,
       app_metadata: { role: 'user' },
       user_metadata: { display_name: input.nickname },
     });

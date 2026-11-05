@@ -58,7 +58,7 @@ test('Supabase auth disables public signup while keeping password login', async 
   assert.match(config, /auto_expose_new_tables = false/);
   assert.match(config, /\[auth\][\s\S]*?enable_signup = false/);
   assert.match(config, /\[auth\.email\][\s\S]*?(?=\[auth\.sms\])/);
-  assert.match(config, /\[auth\.email\][\s\S]*?enable_signup = false[\s\S]*?(?=\[auth\.sms\])/);
+  assert.match(config, /\[auth\.email\][\s\S]*?enable_signup = true[\s\S]*?(?=\[auth\.sms\])/);
   assert.match(config, /\[auth\.email\][\s\S]*?enable_confirmations = false[\s\S]*?(?=\[auth\.sms\])/);
   assert.match(config, /minimum_password_length = 8/);
   assert.match(config, /password_requirements = "letters_digits"/);
@@ -178,6 +178,20 @@ test('foundation migration enforces invitation-only access and account safety', 
 
   const config = await readFile(path.join(root, 'supabase/config.toml'), 'utf8');
   assert.match(config, /\[auth\][\s\S]*?enable_signup = false/);
-  assert.match(config, /\[auth\.email\][\s\S]*?enable_signup = false[\s\S]*?(?=\[auth\.sms\])/);
+  assert.match(config, /\[auth\.email\][\s\S]*?enable_signup = true[\s\S]*?(?=\[auth\.sms\])/);
   assert.match(config, /jwt_expiry = 900/);
+});
+
+test('invited accounts keep a separate pending email-verification state', async () => {
+  const migrationDir = path.join(root, 'supabase/migrations');
+  const files = (await readdir(migrationDir)).filter((file) => file.endsWith('_invited_email_status.sql'));
+  assert.equal(files.length, 1);
+  const sql = await readFile(path.join(migrationDir, files[0]), 'utf8');
+
+  assert.match(sql, /email_verification_status text not null default 'pending'/i);
+  assert.match(sql, /email_confirmed_at is not null then 'verified'/i);
+  assert.match(sql, /revoke update \(email_verification_status\)/i);
+
+  const invitations = await readFile(path.join(root, 'apps/api/src/services/invitations.ts'), 'utf8');
+  assert.match(invitations, /email_confirm: true/);
 });
