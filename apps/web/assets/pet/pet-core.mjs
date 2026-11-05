@@ -21,6 +21,12 @@ export const PET_FRAMES = Object.freeze({
   error: 'kt-fox-01_sit@2x.webp',
 });
 
+export const PET_SIZES = Object.freeze(['small', 'medium', 'large']);
+
+export function normalizePetSize(value) {
+  return PET_SIZES.includes(value) ? value : 'medium';
+}
+
 export function resolvePetState(context = {}) {
   if (context.collapsed) return 'hidden';
   if (context.error) return 'error';
@@ -58,11 +64,50 @@ export function clampPetPosition({
   viewportWidth,
   viewportHeight,
   margin = 8,
+  bottomInset = 0,
 }) {
   const maxLeft = Math.max(margin, viewportWidth - width - margin);
-  const maxTop = Math.max(margin, viewportHeight - height - margin);
+  const maxTop = Math.max(margin, viewportHeight - height - margin - bottomInset);
   return {
     left: Math.min(Math.max(left, margin), maxLeft),
     top: Math.min(Math.max(top, margin), maxTop),
   };
+}
+
+export function positionPetForSize({
+  left,
+  top,
+  newWidth,
+  newHeight,
+  viewportWidth,
+  viewportHeight,
+  margin = 8,
+  bottomInset = 0,
+}) {
+  return clampPetPosition({
+    left,
+    top,
+    width: newWidth,
+    height: newHeight,
+    viewportWidth,
+    viewportHeight,
+    margin,
+    bottomInset,
+  });
+}
+
+export function snapPetToSide({
+  left,
+  width,
+  viewportWidth,
+  margin = 12,
+}) {
+  const leftEdge = margin;
+  const rightEdge = Math.max(margin, viewportWidth - width - margin);
+  const center = viewportWidth / 2;
+  return left < center ? leftEdge : rightEdge;
+}
+
+export function resolveAssetFailure() {
+  return 'placeholder';
 }

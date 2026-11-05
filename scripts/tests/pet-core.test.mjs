@@ -10,6 +10,10 @@ import {
   canShowHint,
   rememberDismissedHint,
   clampPetPosition,
+  normalizePetSize,
+  positionPetForSize,
+  resolveAssetFailure,
+  snapPetToSide,
 } from '../../apps/web/assets/pet/pet-core.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -63,6 +67,39 @@ test('dragged pet position stays inside the viewport', () => {
     }),
     { left: 302, top: 20 },
   );
+});
+
+test('pet size is limited to small, medium and large', () => {
+  assert.equal(normalizePetSize('small'), 'small');
+  assert.equal(normalizePetSize('medium'), 'medium');
+  assert.equal(normalizePetSize('large'), 'large');
+  assert.equal(normalizePetSize('huge'), 'medium');
+  assert.equal(normalizePetSize(''), 'medium');
+});
+
+test('size changes keep the pet inside the safe viewport', () => {
+  assert.deepEqual(
+    positionPetForSize({
+      left: 390,
+      top: 690,
+      oldWidth: 84,
+      oldHeight: 94,
+      newWidth: 132,
+      newHeight: 144,
+      viewportWidth: 430,
+      viewportHeight: 760,
+    }),
+    { left: 290, top: 608 },
+  );
+});
+
+test('side snapping leaves a safe edge gap', () => {
+  assert.equal(snapPetToSide({ left: 40, width: 118, viewportWidth: 430 }), 12);
+  assert.equal(snapPetToSide({ left: 300, width: 118, viewportWidth: 430 }), 300);
+});
+
+test('image load failure resolves to a visible placeholder state', () => {
+  assert.equal(resolveAssetFailure(), 'placeholder');
 });
 
 test('pet WebP frames stay under 250 KB', async () => {

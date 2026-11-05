@@ -665,7 +665,8 @@
     document.querySelectorAll('[data-pet-size]').forEach(function (button) {
       button.addEventListener('click', function () {
         var size = button.getAttribute('data-pet-size');
-        writePreference('knowtree.pet.size.v1', size);
+        var preference = petPreferenceUpdate('size', size);
+        writePreference(preference.key, preference.value);
         syncPetPreferences();
         document.dispatchEvent(new CustomEvent('knowtree:pet-size', {
           detail: { size: size },

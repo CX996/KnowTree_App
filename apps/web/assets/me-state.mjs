@@ -7,6 +7,9 @@ export function petPreferenceUpdate(kind, on) {
   if (kind === 'motion') {
     return { key: 'knowtree.pet.motion.v1', value: on ? '1' : '0' };
   }
+  if (kind === 'size') {
+    return { key: 'knowtree.pet.size.v1', value: String(on || 'medium') };
+  }
   throw new Error('Unsupported pet preference: ' + kind);
 }
 

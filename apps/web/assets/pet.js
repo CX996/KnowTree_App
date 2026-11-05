@@ -4,6 +4,10 @@ import {
   canShowHint,
   rememberDismissedHint,
   clampPetPosition,
+  normalizePetSize,
+  positionPetForSize,
+  snapPetToSide,
+  resolveAssetFailure,
 } from './pet/pet-core.mjs';
 
 const MOTION = 'knowtree.pet.motion.v1';
@@ -11,6 +15,7 @@ const POSITION = 'knowtree.pet.position.v1';
 const CELEBRATE = 'knowtree.pet.celebrate.v1';
 const HINT_SHOWN = 'knowtree.pet.hintShown.v1';
 const HINT_DISMISSED = 'knowtree.pet.hintDismissed.v1';
+const SIZE = 'knowtree.pet.size.v1';
 
 function readFlag(key, fallback = false) {
   try {
@@ -107,6 +112,7 @@ mount.innerHTML =
     '<a data-pet-action="capture" href="capture.html">记一条</a>' +
     '<a data-pet-action="inbox" href="inbox.html" hidden>处理待归类</a>' +
     '<a data-pet-action="review" href="review.html">看看今天的回顾</a>' +
+    '<button class="pet-menu__button" type="button" data-pet-reset>回到默认位置</button>' +
   '</div>' +
   '<div class="pet-bubble" role="status" aria-live="polite" hidden>' +
     '<span class="pet-bubble__text"></span>' +
@@ -125,23 +131,50 @@ let reduced = readFlag(MOTION) ||
   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 let dragState = null;
 let suppressClick = false;
+let assetFailed = false;
+let petSize = normalizePetSize(readPreferenceString(SIZE, 'medium'));
+
+function readPreferenceString(key, fallback) {
+  try {
+    return localStorage.getItem(key) || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function viewportBounds() {
+  const viewport = window.visualViewport;
+  const layoutWidth = document.documentElement?.clientWidth || window.innerWidth;
+  return {
+    width: Math.max(1, Math.min(layoutWidth, viewport?.width || layoutWidth)),
+    height: Math.max(1, Math.min(window.innerHeight, viewport?.height || window.innerHeight)),
+    bottomInset: window.innerWidth < 768 ? 76 : 12,
+  };
+}
+
+function applySize(value) {
+  petSize = normalizePetSize(value);
+  mount.dataset.size = petSize;
+}
 
 function applyPosition(position, persist = false) {
   const rect = mount.getBoundingClientRect();
+  const viewport = viewportBounds();
   const clamped = clampPetPosition({
     left: position.left,
     top: position.top,
-    width: rect.width || 84,
-    height: rect.height || 94,
-    viewportWidth: window.innerWidth,
-    viewportHeight: window.innerHeight,
+    width: rect.width || 104,
+    height: rect.height || 118,
+    viewportWidth: viewport.width,
+    viewportHeight: viewport.height,
+    bottomInset: viewport.bottomInset,
   });
   mount.style.left = clamped.left + 'px';
   mount.style.top = clamped.top + 'px';
   mount.style.right = 'auto';
   mount.style.bottom = 'auto';
-  mount.dataset.horizontal = clamped.left < window.innerWidth / 2 ? 'left' : 'right';
-  mount.dataset.vertical = clamped.top < window.innerHeight / 2 ? 'top' : 'bottom';
+  mount.dataset.horizontal = clamped.left < viewport.width / 2 ? 'left' : 'right';
+  mount.dataset.vertical = clamped.top < viewport.height / 2 ? 'top' : 'bottom';
   if (persist) writePosition(clamped);
   return clamped;
 }
@@ -151,13 +184,54 @@ function restorePosition() {
   if (saved) applyPosition(saved);
 }
 
+function resetPosition() {
+  try {
+    localStorage.removeItem(POSITION);
+  } catch {
+    // Default positioning still applies for this page.
+  }
+  mount.style.removeProperty('left');
+  mount.style.removeProperty('top');
+  mount.style.removeProperty('right');
+  mount.style.removeProperty('bottom');
+  delete mount.dataset.horizontal;
+  delete mount.dataset.vertical;
+  closeMenu(false);
+}
+
+function applySizeAndReposition(value) {
+  const before = mount.getBoundingClientRect();
+  applySize(value);
+  const after = mount.getBoundingClientRect();
+  const viewport = viewportBounds();
+  const next = positionPetForSize({
+    left: Number.isFinite(before.left) ? before.left : after.left,
+    top: Number.isFinite(before.top) ? before.top : after.top,
+    oldWidth: before.width,
+    oldHeight: before.height,
+    newWidth: after.width,
+    newHeight: after.height,
+    viewportWidth: viewport.width,
+    viewportHeight: viewport.height,
+    bottomInset: viewport.bottomInset,
+  });
+  applyPosition(next, Boolean(mount.style.left || mount.style.top));
+}
+
 function moveByKeyboard(deltaX, deltaY) {
   const rect = mount.getBoundingClientRect();
   applyPosition({ left: rect.left + deltaX, top: rect.top + deltaY }, true);
 }
 
 image.addEventListener('error', () => {
-  mount.hidden = true;
+  assetFailed = true;
+  mount.dataset.asset = resolveAssetFailure();
+  image.hidden = true;
+});
+image.addEventListener('load', () => {
+  assetFailed = false;
+  delete mount.dataset.asset;
+  image.hidden = false;
 });
 
 function pendingCount() {
@@ -170,10 +244,13 @@ function renderState(state) {
   mount.dataset.state = state;
   mount.dataset.motion = reduced ? 'reduce' : 'full';
   mount.hidden = state === 'hidden';
-  image.src = new URL(
-    './pet/' + (PET_FRAMES[state] || PET_FRAMES.idle),
-    import.meta.url,
-  ).href;
+  if (!assetFailed) {
+    const nextSource = new URL(
+      './pet/' + (PET_FRAMES[state] || PET_FRAMES.idle),
+      import.meta.url,
+    ).href;
+    if (image.src !== nextSource) image.src = nextSource;
+  }
   image.alt = state === 'hidden' ? '' : '知树小黑狐';
   button.setAttribute(
     'aria-label',
@@ -271,7 +348,7 @@ document.addEventListener('pointermove', (event) => {
   if (!dragState || event.pointerId !== dragState.pointerId) return;
   const deltaX = event.clientX - dragState.startX;
   const deltaY = event.clientY - dragState.startY;
-  if (!dragState.moved && Math.hypot(deltaX, deltaY) < 6) return;
+  if (!dragState.moved && Math.hypot(deltaX, deltaY) < 8) return;
   dragState.moved = true;
   applyPosition({
     left: dragState.left + deltaX,
@@ -280,18 +357,30 @@ document.addEventListener('pointermove', (event) => {
   event.preventDefault();
 });
 
-document.addEventListener('pointerup', (event) => {
+function finishDrag(event, interrupted = false) {
   if (!dragState || event.pointerId !== dragState.pointerId) return;
   const moved = dragState.moved;
   const rect = mount.getBoundingClientRect();
   dragState = null;
   mount.classList.remove('is-dragging');
   if (moved) {
-    applyPosition({ left: rect.left, top: rect.top }, true);
-    suppressClick = true;
-    setTimeout(() => { suppressClick = false; }, 300);
+    const viewport = viewportBounds();
+    const snappedLeft = snapPetToSide({
+      left: rect.left,
+      width: rect.width,
+      viewportWidth: viewport.width,
+    });
+    applyPosition({ left: snappedLeft, top: rect.top }, true);
+    if (!interrupted) {
+      suppressClick = true;
+      setTimeout(() => { suppressClick = false; }, 300);
+    }
   }
-});
+}
+
+document.addEventListener('pointerup', (event) => finishDrag(event));
+document.addEventListener('pointercancel', (event) => finishDrag(event, true));
+button.addEventListener('lostpointercapture', (event) => finishDrag(event, true));
 
 button.addEventListener('click', (event) => {
   if (suppressClick && event.detail > 0) {
@@ -326,6 +415,11 @@ mount.querySelector('.pet-bubble__close').addEventListener('click', (event) => {
 });
 
 menu.addEventListener('click', (event) => {
+  if (event.target.closest('[data-pet-reset]')) {
+    resetPosition();
+    window.UI?.toast('小黑狐已回到默认位置');
+    return;
+  }
   if (event.target.closest('a')) closeMenu(false);
 });
 
@@ -380,6 +474,10 @@ document.addEventListener('knowtree:pet-motion', (event) => {
   reduced = Boolean(event.detail.reduced);
   renderState(mount.dataset.state || 'idle');
 });
+document.addEventListener('knowtree:pet-size', (event) => {
+  applySizeAndReposition(event.detail.size);
+});
+document.addEventListener('knowtree:pet-reset', resetPosition);
 
 window.KTPet = {
   setState,
@@ -402,9 +500,23 @@ if (consumeCelebration()) {
   }, 240);
 }
 
+applySize(petSize);
 restorePosition();
 window.addEventListener('resize', () => {
   if (!mount.style.left || !mount.style.top) return;
   const rect = mount.getBoundingClientRect();
   applyPosition({ left: rect.left, top: rect.top }, true);
+});
+window.visualViewport?.addEventListener('resize', () => {
+  if (!mount.style.left || !mount.style.top) return;
+  const rect = mount.getBoundingClientRect();
+  applyPosition({ left: rect.left, top: rect.top }, true);
+});
+window.visualViewport?.addEventListener('scroll', () => {
+  if (!mount.style.left || !mount.style.top) return;
+  const rect = mount.getBoundingClientRect();
+  applyPosition({ left: rect.left, top: rect.top });
+});
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && dragState) finishDrag({ pointerId: dragState.pointerId }, true);
 });
