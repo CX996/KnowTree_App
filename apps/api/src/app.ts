@@ -5,6 +5,10 @@ import { fileURLToPath } from 'node:url';
 import router from './routes/index.js';
 import { runDueJobs } from './services/jobs.js';
 import { forwardSupabaseAuth } from './services/auth-proxy.js';
+import {
+  registerWithInvitation,
+  validateInvitation,
+} from './services/invitations.js';
 import { getSupabasePublicConfig } from './storage/database/supabase-client.js';
 import {
   AppError,
@@ -147,6 +151,33 @@ export function configureApp(app: express.Express, options: AppOptions = {}) {
       body: { password },
       accessToken,
     });
+  }));
+
+  const publicRoute = (
+    handler: (req: Request, res: Response) => Promise<void>,
+  ) => async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      res.setHeader('Cache-Control', 'no-store');
+      await handler(req, res);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  app.post('/api/v1/auth/invite/validate', publicRoute(async (req, res) => {
+    const token = typeof req.body?.token === 'string' ? req.body.token : '';
+    const invitation = await validateInvitation(token);
+    res.json({ valid: true, ...invitation });
+  }));
+
+  app.post('/api/v1/auth/invite/register', publicRoute(async (req, res) => {
+    const session = await registerWithInvitation({
+      token: typeof req.body?.token === 'string' ? req.body.token : '',
+      nickname: typeof req.body?.nickname === 'string' ? req.body.nickname : '',
+      password: typeof req.body?.password === 'string' ? req.body.password : '',
+      confirmPassword: typeof req.body?.confirmPassword === 'string' ? req.body.confirmPassword : '',
+    });
+    res.status(201).json(session);
   }));
 
   app.get('/api/v1/cron/jobs', async (req, res) => {

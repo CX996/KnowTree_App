@@ -118,16 +118,38 @@ export function requireActiveAccount(req: Request, _res: Response, next: NextFun
   ));
 }
 
+export function requireOwner(req: Request, _res: Response, next: NextFunction): void {
+  if (req.user?.role === 'owner') {
+    next();
+    return;
+  }
+  next(new AppError('PERMISSION_DENIED', 403, '当前账号无权执行此操作'));
+}
+
 /** 从 database 读取用户配置（不存在则创建一条默认配置） */
-export async function ensureProfile(userId: string): Promise<Profile> {
+export async function ensureProfile(userId: string, displayName?: string): Promise<Profile> {
   const client = getSupabaseClient();
   const { data, error } = await client.from('profiles').select('*').eq('user_id', userId).maybeSingle();
   if (error) throw new Error(`读取用户配置失败: ${error.message}`);
-  if (data) return data as unknown as Profile;
+  if (data) {
+    const profile = data as unknown as Profile;
+    const name = displayName?.trim();
+    if (name && !profile.display_name) {
+      const { data: updated, error: updateError } = await client
+        .from('profiles')
+        .update({ display_name: name, updated_at: new Date().toISOString() })
+        .eq('user_id', userId)
+        .select()
+        .single();
+      if (updateError) throw new Error(`更新用户昵称失败: ${updateError.message}`);
+      return updated as unknown as Profile;
+    }
+    return profile;
+  }
 
   const defaults = {
     user_id: userId,
-    display_name: null,
+    display_name: displayName?.trim() || null,
     avatar_url: null,
     daily_recall_enabled: true,
     daily_recall_count: 3,

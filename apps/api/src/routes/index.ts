@@ -1,11 +1,17 @@
 import { Router } from 'express';
 import multer from 'multer';
-import { requireAuth, requireActiveAccount, ensureProfile } from '../middleware/auth.js';
+import {
+  requireAuth,
+  requireActiveAccount,
+  requireOwner,
+  ensureProfile,
+} from '../middleware/auth.js';
 import * as categorySvc from '../services/categories.js';
 import * as entrySvc from '../services/entries.js';
 import * as recallSvc from '../services/recalls.js';
 import * as jobSvc from '../services/jobs.js';
 import * as accountSvc from '../services/account.js';
+import * as invitationSvc from '../services/invitations.js';
 import { getJob, listJobs } from '../lib/task.js';
 import { getSupabaseClient } from '../storage/database/supabase-client.js';
 import { scheduleBackgroundTask } from '../lib/background.js';
@@ -58,6 +64,21 @@ const pid = (req: Request): string => {
   const v = req.params?.id;
   return typeof v === 'string' ? v : Array.isArray(v) ? v[0] ?? '' : (v ?? '');
 };
+
+function requestOrigin(req: Request): string {
+  const configured = process.env.PUBLIC_APP_ORIGIN?.trim();
+  if (configured) return configured;
+  const forwardedProto = str(req.headers['x-forwarded-proto'])?.split(',')[0]?.trim();
+  const forwardedHost = str(req.headers['x-forwarded-host'])?.split(',')[0]?.trim();
+  const protocol = forwardedProto || req.protocol || 'https';
+  const host = forwardedHost || req.get('host');
+  if (!host) {
+    throw new AppError('SERVER_ERROR', 500, '无法生成邀请链接，请稍后重试', {
+      retryable: true,
+    });
+  }
+  return `${protocol}://${host}`;
+}
 
 // ---------------------------------------------------------------------------
 // 我的账号 / 配置
@@ -185,6 +206,24 @@ r.delete('/me/account', h(async (_req, _res) => {
     410,
     '注销账号已改为 7 天冷静期流程，请在“我的”页面重新提交',
   );
+}));
+
+// ---------------------------------------------------------------------------
+// Owner invitation management
+// ---------------------------------------------------------------------------
+r.post('/owner/invites', requireOwner, h(async (req, res) => {
+  const email = typeof req.body?.email === 'string' ? req.body.email : '';
+  const invitation = await invitationSvc.createInvitation(req.user!, email, requestOrigin(req));
+  res.status(201).json(invitation);
+}));
+
+r.get('/owner/invites', requireOwner, h(async (req, res) => {
+  res.json(await invitationSvc.listInvitations(req.user!));
+}));
+
+r.delete('/owner/invites/:id', requireOwner, h(async (req, res) => {
+  await invitationSvc.revokeInvitation(req.user!, pid(req));
+  res.json({ revoked: true });
 }));
 
 // ---------------------------------------------------------------------------
