@@ -8,6 +8,8 @@
 
 **Tech Stack:** Node.js 24、TypeScript、Express 4、Supabase Auth/Postgres/RLS、Node test runner、原生 HTML/CSS/JS、agent-browser。
 
+> 状态：10 个任务已于 2026-11-05 实现，并通过自动化、真实 Supabase 链路和浏览器桌面/手机验收。
+
 ---
 
 ### Task 1: Database Foundation and Security Invariants

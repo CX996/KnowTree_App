@@ -16,9 +16,11 @@
 6. 待确认收件箱。
 7. 知识详情。
 8. 每日回溯。
-9. 我的、导出和注销。
+9. 完整账户中心、会话退出、导出和 7 天冷静期注销。
+10. Owner 邀请管理、两级分类管理和 30 天回收站。
+11. 常驻、可拖动、三档尺寸的小黑狐。
 
-不展示假统计、演示数据或后端不支持的收藏、回收站、恢复、撤销和重置入口。
+不展示假统计或演示数据。知树当前是邀请制产品，不开放公开注册。
 
 ## 收录方式
 
@@ -37,14 +39,15 @@
   ▼
 Vercel / Express
   │
-  ├─ Supabase Auth       注册、邮件确认、登录、找回密码
+  ├─ Supabase Auth       邀请注册、登录、密码和安全会话
   ├─ Supabase Postgres   业务数据 + RLS
   ├─ pgvector            语义搜索与互链
   └─ OpenAI 兼容服务     归类、摘要、embedding（可选）
 ```
 
 - 用户请求使用 publishable key + access token，执行受 RLS 约束。
-- 浏览器登录、注册、找回密码走同源 `/api/v1/auth/*` 代理，不直接依赖手机访问 Supabase 域名。
+- 浏览器登录和邀请注册走同源 `/api/v1/auth/*` 代理，不直接依赖手机访问 Supabase 域名。
+- 每个受保护请求校验 JWT `session_id` 仍在 `auth.sessions`；JWT 有效期为 15 分钟。
 - 后台任务和账号管理使用只存在服务端的 Supabase secret key。
 - 收录后由 Vercel `waitUntil` 处理任务，Cron 负责补偿重试。
 - 未配置 AI 时使用规则分类和关键词搜索降级。
@@ -105,11 +108,22 @@ pnpm dlx supabase@2.122.0 link --project-ref <PROJECT_REF>
 pnpm dlx supabase@2.122.0 db push
 ```
 
-Migration 包含 8 张业务表、RLS、显式 grant、pgvector、HNSW、语义检索函数和原子任务抢占函数。
+Migration 包含业务表、邀请/审计/错误事件、RLS、显式 grant、pgvector、HNSW、语义检索函数、原子任务抢占函数和会话校验函数。
 
 如果旧项目已有同名表，不要直接推送。先导出线上 schema 并核对，或新建空项目。
 
-邮箱自助注册已启用。当前在配置自有 SMTP 前临时关闭邮件确认，新账号可直接登录；密码至少 8 位并同时包含字母和数字，匿名登录保持关闭。SMTP 配置完成后应恢复邮件验证。
+当前阶段：
+
+- Supabase 全局公开注册关闭。
+- 邮箱密码登录提供方保持开启。
+- 新用户只能通过 Owner 创建的专属邀请注册，邀请 7 天有效且只能使用一次。
+- 邀请阶段不发送邀请邮件，邀请链接由 Owner 手动复制。
+- 邮箱确认暂时关闭；受邀账号在知树中显示“邮箱待验证”，不冒充已验证。
+- 密码至少 8 位并同时包含字母和数字，匿名登录保持关闭。
+
+首个 Owner 需要由部署者在 Supabase Dashboard 创建 Auth 用户，设置
+`app_metadata.role = "owner"`，并确保对应 `profiles` 行存在。应用不提供自助
+提升 Owner。
 
 ## Vercel
 
@@ -142,16 +156,28 @@ pnpm preflight
 
 自动化覆盖目录边界、公共配置隔离、AI 降级、后台调度、前端核心流程、表单语义、访问标准、RLS migration 和 Vercel 入口。
 
+真实环境验证可运行：
+
+```powershell
+pnpm --dir apps/api exec node --use-env-proxy --import tsx scripts/verify-foundation-live.ts
+```
+
+该脚本创建临时 Owner 和受邀账号，验证邀请、账户、分类、回收站、重新认证与错误诊断后自动删除测试数据，不输出密码或令牌。
+
 ## 当前边界
 
 | 项 | 当前实现 |
 |---|---|
-| 登录 | 邮箱密码；支持注册和找回密码。测试阶段注册后直接登录 |
+| 登录 | 邮箱密码和找回密码；新账号必须使用 Owner 邀请 |
+| 账户安全 | 昵称、当前会话、修改密码、退出当前/全部设备、7 天注销冷静期 |
+| 错误 | 稳定中文摘要、字段错误、可复制 requestId；Owner 查看脱敏诊断 |
 | AI | 一次结构化请求生成标题、摘要、分类和关键词；在“我的 → AI 整理”管理能力 |
 | 文档导入 | MD、TXT、HTML、DOCX、文本型 PDF；不保存原文件、不含 OCR |
 | Markdown | 本地解析与 XSS 清洗；详情页支持和编辑实时预览 |
 | 移动端 | 响应式 H5；登录、注册、采集、阅读和编辑支持手机浏览器 |
 | 向量 | 固定 1024 维 |
 | 任务补偿 | Vercel Cron 每日检查 |
-| 收藏 / 回收站 | 不提供 |
+| 分类 | 最多两级；只允许删除空分类 |
+| 回收站 | 30 天搜索/恢复/永久删除；到期后台清理 |
+| 收藏 | 不提供 |
 | 分类计数 | 前端按 `parent_id` 递归聚合 |

@@ -1,7 +1,7 @@
 # 知树基础能力与可信体验设计
 
 日期：2026-11-05
-状态：书面规格待审阅；批准后才进入实施计划
+状态：已批准并实施；实现结果见同名实施计划与 Git 提交
 关系：补充并修订 `2026-11-04-knowtree-ui-companion-design.md` 中账户、错误、回收站和宠物部分
 
 ## 1. 目标
@@ -88,7 +88,7 @@ register.html#invite=<opaque-token>
   -> 服务端验证令牌并返回绑定邮箱
   -> 用户设置昵称和密码
   -> 数据库原子占用邀请（active -> claimed，10 分钟租约）
-  -> 服务端 Admin API 创建未验证邮件的 Supabase Auth 用户
+  -> 服务端 Admin API 创建可登录的 Supabase Auth 用户
   -> 幂等创建 profile 和默认一级分类
   -> 数据库事务标记邀请 used
   -> 用户登录并进入欢迎页
@@ -121,7 +121,7 @@ Supabase Auth 与业务数据库不能组成一个真正的跨系统事务，因
 - 加入时间；
 - 邮箱验证状态。
 
-当前邀请阶段不发送验证邮件，因此正常受邀账号显示“待验证（邀请制阶段）”；不能写成“已验证”。
+当前邀请阶段不发送验证邮件。为了让受邀用户能用密码登录，Auth 层把邀请令牌视为本次访问确认；知树业务层仍通过 `profiles.email_verification_status` 显示“待验证（邀请制阶段）”，不能写成“已验证”。
 
 允许修改：
 
@@ -431,10 +431,16 @@ created_at timestamptz not null
 新增：
 
 ```text
+email_verification_status text not null default 'pending'
 account_status text not null default 'active'
 deletion_requested_at timestamptz
 deletion_scheduled_for timestamptz
 ```
+
+`email_verification_status` 允许：
+
+- `pending`
+- `verified`
 
 `account_status` 允许：
 
