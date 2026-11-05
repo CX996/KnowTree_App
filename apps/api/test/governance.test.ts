@@ -45,7 +45,7 @@ test('Supabase migration enables RLS and installs vector and queue functions', a
     migrations.map((file) => readFile(path.join(migrationDir, file), 'utf8')),
   )).join('\n');
 
-  assert.equal((sql.match(/enable row level security/g) ?? []).length, 8);
+  assert.ok((sql.match(/enable row level security/g) ?? []).length >= 11);
   assert.match(sql, /create(?: or replace)? function public\.match_entries/i);
   assert.match(sql, /create(?: or replace)? function public\.claim_due_jobs/i);
   assert.match(sql, /create policy entries_update_own/i);
@@ -53,15 +53,16 @@ test('Supabase migration enables RLS and installs vector and queue functions', a
   assert.match(sql, /with check \(\(select auth\.uid\(\)\) = user_id\)/i);
 });
 
-test('local auth supports temporary direct registration during SMTP setup', async () => {
+test('Supabase auth disables public signup while keeping password login', async () => {
   const config = await readFile(path.join(root, 'supabase/config.toml'), 'utf8');
   assert.match(config, /auto_expose_new_tables = false/);
-  assert.match(config, /\[auth\][\s\S]*?enable_signup = true/);
+  assert.match(config, /\[auth\][\s\S]*?enable_signup = false/);
   assert.match(config, /\[auth\.email\][\s\S]*?(?=\[auth\.sms\])/);
-  assert.match(config, /\[auth\.email\][\s\S]*?enable_signup = true[\s\S]*?(?=\[auth\.sms\])/);
+  assert.match(config, /\[auth\.email\][\s\S]*?enable_signup = false[\s\S]*?(?=\[auth\.sms\])/);
   assert.match(config, /\[auth\.email\][\s\S]*?enable_confirmations = false[\s\S]*?(?=\[auth\.sms\])/);
   assert.match(config, /minimum_password_length = 8/);
   assert.match(config, /password_requirements = "letters_digits"/);
+  assert.match(config, /jwt_expiry = 900/);
 });
 
 test('Vercel uses an API function, static output, and a protected daily cron', async () => {
@@ -155,4 +156,28 @@ test('capture migration adds file metadata and AI preferences', async () => {
   assert.match(sql, /summary_source/);
   assert.match(sql, /ai_auto_title/);
   assert.match(sql, /ai_embeddings_enabled/);
+});
+
+test('foundation migration enforces invitation-only access and account safety', async () => {
+  const migrationDir = path.join(root, 'supabase/migrations');
+  const files = (await readdir(migrationDir)).filter((file) => file.endsWith('_foundation_security.sql'));
+  assert.equal(files.length, 1);
+
+  const sql = await readFile(path.join(migrationDir, files[0]), 'utf8');
+  assert.match(sql, /create table public\.invitations/i);
+  assert.match(sql, /create table public\.audit_events/i);
+  assert.match(sql, /create table public\.error_events/i);
+  assert.match(sql, /account_status text not null default 'active'/i);
+  assert.match(sql, /deletion_scheduled_for timestamptz/i);
+  assert.match(sql, /create or replace function public\.session_is_valid/i);
+  assert.match(sql, /revoke all on table public\.invitations from anon, authenticated/i);
+  assert.match(sql, /revoke all on function public\.session_is_valid[\s\S]*from public, anon, authenticated/i);
+  assert.match(sql, /categories_user_parent_name_unique/i);
+  assert.match(sql, /categories_parent_same_user/i);
+  assert.match(sql, /revoke update \(account_status, deletion_requested_at, deletion_scheduled_for\)/i);
+
+  const config = await readFile(path.join(root, 'supabase/config.toml'), 'utf8');
+  assert.match(config, /\[auth\][\s\S]*?enable_signup = false/);
+  assert.match(config, /\[auth\.email\][\s\S]*?enable_signup = false[\s\S]*?(?=\[auth\.sms\])/);
+  assert.match(config, /jwt_expiry = 900/);
 });
