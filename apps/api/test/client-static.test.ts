@@ -151,6 +151,17 @@ test('capture page supports document drop and replaces history after success', a
   assert.equal(capture.includes("UI.go('detail.html?id='"), false);
 });
 
+test('capture optional backdrop cannot abort file mode initialization', async () => {
+  const capture = await readFile(path.join(clientDir, 'capture.html'), 'utf8');
+  assert.match(capture, /var background = document\.getElementById\('bg'\)/);
+  assert.match(capture, /if \(background\) background\.addEventListener\('click', leave\)/);
+  assert.match(capture, /fileMode\.addEventListener\('click'/);
+  assert.ok(
+    capture.lastIndexOf("fileMode.addEventListener('click'") < capture.lastIndexOf('KT.load()'),
+    'capture interactions must be bound before the bootstrap request starts',
+  );
+});
+
 test('detail page exposes safe markdown reading and editing', async () => {
   const detail = await readFile(path.join(clientDir, 'detail.html'), 'utf8');
   const markdown = await readFile(path.join(clientDir, 'assets/markdown.js'), 'utf8');

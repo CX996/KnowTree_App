@@ -218,6 +218,11 @@ export function configureApp(app: express.Express, options: AppOptions = {}) {
     app.use(express.static(staticDir, {
       index: 'index.html',
       maxAge: process.env.VERCEL ? '1h' : 0,
+      setHeaders: (res, filePath) => {
+        if (/\.html$/i.test(filePath)) {
+          res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        }
+      },
     }));
   }
   app.use((_req, res) => {

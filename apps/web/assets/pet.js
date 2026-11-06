@@ -8,7 +8,7 @@ import {
   positionPetForSize,
   snapPetToSide,
   resolveAssetFailure,
-} from './pet/pet-core.mjs?v=20261105b';
+} from './pet/pet-core.mjs?v=20261106';
 
 const MOTION = 'knowtree.pet.motion.v1';
 const POSITION = 'knowtree.pet.position.v1';
@@ -114,7 +114,7 @@ mount.innerHTML =
     '<img class="pet-frame" alt="" width="768" height="676" />' +
   '</button>' +
   '<div class="pet-menu" id="petMenu" role="dialog" aria-label="小黑狐快捷入口" hidden>' +
-    '<a data-pet-action="capture" href="capture.html">记一条</a>' +
+    '<a data-pet-action="capture" href="capture.html?v=20261106">记一条</a>' +
     '<a data-pet-action="inbox" href="inbox.html" hidden>处理待归类</a>' +
     '<a data-pet-action="review" href="review.html">看看今天的回顾</a>' +
     '<button class="pet-menu__button" type="button" data-pet-reset>回到默认位置</button>' +
@@ -288,7 +288,7 @@ function setState(requested) {
 }
 
 function chooseDestination() {
-  return pendingCount() > 0 ? 'inbox.html' : 'capture.html';
+  return pendingCount() > 0 ? 'inbox.html' : 'capture.html?v=20261106';
 }
 
 function navigateFromPet() {

@@ -201,7 +201,7 @@ test('companion runtime is navigation-only and publishes safe data events', asyn
   assert.match(pet, /location\.href/);
   assert.equal(/KT\.(ingest|assign|delete|merge|updateEntry|markSeen)\s*\(/.test(pet), false);
   assert.match(pet, /role="dialog"[^>]*aria-label="小黑狐快捷入口"/);
-  assert.match(pet, /href="capture\.html">记一条/);
+  assert.match(pet, /href="capture\.html\?v=20261106">记一条/);
   assert.match(pet, /href="inbox\.html"[^>]*>处理待归类/);
   assert.match(pet, /href="review\.html">看看今天的回顾/);
   assert.match(pet, /knowtree:input-focus/);

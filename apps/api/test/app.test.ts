@@ -47,6 +47,14 @@ test('Vercel API rewrite restores a nested API path', async (t) => {
   assert.deepEqual(await response.json(), { status: 'ok' });
 });
 
+test('HTML application shells are not cached by browsers', async (t) => {
+  const base = await startApp(t);
+  const response = await fetch(`${base}/capture.html`);
+
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get('cache-control') || '', /no-store|no-cache/);
+});
+
 test('public config exposes only the Supabase URL and publishable key', async (t) => {
   const previous = {
     url: process.env.SUPABASE_URL,

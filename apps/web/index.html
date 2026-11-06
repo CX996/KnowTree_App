@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="assets/styles/components.css" />
   <link rel="stylesheet" href="assets/styles/pages.css" />
   <link rel="stylesheet" href="assets/styles/shell.css" />
-  <link rel="stylesheet" href="assets/styles/pet.css?v=20261105b" />
+  <link rel="stylesheet" href="assets/styles/pet.css?v=20261106" />
   <link rel="stylesheet" href="assets/styles/transitions.css" />
 </head>
 <body data-tab="tree" data-pet-mode="ambient">
@@ -23,7 +23,7 @@
       <p class="page-head__meta" id="stats">正在生长…</p>
     </header>
 
-    <a class="capture-hero" href="capture.html" data-home-capture>
+    <a class="capture-hero" href="capture.html?v=20261106" data-home-capture>
       <span>新的一条</span>
       <strong>写下想法，或丢进一份文档</strong>
       <small>文字 · 链接 · 文件 ↗</small>
@@ -43,7 +43,7 @@
       <div class="tree-empty" id="treeEmpty" hidden>
         <strong>种下第一片叶子</strong>
         <p>从一条想法开始，知树会帮你找到它的位置。</p>
-        <a class="btn btn-primary" href="capture.html">丢一条进树里</a>
+        <a class="btn btn-primary" href="capture.html?v=20261106">丢一条进树里</a>
       </div>
       <svg id="homeTree" viewBox="0 0 360 300" role="group" aria-label="知识分类树"></svg>
       <a class="text-link" id="viewAllKnowledge" href="library.html">查看全部知识</a>
@@ -53,8 +53,8 @@
   <script src="assets/transitions.js"></script>
   <script src="assets/api.js"></script>
   <script src="assets/ui.js"></script>
-  <script src="assets/shell.js?v=20261105b"></script>
-  <script type="module" src="assets/pet.js?v=20261105b"></script>
+  <script src="assets/shell.js?v=20261106"></script>
+  <script type="module" src="assets/pet.js?v=20261106"></script>
   <script type="module">
     import { selectHomeCategories, countSince, startOfMonth } from './assets/tree-summary.mjs';
     import { renderKnowledgeTree } from './assets/tree-view.mjs';

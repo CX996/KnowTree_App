@@ -128,7 +128,10 @@
       check(menu.hidden === false, 'pet click must open quick menu');
       check(mount().hidden === false, 'pet tap must keep the companion visible');
       check(menuLinks.length === 3, 'pending inbox menu must expose three actions');
-      check(menuLinks[0].getAttribute('href') === 'capture.html', 'capture action');
+      check(
+        menuLinks[0].getAttribute('href').startsWith('capture.html'),
+        'capture action',
+      );
       check(menuLinks[1].getAttribute('href') === 'inbox.html', 'inbox action');
       check(menuLinks[2].getAttribute('href') === 'review.html', 'review action');
       check(document.activeElement === menuLinks[0], 'menu must focus first action');

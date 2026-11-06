@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="assets/styles/base.css" />
   <link rel="stylesheet" href="assets/styles/components.css" />
   <link rel="stylesheet" href="assets/styles/pages.css" />
-  <link rel="stylesheet" href="assets/styles/pet.css?v=20261105b" />
+  <link rel="stylesheet" href="assets/styles/pet.css?v=20261106" />
   <link rel="stylesheet" href="assets/styles/transitions.css" />
 </head>
 <body class="capture-body" data-pet-mode="focus">
@@ -65,7 +65,7 @@
   <script src="assets/transitions.js"></script>
   <script src="assets/api.js"></script>
   <script src="assets/ui.js"></script>
-  <script type="module" src="assets/pet.js?v=20261105b"></script>
+  <script type="module" src="assets/pet.js?v=20261106"></script>
   <script>
     (async function () {
       var titleInput = document.getElementById('title');
@@ -92,14 +92,9 @@
         UI.back('index.html');
       }
 
-      document.getElementById('bg').addEventListener('click', leave);
+      var background = document.getElementById('bg');
+      if (background) background.addEventListener('click', leave);
       document.getElementById('close').addEventListener('click', leave);
-
-      try {
-        await KT.load();
-      } catch (e) {
-        /* KT.load 会在未登录时跳转登录页 */
-      }
 
       function setStatus(message) {
         status.textContent = message || '';
@@ -268,6 +263,9 @@
 
       setMode('text');
       setTimeout(function () { titleInput.focus(); }, 120);
+      KT.load().catch(function () {
+        /* KT.load handles authentication failure and navigation. */
+      });
     })();
   </script>
 </body>
